@@ -132,6 +132,59 @@ serve(async (req) => {
       });
     }
 
+    // --- Buyer trust tracking ---
+    // Check if the buyer who filed this complaint has excessive complaint history
+    const { data: buyerComplaints } = await supabase
+      .from("complaints")
+      .select("id, status")
+      .eq("buyer_id", seller_id); // Note: we check all buyers who complained about this seller
+
+    // For each unique buyer, update their trust score
+    const { data: allBuyerComplaints } = await supabase
+      .from("complaints")
+      .select("buyer_id, status")
+      .eq("seller_id", seller_id);
+
+    const buyerIds = [...new Set((allBuyerComplaints || []).map((c: any) => c.buyer_id))];
+    
+    for (const buyerId of buyerIds) {
+      const { data: buyerAllComplaints } = await supabase
+        .from("complaints")
+        .select("id, status")
+        .eq("buyer_id", buyerId);
+
+      const buyerTotal = buyerAllComplaints?.length || 0;
+      const buyerFalse = buyerAllComplaints?.filter((c: any) => c.status === "rejected").length || 0;
+      
+      let buyerScore = 100 - (buyerFalse * 15) - (buyerTotal > 5 ? (buyerTotal - 5) * 3 : 0);
+      buyerScore = Math.max(0, Math.min(100, buyerScore));
+
+      const { data: existingBuyer } = await supabase
+        .from("buyer_trust_scores")
+        .select("id")
+        .eq("buyer_id", buyerId)
+        .maybeSingle();
+
+      if (existingBuyer) {
+        await supabase.from("buyer_trust_scores").update({
+          trust_score: buyerScore,
+          total_complaints: buyerTotal,
+          false_complaints: buyerFalse,
+          is_restricted: buyerScore < 30,
+          restricted_at: buyerScore < 30 ? new Date().toISOString() : null,
+          restrict_reason: buyerScore < 30 ? "Excessive false complaints" : null,
+          updated_at: new Date().toISOString(),
+        }).eq("id", existingBuyer.id);
+      } else {
+        await supabase.from("buyer_trust_scores").insert({
+          buyer_id: buyerId,
+          trust_score: buyerScore,
+          total_complaints: buyerTotal,
+          false_complaints: buyerFalse,
+        });
+      }
+    }
+
     return new Response(
       JSON.stringify({ success: true, trust_score: trustScore, action: actionTaken }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
