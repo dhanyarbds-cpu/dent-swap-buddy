@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { ArrowLeft, ShieldCheck, Loader2, CheckCircle, MapPin, Truck, CreditCard, Smartphone } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { ArrowLeft, ShieldCheck, Loader2, CheckCircle, MapPin, Truck, CreditCard, Smartphone, QrCode, Copy, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { formatPrice } from "@/lib/mockData";
@@ -32,7 +32,10 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
   const [deliveryMethod, setDeliveryMethod] = useState<"pickup" | "shipping">("pickup");
   const [shippingAddress, setShippingAddress] = useState("");
   const [listingDetails, setListingDetails] = useState<{ pickup_available: boolean; shipping_available: boolean } | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<"razorpay" | "stripe">("razorpay");
+  const [paymentMethod, setPaymentMethod] = useState<"razorpay" | "stripe" | "upi_qr">("razorpay");
+  const [upiQrData, setUpiQrData] = useState<{ order_id: string; upi_uri: string; upi_id: string; amount: number; txn_ref: string } | null>(null);
+  const [showQrModal, setShowQrModal] = useState(false);
+  const qrCanvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     const fetchAll = async () => {
