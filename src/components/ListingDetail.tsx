@@ -18,6 +18,7 @@ interface ListingDetailProps {
 
 const ListingDetail = ({ listing, onBack }: ListingDetailProps) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const initials = listing.seller.name.split(" ").map((n) => n[0]).join("");
   const isDbListing = listing.id.length > 10;
   const hasImages = listing.images && listing.images.length > 0 && listing.images[0];
@@ -26,6 +27,8 @@ const ListingDetail = ({ listing, onBack }: ListingDetailProps) => {
   const imageCount = hasImages ? listing.images.length : 0;
   const { wishlistedIds, toggle } = useWishlist();
   const wishlisted = wishlistedIds.has(listing.id);
+  const [certificate, setCertificate] = useState<any>(null);
+  const [generatingCert, setGeneratingCert] = useState(false);
 
   // Track product view
   useEffect(() => {
