@@ -156,37 +156,46 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          bio: string | null
           college: string
           created_at: string
           full_name: string
           id: string
           location: string
+          phone: string | null
           updated_at: string
           user_id: string
+          username: string | null
           verified: boolean
           year_of_study: string
         }
         Insert: {
           avatar_url?: string | null
+          bio?: string | null
           college?: string
           created_at?: string
           full_name?: string
           id?: string
           location?: string
+          phone?: string | null
           updated_at?: string
           user_id: string
+          username?: string | null
           verified?: boolean
           year_of_study?: string
         }
         Update: {
           avatar_url?: string | null
+          bio?: string | null
           college?: string
           created_at?: string
           full_name?: string
           id?: string
           location?: string
+          phone?: string | null
           updated_at?: string
           user_id?: string
+          username?: string | null
           verified?: boolean
           year_of_study?: string
         }
