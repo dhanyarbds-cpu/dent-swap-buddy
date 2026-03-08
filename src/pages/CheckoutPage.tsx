@@ -536,8 +536,8 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
                 <div className="rounded-xl bg-secondary/50 px-4 py-3 space-y-1">
                   <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Pay to UPI ID</p>
                   <div className="flex items-center justify-between">
-                    <p className="text-sm font-bold text-foreground">9080970874@upi</p>
-                    <button onClick={() => { navigator.clipboard.writeText("9080970874@upi"); toast({ title: "Copied!", description: "UPI ID copied" }); }} className="flex items-center gap-1 text-xs font-semibold text-primary">
+                    <p className="text-sm font-bold text-foreground">kharmugilanr2005@oksbi</p>
+                    <button onClick={() => { navigator.clipboard.writeText("kharmugilanr2005@oksbi"); toast({ title: "Copied!", description: "UPI ID copied" }); }} className="flex items-center gap-1 text-xs font-semibold text-primary">
                       <Copy className="h-3 w-3" /> Copy
                     </button>
                   </div>

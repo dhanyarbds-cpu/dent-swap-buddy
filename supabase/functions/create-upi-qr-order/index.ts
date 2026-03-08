@@ -100,7 +100,7 @@ serve(async (req) => {
       .eq("key", "platform_upi")
       .single();
 
-    const platformUpiId = (upiSettings?.value as any)?.upi_id || "9080970874@upi";
+    const platformUpiId = (upiSettings?.value as any)?.upi_id || "kharmugilanr2005@oksbi";
     const platformName = "DentSwap";
 
     // Create order record
