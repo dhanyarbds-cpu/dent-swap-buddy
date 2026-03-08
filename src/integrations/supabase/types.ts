@@ -294,6 +294,39 @@ export type Database = {
         }
         Relationships: []
       }
+      elite_memberships: {
+        Row: {
+          amount: number
+          created_at: string
+          expires_at: string
+          id: string
+          payment_id: string | null
+          started_at: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          expires_at?: string
+          id?: string
+          payment_id?: string | null
+          started_at?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          expires_at?: string
+          id?: string
+          payment_id?: string | null
+          started_at?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       elite_notifications: {
         Row: {
           created_at: string
