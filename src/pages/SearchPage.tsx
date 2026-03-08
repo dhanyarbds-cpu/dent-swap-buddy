@@ -111,11 +111,48 @@ const SearchPage = () => {
               </div>
             ))}
           </div>
-          {sorted.length === 0 && (
-            <div className="flex flex-col items-center py-20 text-center animate-fade-in">
+          {sorted.length === 0 && query.length > 2 && (
+            <div className="flex flex-col items-center py-16 text-center animate-fade-in">
               <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-secondary text-3xl">🔍</div>
               <p className="mt-4 text-sm font-medium text-foreground">No results found</p>
               <p className="mt-1 text-xs text-muted-foreground">Try different keywords</p>
+
+              {/* Elite auto-track prompt */}
+              {profile?.is_elite && trackedQuery !== query && (
+                <button
+                  onClick={async () => {
+                    if (!user) return;
+                    await supabase.from("demand_alerts").insert({
+                      user_id: user.id,
+                      keywords: query,
+                    });
+                    setTrackedQuery(query);
+                    toast({ title: "Search tracked ✓", description: "You'll be notified when matching products appear." });
+                  }}
+                  className="mt-4 flex items-center gap-2 rounded-full dentzap-gradient px-4 py-2 text-xs font-semibold text-primary-foreground dentzap-shadow"
+                >
+                  <Bell className="h-3.5 w-3.5" />
+                  Alert me when available
+                </button>
+              )}
+              {profile?.is_elite && trackedQuery === query && (
+                <p className="mt-4 flex items-center gap-1.5 text-xs font-medium text-verified">
+                  <Crown className="h-3.5 w-3.5" /> Tracking active — we'll notify you
+                </p>
+              )}
+              {!profile?.is_elite && user && (
+                <p className="mt-4 text-[11px] text-muted-foreground">
+                  <Crown className="mr-1 inline h-3 w-3 text-primary" />
+                  Elite members get notified when this product becomes available
+                </p>
+              )}
+            </div>
+          )}
+          {sorted.length === 0 && query.length <= 2 && (
+            <div className="flex flex-col items-center py-16 text-center animate-fade-in">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-secondary text-3xl">🔍</div>
+              <p className="mt-4 text-sm font-medium text-foreground">Search for products</p>
+              <p className="mt-1 text-xs text-muted-foreground">Type to find equipment, books, and more</p>
             </div>
           )}
         </div>
