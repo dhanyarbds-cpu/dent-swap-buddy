@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Crown, Search, Bell, Trash2, Plus, Sparkles, X, Eye, TrendingUp, Clock, Check, AlertTriangle, Loader2, CalendarDays, Shield } from "lucide-react";
+import { ArrowLeft, Crown, Search, Bell, Trash2, Plus, Sparkles, X, Eye, TrendingUp, Clock, Check, AlertTriangle, Loader2, CalendarDays, Shield, Smartphone, CreditCard, Building2, Wallet, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
@@ -8,6 +8,18 @@ import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { formatPrice } from "@/lib/mockData";
 
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
+
+const paymentMethods = [
+  { id: "upi", label: "UPI", desc: "Google Pay, PhonePe, Paytm, Navi", icon: Smartphone },
+  { id: "card", label: "Card", desc: "Debit / Credit Card", icon: CreditCard },
+  { id: "netbanking", label: "Net Banking", desc: "All major banks", icon: Building2 },
+  { id: "wallet", label: "Wallets", desc: "PayPal, Freecharge, Mobikwik", icon: Wallet },
+];
 interface DemandAlert {
   id: string;
   keywords: string;
