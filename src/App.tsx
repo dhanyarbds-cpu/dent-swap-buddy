@@ -26,6 +26,9 @@ import VerificationPage from "./pages/VerificationPage";
 import OrdersPage from "./pages/OrdersPage";
 import WishlistPage from "./pages/WishlistPage";
 import ComplaintsPage from "./pages/ComplaintsPage";
+import CompanyRegistrationPage from "./pages/CompanyRegistrationPage";
+import CompanySellPage from "./pages/CompanySellPage";
+import AdminCompaniesPage from "./pages/AdminCompaniesPage";
 
 const queryClient = new QueryClient();
 
@@ -63,6 +66,9 @@ const AppRoutes = () => {
           <Route path="/orders" element={<OrdersPage />} />
           <Route path="/wishlist" element={<WishlistPage />} />
           <Route path="/complaints" element={<ComplaintsPage />} />
+          <Route path="/register-company" element={<CompanyRegistrationPage />} />
+          <Route path="/company-sell" element={<CompanySellPage />} />
+          <Route path="/admin/companies" element={<AdminCompaniesPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <BottomTabBar />

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, ArrowRight, Check, MapPin, Truck, ShieldAlert, ExternalLink } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, MapPin, Truck, ShieldAlert, ExternalLink, Building2 } from "lucide-react";
 import { categories } from "@/lib/mockData";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -149,8 +149,11 @@ const SellPage = () => {
               <ArrowLeft className="h-4 w-4" />
             </button>
           )}
-          <h1 className="flex-1 text-lg font-bold text-foreground">Post Your Ad</h1>
-          <span className="text-xs font-medium text-muted-foreground">{step + 1}/{steps.length}</span>
+           <h1 className="flex-1 text-lg font-bold text-foreground">Post Your Ad</h1>
+           <button onClick={() => navigate("/company-sell")} className="flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1.5 text-[11px] font-semibold text-primary transition hover:bg-primary/20">
+             <Building2 className="h-3 w-3" /> Company
+           </button>
+           <span className="text-xs font-medium text-muted-foreground">{step + 1}/{steps.length}</span>
         </div>
         <div className="mx-auto flex max-w-lg gap-1 px-4 pb-2">
           {steps.map((s, i) => (

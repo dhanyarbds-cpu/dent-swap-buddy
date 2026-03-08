@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, Share2, Heart, MapPin, BadgeCheck, Tag, IndianRupee, Eye, Clock, Bookmark, ChevronLeft, ChevronRight, ShoppingCart, Truck, ShieldAlert, AlertTriangle, Flag } from "lucide-react";
+import { ArrowLeft, Share2, Heart, MapPin, BadgeCheck, Tag, IndianRupee, Eye, Clock, Bookmark, ChevronLeft, ChevronRight, ShoppingCart, Truck, ShieldAlert, AlertTriangle, Flag, Building2 } from "lucide-react";
 import { type Listing, formatPrice, timeAgo } from "@/lib/mockData";
 import NegotiateDialog from "@/components/NegotiateDialog";
 import { Button } from "@/components/ui/button";
@@ -216,21 +216,40 @@ const ListingDetail = ({ listing, onBack }: ListingDetailProps) => {
         )}
 
         {/* Seller Card */}
-        <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-lg font-bold text-primary">
-            {initials}
-          </div>
-          <div className="flex-1">
-            <div className="flex items-center gap-1.5">
-              <span className="font-semibold text-foreground">{listing.seller.name}</span>
-              {listing.seller.verified && <BadgeCheck className="h-4 w-4 text-verified" />}
+        {(listing as any).seller_type === "company" && (listing as any).company_name ? (
+          <div className="flex items-center gap-3 rounded-2xl border border-primary/20 bg-primary/5 p-4">
+            {(listing as any).company_logo ? (
+              <img src={(listing as any).company_logo} alt="" className="h-14 w-14 rounded-2xl object-cover" />
+            ) : (
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
+                <Building2 className="h-7 w-7 text-primary" />
+              </div>
+            )}
+            <div className="flex-1">
+              <div className="flex items-center gap-1.5">
+                <span className="font-semibold text-foreground">{(listing as any).company_name}</span>
+                <span className="rounded-full bg-primary px-2 py-0.5 text-[9px] font-bold text-primary-foreground">Official</span>
+              </div>
+              <p className="text-xs text-primary font-medium">Company Seller</p>
             </div>
-            <p className="text-xs text-muted-foreground">{listing.seller.college} · {listing.seller.year}</p>
           </div>
-          <Button variant="outline" size="sm" className="rounded-xl text-xs">
-            View Profile
-          </Button>
-        </div>
+        ) : (
+          <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-lg font-bold text-primary">
+              {initials}
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-1.5">
+                <span className="font-semibold text-foreground">{listing.seller.name}</span>
+                {listing.seller.verified && <BadgeCheck className="h-4 w-4 text-verified" />}
+              </div>
+              <p className="text-xs text-muted-foreground">{listing.seller.college} · {listing.seller.year}</p>
+            </div>
+            <Button variant="outline" size="sm" className="rounded-xl text-xs">
+              View Profile
+            </Button>
+          </div>
+        )}
 
         {/* Report Product */}
         {isDbListing && (
