@@ -6,8 +6,10 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { WishlistProvider } from "@/hooks/useWishlist";
+import { LanguageProvider } from "@/hooks/useLanguage";
 import BottomTabBar from "@/components/BottomTabBar";
 import GalaxyBackground from "@/components/GalaxyBackground";
+import AIChatAssistant from "@/components/AIChatAssistant";
 import Index from "./pages/Index";
 import SearchPage from "./pages/SearchPage";
 import SellPage from "./pages/SellPage";
@@ -88,6 +90,7 @@ const AppRoutes = () => {
           <Route path="*" element={<NotFound />} />
         </Routes>
         <BottomTabBar />
+        <AIChatAssistant />
       </div>
     </WishlistProvider>
   );
@@ -97,13 +100,15 @@ const App = () => (
   <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} storageKey="dentzap-theme">
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AuthProvider>
-            <AppRoutes />
-          </AuthProvider>
-        </BrowserRouter>
+        <LanguageProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AuthProvider>
+              <AppRoutes />
+            </AuthProvider>
+          </BrowserRouter>
+        </LanguageProvider>
       </TooltipProvider>
     </QueryClientProvider>
   </ThemeProvider>

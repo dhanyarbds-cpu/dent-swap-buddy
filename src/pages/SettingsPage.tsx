@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, Moon, Bell, Lock, KeyRound, Loader2 } from "lucide-react";
+import { ArrowLeft, Moon, Bell, Lock, KeyRound, Loader2, Languages } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,12 +8,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "next-themes";
+import { useLanguage, AVAILABLE_LANGUAGES } from "@/hooks/useLanguage";
 
 const SettingsPage = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
+  const { language, setLanguage, t } = useLanguage();
 
   const [showPassword, setShowPassword] = useState(false);
   const [newPassword, setNewPassword] = useState("");
@@ -68,6 +70,42 @@ const SettingsPage = () => {
                 checked={theme === "dark"}
                 onCheckedChange={(v) => setTheme(v ? "dark" : "light")}
               />
+            </div>
+          </div>
+        </div>
+
+        {/* Language */}
+        <div>
+          <p className="mb-2 px-1 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">{t("settings.language")}</p>
+          <div className="overflow-hidden rounded-2xl border border-border bg-card dentzap-card-shadow">
+            <div className="px-4 py-3">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-secondary">
+                  <Languages className="h-4 w-4 text-secondary-foreground" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-foreground">{t("settings.language")}</p>
+                  <p className="text-xs text-muted-foreground">{t("settings.languageDesc")}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {AVAILABLE_LANGUAGES.map((lang) => (
+                  <button
+                    key={lang.code}
+                    onClick={() => setLanguage(lang.code)}
+                    className={`rounded-xl border p-2.5 text-center transition-all ${
+                      language === lang.code
+                        ? "border-primary bg-primary/10 ring-1 ring-primary/20"
+                        : "border-border bg-card hover:border-primary/20"
+                    }`}
+                  >
+                    <p className={`text-xs font-bold ${language === lang.code ? "text-primary" : "text-foreground"}`}>
+                      {lang.native}
+                    </p>
+                    <p className="text-[9px] text-muted-foreground">{lang.label}</p>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
