@@ -14,7 +14,184 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      chat_messages: {
+        Row: {
+          chat_request_id: string
+          content: string
+          created_at: string
+          id: string
+          is_read: boolean
+          message_type: string
+          price_amount: number | null
+          sender_id: string
+        }
+        Insert: {
+          chat_request_id: string
+          content: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message_type?: string
+          price_amount?: number | null
+          sender_id: string
+        }
+        Update: {
+          chat_request_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message_type?: string
+          price_amount?: number | null
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_chat_request_id_fkey"
+            columns: ["chat_request_id"]
+            isOneToOne: false
+            referencedRelation: "chat_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_requests: {
+        Row: {
+          buyer_id: string
+          created_at: string
+          id: string
+          listing_id: string
+          message: string | null
+          offered_price: number | null
+          seller_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          buyer_id: string
+          created_at?: string
+          id?: string
+          listing_id: string
+          message?: string | null
+          offered_price?: number | null
+          seller_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          buyer_id?: string
+          created_at?: string
+          id?: string
+          listing_id?: string
+          message?: string | null
+          offered_price?: number | null
+          seller_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_requests_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      listings: {
+        Row: {
+          brand: string
+          category: string
+          condition: string
+          created_at: string
+          description: string
+          hashtags: string[] | null
+          id: string
+          images: string[] | null
+          is_negotiable: boolean
+          location: string
+          price: number
+          seller_id: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          brand?: string
+          category: string
+          condition: string
+          created_at?: string
+          description?: string
+          hashtags?: string[] | null
+          id?: string
+          images?: string[] | null
+          is_negotiable?: boolean
+          location?: string
+          price: number
+          seller_id: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          brand?: string
+          category?: string
+          condition?: string
+          created_at?: string
+          description?: string
+          hashtags?: string[] | null
+          id?: string
+          images?: string[] | null
+          is_negotiable?: boolean
+          location?: string
+          price?: number
+          seller_id?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          college: string
+          created_at: string
+          full_name: string
+          id: string
+          location: string
+          updated_at: string
+          user_id: string
+          verified: boolean
+          year_of_study: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          college?: string
+          created_at?: string
+          full_name?: string
+          id?: string
+          location?: string
+          updated_at?: string
+          user_id: string
+          verified?: boolean
+          year_of_study?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          college?: string
+          created_at?: string
+          full_name?: string
+          id?: string
+          location?: string
+          updated_at?: string
+          user_id?: string
+          verified?: boolean
+          year_of_study?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
