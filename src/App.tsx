@@ -33,6 +33,9 @@ import SellerPayoutPage from "./pages/SellerPayoutPage";
 import AdminTransactionsPage from "./pages/AdminTransactionsPage";
 import AdminReturnsPage from "./pages/AdminReturnsPage";
 import PoliciesPage from "./pages/PoliciesPage";
+import SellerAnalyticsPage from "./pages/SellerAnalyticsPage";
+import BadgesPage from "./pages/BadgesPage";
+import ReferralPage from "./pages/ReferralPage";
 
 const queryClient = new QueryClient();
 
