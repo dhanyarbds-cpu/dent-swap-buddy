@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, ArrowRight, Check, MapPin, Truck, ShieldAlert } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, MapPin, Truck, ShieldAlert, ExternalLink } from "lucide-react";
 import { categories } from "@/lib/mockData";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -270,13 +270,30 @@ const SellPage = () => {
           </div>
         )}
 
-        {/* Step 3: Price */}
+        {/* Step 3: Links & Price */}
         {step === 3 && (
           <div className="space-y-5">
             <div>
-              <p className="text-base font-bold text-foreground">Set Your Price</p>
-              <p className="mt-1 text-sm text-muted-foreground">Choose a competitive price</p>
+              <p className="text-base font-bold text-foreground">Links & Price</p>
+              <p className="mt-1 text-sm text-muted-foreground">Add optional links and set your price</p>
             </div>
+
+            {/* External Link */}
+            <div>
+              <label className="mb-1.5 block text-sm font-semibold text-foreground">External Link (optional)</label>
+              <div className="relative">
+                <ExternalLink className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="url"
+                  value={form.externalLink}
+                  onChange={(e) => update("externalLink", e.target.value)}
+                  placeholder="https://example.com/product-demo"
+                  className="rounded-xl py-5 pl-10"
+                />
+              </div>
+              <p className="mt-1 text-[11px] text-muted-foreground">Product demo video, website, or additional info</p>
+            </div>
+
             <div>
               <label className="mb-1.5 block text-sm font-semibold text-foreground">Price (₹)</label>
               <Input
