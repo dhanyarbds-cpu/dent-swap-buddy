@@ -1,90 +1,63 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Loader2, CheckCircle, Building2, Smartphone } from "lucide-react";
+import { ArrowLeft, Loader2, CheckCircle, ExternalLink, ShieldCheck, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 
 const SellerPayoutPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [method, setMethod] = useState<"upi" | "bank">("upi");
-  const [form, setForm] = useState({
-    upi_id: "",
-    account_holder_name: "",
-    bank_name: "",
-    bank_account_number: "",
-    ifsc_code: "",
-  });
-  const [existingId, setExistingId] = useState<string | null>(null);
+  const [connecting, setConnecting] = useState(false);
+  const [status, setStatus] = useState<{
+    connected: boolean;
+    onboarding_complete: boolean;
+    charges_enabled?: boolean;
+    payouts_enabled?: boolean;
+  } | null>(null);
 
-  useEffect(() => {
+  const checkStatus = async () => {
     if (!user) return;
-    const fetch = async () => {
-      const { data } = await supabase
-        .from("seller_payout_details" as any)
-        .select("*")
-        .eq("seller_id", user.id)
-        .maybeSingle();
-      if (data) {
-        setExistingId((data as any).id);
-        setMethod((data as any).payout_method === "bank" ? "bank" : "upi");
-        setForm({
-          upi_id: (data as any).upi_id || "",
-          account_holder_name: (data as any).account_holder_name || "",
-          bank_name: (data as any).bank_name || "",
-          bank_account_number: (data as any).bank_account_number || "",
-          ifsc_code: (data as any).ifsc_code || "",
-        });
-      }
-      setLoading(false);
-    };
-    fetch();
-  }, [user]);
-
-  const handleSave = async () => {
-    if (!user) return;
-    setSaving(true);
     try {
-      const payload = {
-        seller_id: user.id,
-        payout_method: method,
-        upi_id: method === "upi" ? form.upi_id : null,
-        account_holder_name: form.account_holder_name,
-        bank_name: method === "bank" ? form.bank_name : null,
-        bank_account_number: method === "bank" ? form.bank_account_number : null,
-        ifsc_code: method === "bank" ? form.ifsc_code : null,
-      };
-
-      if (existingId) {
-        const { error } = await supabase
-          .from("seller_payout_details" as any)
-          .update(payload as any)
-          .eq("id", existingId);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from("seller_payout_details" as any)
-          .insert(payload as any);
-        if (error) throw error;
-      }
-
-      toast({ title: "Payout Details Saved ✓", description: "Your payout information has been updated." });
-      navigate(-1);
-    } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      const { data, error } = await supabase.functions.invoke("check-connect-status");
+      if (error) throw error;
+      setStatus(data);
+    } catch (err) {
+      console.error("Failed to check status:", err);
+      setStatus({ connected: false, onboarding_complete: false });
     }
-    setSaving(false);
+    setLoading(false);
   };
 
-  const isValid = method === "upi"
-    ? !!form.upi_id && !!form.account_holder_name
-    : !!form.account_holder_name && !!form.bank_name && !!form.bank_account_number && !!form.ifsc_code;
+  useEffect(() => {
+    checkStatus();
+  }, [user]);
+
+  // Handle return from Stripe onboarding
+  useEffect(() => {
+    if (searchParams.get("onboarding") === "complete") {
+      toast({ title: "Checking status...", description: "Verifying your Stripe account setup." });
+      checkStatus();
+    }
+  }, [searchParams]);
+
+  const handleConnect = async () => {
+    setConnecting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-connect-account");
+      if (error) throw error;
+      if (data?.url) {
+        window.location.href = data.url;
+      }
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+      setConnecting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -94,112 +67,127 @@ const SellerPayoutPage = () => {
     );
   }
 
+  const isFullySetup = status?.connected && status?.onboarding_complete;
+
   return (
     <div className="safe-bottom min-h-screen bg-background">
       <header className="sticky top-0 z-40 flex items-center gap-3 border-b border-border bg-card/95 px-4 py-3 backdrop-blur-xl">
         <button onClick={() => navigate(-1)} className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary">
           <ArrowLeft className="h-5 w-5 text-foreground" />
         </button>
-        <h1 className="flex-1 text-lg font-bold text-foreground">Payout Details</h1>
-        {existingId && (
+        <h1 className="flex-1 text-lg font-bold text-foreground">Payment Setup</h1>
+        {isFullySetup && (
           <span className="flex items-center gap-1 text-[10px] font-medium text-verified">
-            <CheckCircle className="h-3 w-3" /> Saved
+            <CheckCircle className="h-3 w-3" /> Active
           </span>
         )}
       </header>
 
       <main className="mx-auto max-w-lg p-4 space-y-5 animate-fade-in">
-        <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
-          <p className="text-sm font-semibold text-foreground">Setup Required</p>
-          <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
-            You must register your payout details before you can receive payments from sales. Funds will be transferred to this account after buyer confirms delivery.
-          </p>
-        </div>
+        {/* Status Card */}
+        {isFullySetup ? (
+          <div className="rounded-2xl border border-verified/20 bg-verified/5 p-5 space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-verified/10">
+                <CheckCircle className="h-6 w-6 text-verified" />
+              </div>
+              <div>
+                <p className="text-base font-bold text-foreground">Payment Setup Complete</p>
+                <p className="text-xs text-muted-foreground">You can receive payments from buyers</p>
+              </div>
+            </div>
 
-        {/* Method Selection */}
-        <div>
-          <p className="mb-3 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Payout Method</p>
-          <div className="flex gap-3">
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <div className="rounded-xl bg-background/50 px-3 py-2.5 text-center">
+                <p className="text-[10px] font-bold uppercase text-muted-foreground">Charges</p>
+                <p className="mt-0.5 text-sm font-bold text-verified">✓ Enabled</p>
+              </div>
+              <div className="rounded-xl bg-background/50 px-3 py-2.5 text-center">
+                <p className="text-[10px] font-bold uppercase text-muted-foreground">Payouts</p>
+                <p className="mt-0.5 text-sm font-bold text-verified">✓ Enabled</p>
+              </div>
+            </div>
+          </div>
+        ) : status?.connected ? (
+          <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-5 space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-500/10">
+                <AlertTriangle className="h-6 w-6 text-amber-500" />
+              </div>
+              <div>
+                <p className="text-base font-bold text-foreground">Setup Incomplete</p>
+                <p className="text-xs text-muted-foreground">Complete your Stripe onboarding to start receiving payments</p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5 space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10">
+                <ShieldCheck className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <p className="text-base font-bold text-foreground">Setup Required</p>
+                <p className="text-xs text-muted-foreground">Connect your Stripe account to receive payments from sales</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* How it works */}
+        <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">How Payments Work</p>
+          <div className="space-y-3">
             {[
-              { id: "upi" as const, label: "UPI", icon: Smartphone },
-              { id: "bank" as const, label: "Bank Transfer", icon: Building2 },
-            ].map((m) => (
-              <button
-                key={m.id}
-                onClick={() => setMethod(m.id)}
-                className={`flex flex-1 items-center gap-2 rounded-2xl border p-4 transition-all press-scale ${
-                  method === m.id ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "border-border bg-card"
-                }`}
-              >
-                <m.icon className={`h-5 w-5 ${method === m.id ? "text-primary" : "text-muted-foreground"}`} />
-                <span className={`text-sm font-semibold ${method === m.id ? "text-primary" : "text-foreground"}`}>{m.label}</span>
-              </button>
+              { step: "1", title: "Buyer pays via Stripe", desc: "Cards, UPI, and more — all handled securely" },
+              { step: "2", title: "Platform holds payment", desc: "Funds are held until buyer confirms delivery" },
+              { step: "3", title: "You get paid automatically", desc: "After delivery confirmation, funds transfer to your Stripe account (minus 1% platform fee)" },
+            ].map((item) => (
+              <div key={item.step} className="flex items-start gap-3">
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                  {item.step}
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-foreground">{item.title}</p>
+                  <p className="text-[11px] text-muted-foreground">{item.desc}</p>
+                </div>
+              </div>
             ))}
           </div>
         </div>
 
-        {/* Form */}
-        <div className="space-y-4">
-          <div>
-            <label className="mb-1.5 block text-sm font-semibold text-foreground">Account Holder Name</label>
-            <Input
-              value={form.account_holder_name}
-              onChange={(e) => setForm((f) => ({ ...f, account_holder_name: e.target.value }))}
-              placeholder="Full name as per bank/UPI"
-              className="rounded-xl py-5"
-            />
-          </div>
+        {/* Action Button */}
+        {isFullySetup ? (
+          <Button
+            onClick={handleConnect}
+            variant="outline"
+            disabled={connecting}
+            className="w-full rounded-xl py-5 text-sm font-semibold gap-2"
+          >
+            <ExternalLink className="h-4 w-4" /> Update Account Details
+          </Button>
+        ) : (
+          <Button
+            onClick={handleConnect}
+            disabled={connecting}
+            className="w-full gap-2 dentzap-gradient rounded-xl py-5 text-sm font-semibold text-primary-foreground dentzap-shadow"
+          >
+            {connecting ? (
+              <><Loader2 className="h-4 w-4 animate-spin" /> Setting up...</>
+            ) : status?.connected ? (
+              <><ExternalLink className="h-4 w-4" /> Complete Stripe Onboarding</>
+            ) : (
+              <><ShieldCheck className="h-4 w-4" /> Connect with Stripe</>
+            )}
+          </Button>
+        )}
 
-          {method === "upi" ? (
-            <div>
-              <label className="mb-1.5 block text-sm font-semibold text-foreground">UPI ID</label>
-              <Input
-                value={form.upi_id}
-                onChange={(e) => setForm((f) => ({ ...f, upi_id: e.target.value }))}
-                placeholder="e.g. name@upi, name@paytm"
-                className="rounded-xl py-5"
-              />
-            </div>
-          ) : (
-            <>
-              <div>
-                <label className="mb-1.5 block text-sm font-semibold text-foreground">Bank Name</label>
-                <Input
-                  value={form.bank_name}
-                  onChange={(e) => setForm((f) => ({ ...f, bank_name: e.target.value }))}
-                  placeholder="e.g. State Bank of India"
-                  className="rounded-xl py-5"
-                />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-semibold text-foreground">Account Number</label>
-                <Input
-                  value={form.bank_account_number}
-                  onChange={(e) => setForm((f) => ({ ...f, bank_account_number: e.target.value }))}
-                  placeholder="Enter account number"
-                  className="rounded-xl py-5"
-                />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-semibold text-foreground">IFSC Code</label>
-                <Input
-                  value={form.ifsc_code}
-                  onChange={(e) => setForm((f) => ({ ...f, ifsc_code: e.target.value.toUpperCase() }))}
-                  placeholder="e.g. SBIN0001234"
-                  className="rounded-xl py-5"
-                />
-              </div>
-            </>
-          )}
+        <div className="flex items-start gap-2.5 rounded-2xl border border-border bg-card p-3">
+          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-verified" />
+          <p className="text-[11px] text-muted-foreground leading-relaxed">
+            Your financial data is handled securely by Stripe. DentSwap never stores your bank details.
+          </p>
         </div>
-
-        <Button
-          onClick={handleSave}
-          disabled={!isValid || saving}
-          className="w-full dentzap-gradient rounded-xl py-5 text-sm font-semibold text-primary-foreground dentzap-shadow disabled:opacity-50"
-        >
-          {saving ? "Saving..." : existingId ? "Update Payout Details" : "Save Payout Details"}
-        </Button>
       </main>
     </div>
   );
