@@ -33,7 +33,7 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
   const [shippingAddress, setShippingAddress] = useState("");
   const [listingDetails, setListingDetails] = useState<{ pickup_available: boolean; shipping_available: boolean } | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<"razorpay" | "stripe" | "upi_qr">("razorpay");
-  const [upiQrData, setUpiQrData] = useState<{ order_id: string; upi_uri: string; upi_id: string; amount: number; txn_ref: string } | null>(null);
+  const [upiQrData, setUpiQrData] = useState<{ order_id: string; upi_uri: string; upi_id: string; amount: number; txn_ref: string; product_name?: string } | null>(null);
   const [showQrModal, setShowQrModal] = useState(false);
   const qrCanvasRef = useRef<HTMLCanvasElement>(null);
 
