@@ -70,7 +70,7 @@ const rejectionMessages: Record<string, string> = {
   irrelevant: "This image does not appear to be a relevant product listing.",
   low_quality: "This image is too blurry or low quality. Please upload a clearer photo.",
   stock_image: "Stock images are not allowed. Please upload original photos of your actual product.",
-  consumable: "Consumable/disposable products cannot be listed on this platform.",
+  consumable: "This image has been classified as a consumable product.",
 };
 
 const conditionColors: Record<string, string> = {

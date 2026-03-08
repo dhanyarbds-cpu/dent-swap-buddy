@@ -65,7 +65,7 @@ const sections = [
     icon: Users,
     title: "Community Standards",
     points: [
-      "Only non-consumable products are allowed. Food, medicines, beverages, and edible items are strictly prohibited.",
+      "All medical, dental, and laboratory products are allowed, including consumables and disposables. Non-healthcare items are prohibited.",
       "Harassment, hate speech, and discriminatory behavior result in immediate action.",
       "Respect for all users — both buyers and sellers are treated equally in disputes.",
     ],

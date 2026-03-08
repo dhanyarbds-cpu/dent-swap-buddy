@@ -20,17 +20,6 @@ const priceRanges = [
   { label: "Above ₹5000", min: 5000, max: Infinity },
 ];
 
-const CONSUMABLE_KEYWORDS = [
-  "syringe", "syringes", "glove", "gloves", "mask", "masks", "medicine", "medicines",
-  "pharmaceutical", "reagent", "reagents", "disposable", "cotton", "gauze", "bandage",
-  "capsule", "tablet", "injection", "food", "grocery", "groceries", "beverage",
-  "consumable", "edible", "drink",
-];
-
-function isConsumableQuery(q: string): boolean {
-  const lower = q.toLowerCase();
-  return CONSUMABLE_KEYWORDS.some((kw) => lower.includes(kw));
-}
 
 interface SpeechRecognitionEvent {
   results: SpeechRecognitionResultList;
@@ -62,7 +51,6 @@ const SearchPage = () => {
 
   // Filter results
   const filtered = listings.filter((l) => {
-    if (isConsumableQuery(query)) return false;
     const matchesQuery = !query ||
       l.title.toLowerCase().includes(query.toLowerCase()) ||
       l.hashtags.some((h) => h.toLowerCase().includes(query.toLowerCase())) ||
@@ -176,7 +164,7 @@ const SearchPage = () => {
     return <ListingDetail listing={selectedListing} onBack={() => setSelectedListing(null)} />;
   }
 
-  const showConsumableWarning = query.length > 2 && isConsumableQuery(query);
+  const showConsumableWarning = false;
   const activeFiltersCount = [
     categoryFilter !== "All",
     priceRange !== 0,

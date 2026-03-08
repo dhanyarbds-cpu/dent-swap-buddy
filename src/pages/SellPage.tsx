@@ -14,24 +14,6 @@ import { useNavigate } from "react-router-dom";
 const conditions = ["New", "Used"];
 const steps = ["Category", "Photos", "Details", "Links & Price", "Delivery"];
 
-// Consumable keywords that should block listings
-const CONSUMABLE_KEYWORDS = [
-  "syringe", "syringes", "glove", "gloves", "mask", "masks", "medicine", "medicines",
-  "pharmaceutical", "reagent", "reagents", "disposable", "single-use", "single use",
-  "cotton", "gauze", "bandage", "capsule", "tablet", "injection", "injectable",
-  "chemical", "solution", "disinfectant", "sterilant", "swab", "suture", "sutures",
-  "catheter", "drip", "saline", "gel", "cream", "ointment", "drops",
-];
-
-function detectConsumableContent(title: string, description: string): string | null {
-  const combined = `${title} ${description}`.toLowerCase();
-  for (const keyword of CONSUMABLE_KEYWORDS) {
-    if (combined.includes(keyword)) {
-      return `Your listing appears to contain a consumable product ("${keyword}"). Only durable medical, dental, laboratory, and educational equipment can be listed. Consumable or disposable products are not allowed.`;
-    }
-  }
-  return null;
-}
 
 const SellPage = () => {
   const { toast } = useToast();
@@ -70,12 +52,6 @@ const SellPage = () => {
   const handleSubmit = async () => {
     if (!user) return;
 
-    // Check for consumable content
-    const consumableWarning = detectConsumableContent(form.title, form.description);
-    if (consumableWarning) {
-      toast({ title: "Listing Not Allowed", description: consumableWarning, variant: "destructive" });
-      return;
-    }
 
     setSubmitting(true);
 
@@ -185,7 +161,7 @@ const SellPage = () => {
               <div>
                 <p className="text-xs font-semibold text-foreground">Listing Policy</p>
                 <p className="mt-0.5 text-[11px] text-muted-foreground leading-relaxed">
-                  Only durable medical, dental, laboratory, and educational equipment can be listed. Consumable or disposable products are not allowed.
+                  All medical, dental, laboratory, and educational products — including consumables and disposables — can be listed.
                 </p>
               </div>
             </div>

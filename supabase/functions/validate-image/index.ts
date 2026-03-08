@@ -31,10 +31,9 @@ serve(async (req) => {
 1. **MODERATION**: Determine if the image is a valid product listing photo.
 2. **CONDITION ASSESSMENT**: If approved, assess the visible condition of the product.
 
-APPROVE images showing: durable medical equipment, dental instruments, laboratory tools, medical/dental books, clinic furniture, surgical instruments, diagnostic devices, student training equipment, educational models.
+APPROVE images showing: durable medical equipment, dental instruments, laboratory tools, medical/dental books, clinic furniture, surgical instruments, diagnostic devices, student training equipment, educational models, consumable/disposable medical products (syringes, gloves, masks, cotton, gauze, medicines, reagents, etc.).
 
 REJECT images showing:
-- Consumable/disposable products (syringes, gloves, masks, cotton, gauze, disposable kits, chemical reagents, medicines, pharmaceutical products)
 - Human faces, selfies, or people
 - Explicit/inappropriate/obscene content
 - Stock images, watermarked photos, screenshots from other listings
@@ -73,7 +72,7 @@ You must respond using the validate_image tool.`
                   approved: { type: "boolean", description: "Whether the image is approved for listing" },
                   confidence: { type: "number", description: "Confidence score 0-100 that this is a valid product image" },
                   reason: { type: "string", description: "Brief user-friendly reason for the decision" },
-                  category: { type: "string", enum: ["product", "human", "inappropriate", "irrelevant", "low_quality", "stock_image", "consumable"], description: "Classification of the image" },
+                  category: { type: "string", enum: ["product", "human", "inappropriate", "irrelevant", "low_quality", "stock_image", "consumable"], description: "Classification of the image. Note: consumable products ARE allowed." },
                   condition_rating: { type: "string", enum: ["Excellent", "Good", "Fair", "Poor", "Unknown"], description: "AI-assessed condition of the product (only meaningful if approved)" },
                   condition_details: { type: "string", description: "Brief description of visible condition aspects (wear, damage, etc.)" },
                   counterfeit_flag: { type: "boolean", description: "True if the product appears potentially counterfeit" },
