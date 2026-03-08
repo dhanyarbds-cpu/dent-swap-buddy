@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { ArrowLeft, ShieldCheck, Loader2, CheckCircle, MapPin, Truck, Smartphone, QrCode, Copy, ExternalLink } from "lucide-react";
+import { ArrowLeft, ShieldCheck, Loader2, CheckCircle, MapPin, Truck, Smartphone, QrCode, Copy, ExternalLink, CreditCard } from "lucide-react";
+import GooglePayButton from "@/components/GooglePayButton";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { formatPrice } from "@/lib/mockData";
@@ -32,7 +33,7 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
   const [deliveryMethod, setDeliveryMethod] = useState<"pickup" | "shipping">("pickup");
   const [shippingAddress, setShippingAddress] = useState("");
   const [listingDetails, setListingDetails] = useState<{ pickup_available: boolean; shipping_available: boolean } | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<"upi_qr" | "upi_id">("upi_qr");
+  const [paymentMethod, setPaymentMethod] = useState<"gpay" | "upi_qr" | "upi_id">("gpay");
   const [upiQrData, setUpiQrData] = useState<{ order_id: string; upi_uri: string; upi_id: string; amount: number; txn_ref: string; product_name?: string } | null>(null);
   const [showQrModal, setShowQrModal] = useState(false);
   const [utrNumber, setUtrNumber] = useState("");
@@ -138,12 +139,58 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
     setProcessing(false);
   };
 
+  const handleGooglePaySuccess = async (paymentData: any) => {
+    if (!user) return;
+    setProcessing(true);
+    try {
+      // Create order via edge function
+      const { data, error } = await supabase.functions.invoke("create-upi-qr-order", {
+        body: {
+          listing_id: listing.id,
+          amount: listing.price,
+          delivery_method: deliveryMethod,
+          shipping_address: deliveryMethod === "shipping" ? shippingAddress : null,
+        },
+      });
+
+      if (error || !data?.order_id) {
+        throw new Error(data?.error || error?.message || "Failed to create order");
+      }
+
+      // Update order with Google Pay payment info
+      const paymentMethodData = paymentData?.paymentMethodData;
+      const paymentToken = paymentMethodData?.tokenizationData?.token || "gpay_token";
+
+      await supabase
+        .from("orders")
+        .update({
+          payment_method: "google_pay",
+          razorpay_payment_id: `gpay_${Date.now()}`,
+          status: "paid",
+          escrow_status: "held",
+        })
+        .eq("id", data.order_id);
+
+      toast({ title: "Payment Successful! 🎉", description: "Your order has been placed via Google Pay." });
+      navigate(`/orders?order_id=${data.order_id}`);
+    } catch (err: any) {
+      toast({ title: "Payment Error", description: err.message, variant: "destructive" });
+    }
+    setProcessing(false);
+  };
+
+  const handleGooglePayError = (error: any) => {
+    console.error("Google Pay error:", error);
+    toast({ title: "Google Pay Error", description: "Payment failed. Please try another method.", variant: "destructive" });
+  };
+
   const handlePayment = () => {
     if (paymentMethod === "upi_qr") {
       handleUpiQrPayment();
-    } else {
+    } else if (paymentMethod === "upi_id") {
       handleUpiIdPayment();
     }
+    // Google Pay is handled by its own button
   };
 
   const img = listing.images?.[0];
@@ -345,6 +392,28 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
             <div>
               <p className="text-base font-bold text-foreground mb-3">Choose Payment Method</p>
               <div className="space-y-3">
+                {/* Google Pay */}
+                <button
+                  onClick={() => setPaymentMethod("gpay")}
+                  className={`w-full flex items-start gap-4 rounded-2xl border p-4 text-left transition-all ${
+                    paymentMethod === "gpay" ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "border-border bg-card"
+                  }`}
+                >
+                  <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${paymentMethod === "gpay" ? "bg-primary/10" : "bg-secondary"}`}>
+                    <CreditCard className={`h-5 w-5 ${paymentMethod === "gpay" ? "text-primary" : "text-muted-foreground"}`} />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-foreground">Google Pay</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">Pay with Google Pay — UPI, cards supported</p>
+                    <div className="mt-2 flex items-center gap-1.5">
+                      <span className="rounded-full bg-verified/10 px-2 py-0.5 text-[10px] font-semibold text-verified">Recommended</span>
+                      <span className="text-[10px] text-muted-foreground">Fastest checkout</span>
+                    </div>
+                  </div>
+                  {paymentMethod === "gpay" && <CheckCircle className="h-5 w-5 text-primary shrink-0" />}
+                </button>
+
+                {/* UPI QR */}
                 <button
                   onClick={() => setPaymentMethod("upi_qr")}
                   className={`w-full flex items-start gap-4 rounded-2xl border p-4 text-left transition-all ${
@@ -358,13 +427,13 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
                     <p className="text-sm font-semibold text-foreground">UPI QR Code</p>
                     <p className="mt-0.5 text-xs text-muted-foreground">Scan QR with any UPI app — GPay, PhonePe, Paytm</p>
                     <div className="mt-2 flex items-center gap-1.5">
-                      <span className="rounded-full bg-verified/10 px-2 py-0.5 text-[10px] font-semibold text-verified">Recommended</span>
                       <span className="text-[10px] text-muted-foreground">No gateway fees</span>
                     </div>
                   </div>
                   {paymentMethod === "upi_qr" && <CheckCircle className="h-5 w-5 text-primary shrink-0" />}
                 </button>
 
+                {/* UPI ID / UTR */}
                 <button
                   onClick={() => setPaymentMethod("upi_id")}
                   className={`w-full flex items-start gap-4 rounded-2xl border p-4 text-left transition-all ${
@@ -378,7 +447,7 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
                     <p className="text-sm font-semibold text-foreground">UPI ID / UTR</p>
                     <p className="mt-0.5 text-xs text-muted-foreground">Pay via UPI to our ID and enter UTR number</p>
                     <div className="mt-2 flex items-center gap-1.5">
-                      <span className="rounded-full bg-verified/10 px-2 py-0.5 text-[10px] font-semibold text-verified">Manual</span>
+                      <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">Manual</span>
                       <span className="text-[10px] text-muted-foreground">Admin verified</span>
                     </div>
                   </div>
@@ -414,6 +483,21 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
               </div>
             )}
 
+            {/* Google Pay button */}
+            {paymentMethod === "gpay" && (
+              <div className="animate-fade-in">
+                <GooglePayButton
+                  amount={totalPayment}
+                  onSuccess={handleGooglePaySuccess}
+                  onError={handleGooglePayError}
+                  disabled={processing}
+                />
+                <p className="mt-2 text-center text-[10px] text-muted-foreground">
+                  Google Pay test mode — no real charges
+                </p>
+              </div>
+            )}
+
             {/* Security info */}
             <div className="flex items-start gap-3 rounded-2xl border border-verified/20 bg-verified/5 p-4">
               <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-verified" />
@@ -425,20 +509,22 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
               </div>
             </div>
 
-            {/* Pay button */}
-            <Button
-              onClick={handlePayment}
-              disabled={processing || (paymentMethod === "upi_id" && !utrNumber.trim())}
-              className="w-full gap-2 dentzap-gradient rounded-xl py-5 text-sm font-semibold text-primary-foreground dentzap-shadow disabled:opacity-50"
-            >
-              {processing ? (
-                <><Loader2 className="h-4 w-4 animate-spin" /> Processing...</>
-              ) : paymentMethod === "upi_qr" ? (
-                <><QrCode className="h-4 w-4" /> Generate UPI QR — {formatPrice(totalPayment)}</>
-              ) : (
-                <><Smartphone className="h-4 w-4" /> Submit UTR — {formatPrice(totalPayment)}</>
-              )}
-            </Button>
+            {/* Pay button — only for non-GPay methods */}
+            {paymentMethod !== "gpay" && (
+              <Button
+                onClick={handlePayment}
+                disabled={processing || (paymentMethod === "upi_id" && !utrNumber.trim())}
+                className="w-full gap-2 dentzap-gradient rounded-xl py-5 text-sm font-semibold text-primary-foreground dentzap-shadow disabled:opacity-50"
+              >
+                {processing ? (
+                  <><Loader2 className="h-4 w-4 animate-spin" /> Processing...</>
+                ) : paymentMethod === "upi_qr" ? (
+                  <><QrCode className="h-4 w-4" /> Generate UPI QR — {formatPrice(totalPayment)}</>
+                ) : (
+                  <><Smartphone className="h-4 w-4" /> Submit UTR — {formatPrice(totalPayment)}</>
+                )}
+              </Button>
+            )}
           </div>
         )}
       </main>
