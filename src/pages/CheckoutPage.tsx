@@ -497,6 +497,21 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
                   <Copy className="h-3.5 w-3.5 text-primary" />
                 </button>
               </div>
+
+              <div className="flex items-center justify-center gap-4 pt-2">
+                <div className="flex flex-col items-center gap-1">
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Google_Pay_Logo.svg/512px-Google_Pay_Logo.svg.png" alt="Google Pay" className="h-7 w-auto object-contain" />
+                  <span className="text-[9px] text-muted-foreground">GPay</span>
+                </div>
+                <div className="flex flex-col items-center gap-1">
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/PhonePe_Logo.svg/512px-PhonePe_Logo.svg.png" alt="PhonePe" className="h-7 w-auto object-contain" />
+                  <span className="text-[9px] text-muted-foreground">PhonePe</span>
+                </div>
+                <div className="flex flex-col items-center gap-1">
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Paytm_Logo_%28standalone%29.svg/512px-Paytm_Logo_%28standalone%29.svg.png" alt="Paytm" className="h-7 w-auto object-contain" />
+                  <span className="text-[9px] text-muted-foreground">Paytm</span>
+                </div>
+              </div>
             </div>
 
             <Button onClick={openUpiApp} variant="outline" className="w-full rounded-xl py-5 text-sm font-semibold gap-2 border-primary/30 text-primary hover:bg-primary/5">
