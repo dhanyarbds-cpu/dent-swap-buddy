@@ -51,7 +51,68 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Order not found or not eligible for release" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Release escrow — seller receives payout minus commission
+    let transferResult = null;
+
+    // If payment was via Razorpay, do Route transfer to seller
+    if (order.payment_method === "razorpay" && order.razorpay_payment_id) {
+      const razorpayKeyId = Deno.env.get("RAZORPAY_KEY_ID");
+      const razorpayKeySecret = Deno.env.get("RAZORPAY_KEY_SECRET");
+
+      if (razorpayKeyId && razorpayKeySecret) {
+        // Get seller's Razorpay linked account
+        const { data: payoutDetails } = await serviceSupabase
+          .from("seller_payout_details")
+          .select("razorpay_account_id")
+          .eq("seller_id", order.seller_id)
+          .single();
+
+        if (payoutDetails?.razorpay_account_id) {
+          // Create transfer via Razorpay Route
+          const sellerPayoutPaise = Math.round((order.seller_payout || 0) * 100);
+
+          const transferRes = await fetch(
+            `https://api.razorpay.com/v1/payments/${order.razorpay_payment_id}/transfers`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: "Basic " + btoa(`${razorpayKeyId}:${razorpayKeySecret}`),
+              },
+              body: JSON.stringify({
+                transfers: [
+                  {
+                    account: payoutDetails.razorpay_account_id,
+                    amount: sellerPayoutPaise,
+                    currency: "INR",
+                    notes: {
+                      order_id: order.id,
+                      seller_id: order.seller_id,
+                      purpose: "seller_payout",
+                    },
+                  },
+                ],
+              }),
+            }
+          );
+
+          const transferData = await transferRes.json();
+
+          if (!transferRes.ok) {
+            console.error("Razorpay Route transfer failed:", JSON.stringify(transferData));
+            // Don't block delivery confirmation, but log the failure
+            transferResult = { success: false, error: transferData?.error?.description || "Transfer failed" };
+          } else {
+            transferResult = { success: true, transfer_id: transferData?.items?.[0]?.id };
+            console.log("Razorpay Route transfer successful:", transferData?.items?.[0]?.id);
+          }
+        } else {
+          transferResult = { success: false, error: "Seller has no Razorpay linked account" };
+          console.warn("Seller has no Razorpay linked account for order:", order_id);
+        }
+      }
+    }
+
+    // Release escrow — update order status
     const { error: updateError } = await serviceSupabase
       .from("orders")
       .update({
@@ -70,6 +131,7 @@ serve(async (req) => {
       message: "Escrow released. Payment sent to seller.",
       seller_payout: order.seller_payout,
       commission_amount: order.commission_amount,
+      transfer: transferResult,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
