@@ -74,7 +74,7 @@ const GooglePayButton = ({ amount, onSuccess, onError, disabled }: GooglePayButt
       client
         .isReadyToPay({
           ...BASE_REQUEST,
-          allowedPaymentMethods: [BASE_CARD_METHOD, { type: "UPI" }],
+          allowedPaymentMethods: [BASE_CARD_METHOD],
         })
         .then((res: any) => {
           if (res.result) {
@@ -106,7 +106,7 @@ const GooglePayButton = ({ amount, onSuccess, onError, disabled }: GooglePayButt
 
     const paymentDataRequest = {
       ...BASE_REQUEST,
-      allowedPaymentMethods: [CARD_METHOD, UPI_METHOD],
+      allowedPaymentMethods: [CARD_METHOD],
       transactionInfo: {
         totalPriceStatus: "FINAL",
         totalPrice: amount.toFixed(2),
