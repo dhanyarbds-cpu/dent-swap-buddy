@@ -1,16 +1,23 @@
-import { useState } from "react";
-import { Search, SlidersHorizontal, X, ArrowLeft } from "lucide-react";
+import { useState, useRef, useCallback } from "react";
+import { Search, SlidersHorizontal, X, ArrowLeft, Crown, Bell } from "lucide-react";
 import { listings, categories } from "@/lib/mockData";
 import ProductCard from "@/components/ProductCard";
 import ListingDetail from "@/components/ListingDetail";
 import type { Listing } from "@/lib/mockData";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const sortOptions = ["Newest", "Price: Low", "Price: High", "Relevant"];
 
 const SearchPage = () => {
+  const { user, profile } = useAuth();
+  const { toast } = useToast();
   const [query, setQuery] = useState("");
   const [sortBy, setSortBy] = useState("Newest");
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
+  const [trackedQuery, setTrackedQuery] = useState<string | null>(null);
+  const trackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const filtered = listings.filter(
     (l) =>
