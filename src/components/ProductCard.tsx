@@ -1,4 +1,4 @@
-import { MapPin, Clock, Heart, BadgeCheck, ExternalLink, MessageCircle } from "lucide-react";
+import { MapPin, Clock, Heart, BadgeCheck, ExternalLink, MessageCircle, CalendarDays } from "lucide-react";
 import { type Listing, formatPrice, timeAgo } from "@/lib/mockData";
 import { useWishlist } from "@/hooks/useWishlist";
 import { Button } from "@/components/ui/button";
