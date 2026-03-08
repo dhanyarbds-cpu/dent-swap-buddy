@@ -1,4 +1,4 @@
-import { MapPin, Clock, Heart, BadgeCheck, ExternalLink, MessageCircle } from "lucide-react";
+import { MapPin, Clock, Heart, BadgeCheck, ExternalLink, MessageCircle, CalendarDays } from "lucide-react";
 import { type Listing, formatPrice, timeAgo } from "@/lib/mockData";
 import { useWishlist } from "@/hooks/useWishlist";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,17 @@ import { Button } from "@/components/ui/button";
 interface ProductCardProps {
   listing: Listing;
   onClick?: () => void;
+}
+
+function formatUploadDate(dateStr: string): string {
+  const d = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  const diffDays = Math.floor(diffMs / 86400000);
+  if (diffDays === 0) return "New – Uploaded today";
+  if (diffDays === 1) return "Uploaded yesterday";
+  if (diffDays <= 3) return `Uploaded ${diffDays} days ago`;
+  return `Uploaded on: ${d.getDate().toString().padStart(2, "0")} ${d.toLocaleString("en-US", { month: "long" })} ${d.getFullYear()}`;
 }
 
 const ProductCard = ({ listing, onClick }: ProductCardProps) => {
@@ -64,6 +75,13 @@ const ProductCard = ({ listing, onClick }: ProductCardProps) => {
               {listing.description}
             </p>
           )}
+
+          {/* Upload date */}
+          <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+            <CalendarDays className="h-3 w-3 shrink-0 opacity-60" />
+            <span>{formatUploadDate(listing.createdAt)}</span>
+          </div>
+
           <div className="flex items-center justify-between pt-1 text-[10px] text-muted-foreground">
             <span className="flex items-center gap-0.5 truncate">
               <MapPin className="h-3 w-3 shrink-0 opacity-60" />
