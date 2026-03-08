@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, ShoppingBag, Loader2, MessageSquare, Star, ShieldCheck, CheckCircle, MapPin, Truck, Package, AlertTriangle } from "lucide-react";
+import { ArrowLeft, ShoppingBag, Loader2, MessageSquare, Star, ShieldCheck, CheckCircle, MapPin, Truck, Package, AlertTriangle, RotateCcw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -15,6 +15,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import RaiseComplaintDialog from "@/components/RaiseComplaintDialog";
+import ReturnRequestDialog from "@/components/ReturnRequestDialog";
 
 interface Order {
   id: string;
@@ -367,16 +368,31 @@ const OrdersPage = () => {
                         </button>
                       )}
                       {!seller && (order.escrow_status === "held" || order.status === "completed") && (
-                        <RaiseComplaintDialog
-                          orderId={order.id}
-                          listingId={order.listing?.id || null}
-                          sellerId={order.seller_id}
-                          productName={order.listing?.title || "Unknown product"}
-                        >
-                          <button className="flex items-center gap-1 text-[10px] font-medium text-destructive hover:underline">
-                            <AlertTriangle className="h-3 w-3" /> Complaint
-                          </button>
-                        </RaiseComplaintDialog>
+                        <>
+                          <ReturnRequestDialog
+                            orderId={order.id}
+                            listingId={order.listing?.id || null}
+                            sellerId={order.seller_id}
+                            productName={order.listing?.title || "Unknown product"}
+                            orderPrice={order.price}
+                            sellerName={order.seller_profile?.full_name || "Seller"}
+                            orderDate={order.created_at}
+                          >
+                            <button className="flex items-center gap-1 text-[10px] font-medium text-primary hover:underline">
+                              <RotateCcw className="h-3 w-3" /> Return
+                            </button>
+                          </ReturnRequestDialog>
+                          <RaiseComplaintDialog
+                            orderId={order.id}
+                            listingId={order.listing?.id || null}
+                            sellerId={order.seller_id}
+                            productName={order.listing?.title || "Unknown product"}
+                          >
+                            <button className="flex items-center gap-1 text-[10px] font-medium text-destructive hover:underline">
+                              <AlertTriangle className="h-3 w-3" /> Complaint
+                            </button>
+                          </RaiseComplaintDialog>
+                        </>
                       )}
                     </div>
                   </div>

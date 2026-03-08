@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Settings, ChevronRight, Package, Heart, Star, Shield, Crown, LogOut, BadgeCheck, ShoppingBag, BarChart3, Bell, HelpCircle, Moon, Pencil, MessageSquare, Wallet, Receipt } from "lucide-react";
+import { Settings, ChevronRight, Package, Heart, Star, Shield, Crown, LogOut, BadgeCheck, ShoppingBag, BarChart3, Bell, HelpCircle, Moon, Pencil, MessageSquare, Wallet, Receipt, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/hooks/useAuth";
@@ -61,6 +61,7 @@ const ProfilePage = () => {
       title: "Activity",
       items: [
         { icon: ShoppingBag, label: "My Orders", route: "/orders" },
+        { icon: RotateCcw, label: "Returns & Refunds", route: "/returns" },
         { icon: Heart, label: "Wishlist", route: "/wishlist" },
         { icon: MessageSquare, label: "Messages", route: "/messages" },
         { icon: BarChart3, label: "Seller Dashboard", route: "/my-ads" },

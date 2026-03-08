@@ -759,6 +759,78 @@ export type Database = {
           },
         ]
       }
+      return_requests: {
+        Row: {
+          admin_notes: string | null
+          buyer_id: string
+          created_at: string
+          description: string | null
+          evidence_urls: string[] | null
+          id: string
+          listing_id: string | null
+          order_id: string
+          reason: string
+          refund_amount: number | null
+          refund_processed_at: string | null
+          resolved_at: string | null
+          seller_id: string
+          seller_response: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          buyer_id: string
+          created_at?: string
+          description?: string | null
+          evidence_urls?: string[] | null
+          id?: string
+          listing_id?: string | null
+          order_id: string
+          reason: string
+          refund_amount?: number | null
+          refund_processed_at?: string | null
+          resolved_at?: string | null
+          seller_id: string
+          seller_response?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          buyer_id?: string
+          created_at?: string
+          description?: string | null
+          evidence_urls?: string[] | null
+          id?: string
+          listing_id?: string | null
+          order_id?: string
+          reason?: string
+          refund_amount?: number | null
+          refund_processed_at?: string | null
+          resolved_at?: string | null
+          seller_id?: string
+          seller_response?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "return_requests_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "return_requests_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reviews: {
         Row: {
           comment: string | null
