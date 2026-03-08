@@ -493,7 +493,7 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
                   disabled={processing}
                 />
                 <p className="mt-2 text-center text-[10px] text-muted-foreground">
-                  Google Pay test mode — no real charges
+                  Powered by Google Pay · Secure payment
                 </p>
               </div>
             )}
