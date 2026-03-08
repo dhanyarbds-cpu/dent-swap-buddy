@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, ArrowRight, Check, MapPin, Truck, ShieldAlert } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, MapPin, Truck, ShieldAlert, ExternalLink } from "lucide-react";
 import { categories } from "@/lib/mockData";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,7 @@ import ImageUploader from "@/components/ImageUploader";
 import { useNavigate } from "react-router-dom";
 
 const conditions = ["New", "Used"];
-const steps = ["Category", "Photos", "Details", "Price", "Delivery"];
+const steps = ["Category", "Photos", "Details", "Links & Price", "Delivery"];
 
 // Consumable keywords that should block listings
 const CONSUMABLE_KEYWORDS = [
@@ -48,6 +48,7 @@ const SellPage = () => {
     description: "",
     location: "",
     hashtags: "",
+    externalLink: "",
     negotiable: true,
     pickupAvailable: true,
     shippingAvailable: false,
@@ -96,7 +97,8 @@ const SellPage = () => {
         status: "active",
         pickup_available: form.pickupAvailable,
         shipping_available: form.shippingAvailable,
-      }).select("id").single();
+        external_link: form.externalLink || "",
+      } as any).select("id").single();
 
       if (error) throw error;
 
@@ -203,7 +205,7 @@ const SellPage = () => {
 
         {/* Step 1: Photos */}
         {step === 1 && (
-          <ImageUploader images={images} onImagesChange={setImages} maxImages={8} />
+          <ImageUploader images={images} onImagesChange={setImages} maxImages={5} />
         )}
 
         {/* Step 2: Details */}
@@ -218,10 +220,12 @@ const SellPage = () => {
                 <label className="mb-1.5 block text-sm font-semibold text-foreground">Title</label>
                 <Input
                   value={form.title}
-                  onChange={(e) => update("title", e.target.value)}
+                  onChange={(e) => update("title", e.target.value.slice(0, 80))}
                   placeholder="e.g. Complete BDS Instrument Kit"
                   className="rounded-xl py-5"
+                  maxLength={80}
                 />
+                <p className="mt-1 text-[11px] text-muted-foreground text-right">{form.title.length}/80</p>
               </div>
               <div>
                 <label className="mb-1.5 block text-sm font-semibold text-foreground">Condition</label>
@@ -255,23 +259,42 @@ const SellPage = () => {
                 <label className="mb-1.5 block text-sm font-semibold text-foreground">Description</label>
                 <Textarea
                   value={form.description}
-                  onChange={(e) => update("description", e.target.value)}
+                  onChange={(e) => update("description", e.target.value.slice(0, 500))}
                   placeholder="Describe condition, usage history, what's included..."
                   rows={4}
                   className="rounded-xl"
+                  maxLength={500}
                 />
+                <p className="mt-1 text-[11px] text-muted-foreground text-right">{form.description.length}/500</p>
               </div>
             </div>
           </div>
         )}
 
-        {/* Step 3: Price */}
+        {/* Step 3: Links & Price */}
         {step === 3 && (
           <div className="space-y-5">
             <div>
-              <p className="text-base font-bold text-foreground">Set Your Price</p>
-              <p className="mt-1 text-sm text-muted-foreground">Choose a competitive price</p>
+              <p className="text-base font-bold text-foreground">Links & Price</p>
+              <p className="mt-1 text-sm text-muted-foreground">Add optional links and set your price</p>
             </div>
+
+            {/* External Link */}
+            <div>
+              <label className="mb-1.5 block text-sm font-semibold text-foreground">External Link (optional)</label>
+              <div className="relative">
+                <ExternalLink className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="url"
+                  value={form.externalLink}
+                  onChange={(e) => update("externalLink", e.target.value)}
+                  placeholder="https://example.com/product-demo"
+                  className="rounded-xl py-5 pl-10"
+                />
+              </div>
+              <p className="mt-1 text-[11px] text-muted-foreground">Product demo video, website, or additional info</p>
+            </div>
+
             <div>
               <label className="mb-1.5 block text-sm font-semibold text-foreground">Price (₹)</label>
               <Input

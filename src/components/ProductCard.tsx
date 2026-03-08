@@ -1,6 +1,7 @@
-import { MapPin, Clock, Heart, BadgeCheck } from "lucide-react";
+import { MapPin, Clock, Heart, BadgeCheck, ExternalLink, MessageCircle } from "lucide-react";
 import { type Listing, formatPrice, timeAgo } from "@/lib/mockData";
 import { useWishlist } from "@/hooks/useWishlist";
+import { Button } from "@/components/ui/button";
 
 interface ProductCardProps {
   listing: Listing;
@@ -11,6 +12,7 @@ const ProductCard = ({ listing, onClick }: ProductCardProps) => {
   const { wishlistedIds, toggle } = useWishlist();
   const wishlisted = wishlistedIds.has(listing.id);
   const hasImage = listing.images && listing.images.length > 0 && listing.images[0];
+  const hasExternalLink = listing.external_link && listing.external_link.trim().length > 0;
 
   return (
     <div className="group relative w-full overflow-hidden rounded-2xl border border-border bg-card transition-all duration-300 dentzap-card-shadow hover:dentzap-card-shadow-hover">
@@ -52,12 +54,17 @@ const ProductCard = ({ listing, onClick }: ProductCardProps) => {
         </div>
 
         {/* Content */}
-        <div className="space-y-1 p-3">
+        <div className="space-y-1.5 p-3">
           <p className="text-[15px] font-bold text-foreground">{formatPrice(listing.price)}</p>
-          <h3 className="line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+          <h3 className="line-clamp-2 text-xs font-medium leading-relaxed text-foreground">
             {listing.title}
           </h3>
-          <div className="flex items-center justify-between pt-1.5 text-[10px] text-muted-foreground">
+          {listing.description && (
+            <p className="line-clamp-2 text-[11px] leading-relaxed text-muted-foreground">
+              {listing.description}
+            </p>
+          )}
+          <div className="flex items-center justify-between pt-1 text-[10px] text-muted-foreground">
             <span className="flex items-center gap-0.5 truncate">
               <MapPin className="h-3 w-3 shrink-0 opacity-60" />
               <span className="truncate">{listing.location.split(",")[0]}</span>
@@ -69,6 +76,30 @@ const ProductCard = ({ listing, onClick }: ProductCardProps) => {
           </div>
         </div>
       </button>
+
+      {/* Action Button */}
+      <div className="px-3 pb-3">
+        {hasExternalLink ? (
+          <a
+            href={listing.external_link}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-primary/20 bg-primary/5 py-2 text-xs font-semibold text-primary transition-colors hover:bg-primary/10"
+          >
+            <ExternalLink className="h-3.5 w-3.5" /> View Link
+          </a>
+        ) : (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={(e) => { e.stopPropagation(); onClick?.(); }}
+            className="w-full gap-1.5 rounded-xl text-xs font-semibold"
+          >
+            <MessageCircle className="h-3.5 w-3.5" /> Contact Seller
+          </Button>
+        )}
+      </div>
     </div>
   );
 };

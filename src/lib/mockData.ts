@@ -8,6 +8,7 @@ export interface Listing {
   description: string;
   location: string;
   featured?: boolean;
+  external_link?: string;
   seller: {
     name: string;
     college: string;
