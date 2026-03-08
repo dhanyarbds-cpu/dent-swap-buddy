@@ -14,6 +14,72 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_health_flags: {
+        Row: {
+          created_at: string
+          flag_type: string
+          id: string
+          is_resolved: boolean
+          reason: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          flag_type: string
+          id?: string
+          is_resolved?: boolean
+          reason: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          flag_type?: string
+          id?: string
+          is_resolved?: boolean
+          reason?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      buyer_trust_scores: {
+        Row: {
+          buyer_id: string
+          false_complaints: number
+          id: string
+          is_restricted: boolean
+          restrict_reason: string | null
+          restricted_at: string | null
+          total_complaints: number
+          total_purchases: number
+          trust_score: number
+          updated_at: string
+        }
+        Insert: {
+          buyer_id: string
+          false_complaints?: number
+          id?: string
+          is_restricted?: boolean
+          restrict_reason?: string | null
+          restricted_at?: string | null
+          total_complaints?: number
+          total_purchases?: number
+          trust_score?: number
+          updated_at?: string
+        }
+        Update: {
+          buyer_id?: string
+          false_complaints?: number
+          id?: string
+          is_restricted?: boolean
+          restrict_reason?: string | null
+          restricted_at?: string | null
+          total_complaints?: number
+          total_purchases?: number
+          trust_score?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           created_at: string
