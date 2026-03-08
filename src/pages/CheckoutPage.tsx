@@ -483,6 +483,21 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
               </div>
             )}
 
+            {/* Google Pay button */}
+            {paymentMethod === "gpay" && (
+              <div className="animate-fade-in">
+                <GooglePayButton
+                  amount={totalPayment}
+                  onSuccess={handleGooglePaySuccess}
+                  onError={handleGooglePayError}
+                  disabled={processing}
+                />
+                <p className="mt-2 text-center text-[10px] text-muted-foreground">
+                  Google Pay test mode — no real charges
+                </p>
+              </div>
+            )}
+
             {/* Security info */}
             <div className="flex items-start gap-3 rounded-2xl border border-verified/20 bg-verified/5 p-4">
               <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-verified" />
@@ -494,20 +509,22 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
               </div>
             </div>
 
-            {/* Pay button */}
-            <Button
-              onClick={handlePayment}
-              disabled={processing || (paymentMethod === "upi_id" && !utrNumber.trim())}
-              className="w-full gap-2 dentzap-gradient rounded-xl py-5 text-sm font-semibold text-primary-foreground dentzap-shadow disabled:opacity-50"
-            >
-              {processing ? (
-                <><Loader2 className="h-4 w-4 animate-spin" /> Processing...</>
-              ) : paymentMethod === "upi_qr" ? (
-                <><QrCode className="h-4 w-4" /> Generate UPI QR — {formatPrice(totalPayment)}</>
-              ) : (
-                <><Smartphone className="h-4 w-4" /> Submit UTR — {formatPrice(totalPayment)}</>
-              )}
-            </Button>
+            {/* Pay button — only for non-GPay methods */}
+            {paymentMethod !== "gpay" && (
+              <Button
+                onClick={handlePayment}
+                disabled={processing || (paymentMethod === "upi_id" && !utrNumber.trim())}
+                className="w-full gap-2 dentzap-gradient rounded-xl py-5 text-sm font-semibold text-primary-foreground dentzap-shadow disabled:opacity-50"
+              >
+                {processing ? (
+                  <><Loader2 className="h-4 w-4 animate-spin" /> Processing...</>
+                ) : paymentMethod === "upi_qr" ? (
+                  <><QrCode className="h-4 w-4" /> Generate UPI QR — {formatPrice(totalPayment)}</>
+                ) : (
+                  <><Smartphone className="h-4 w-4" /> Submit UTR — {formatPrice(totalPayment)}</>
+                )}
+              </Button>
+            )}
           </div>
         )}
       </main>
