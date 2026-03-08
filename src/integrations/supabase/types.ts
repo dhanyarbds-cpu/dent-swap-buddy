@@ -201,7 +201,7 @@ export type Database = {
           description: string
           id: string
           listing_id: string | null
-          order_id: string
+          order_id: string | null
           proof_urls: string[] | null
           resolution: string | null
           resolved_at: string | null
@@ -219,7 +219,7 @@ export type Database = {
           description: string
           id?: string
           listing_id?: string | null
-          order_id: string
+          order_id?: string | null
           proof_urls?: string[] | null
           resolution?: string | null
           resolved_at?: string | null
@@ -237,7 +237,7 @@ export type Database = {
           description?: string
           id?: string
           listing_id?: string | null
-          order_id?: string
+          order_id?: string | null
           proof_urls?: string[] | null
           resolution?: string | null
           resolved_at?: string | null
