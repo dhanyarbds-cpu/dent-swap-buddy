@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Settings, ChevronRight, Package, Heart, Star, Shield, Crown, LogOut, BadgeCheck, ShoppingBag, BarChart3, Bell, HelpCircle, Moon, Pencil } from "lucide-react";
+import { Settings, ChevronRight, Package, Heart, Star, Shield, Crown, LogOut, BadgeCheck, ShoppingBag, BarChart3, Bell, HelpCircle, Moon, Pencil, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/hooks/useAuth";
@@ -73,18 +73,6 @@ const ProfilePage = () => {
         { icon: Crown, label: "Elite Membership", badge: profile?.is_elite ? "Active" : "Upgrade", route: "/elite" },
         { icon: Shield, label: "Verification", badge: profile?.verified ? "Verified" : "Pending", route: "/verification" },
         { icon: Star, label: "Reviews & Ratings", route: "/reviews" },
-        { icon: Bell, label: "Notifications", route: "/notification-settings" },
-        { icon: Moon, label: "Dark Mode", toggle: true },
-      ],
-    },
-    {
-      title: "Support",
-      items: [
-        { icon: HelpCircle, label: "Help & Support", route: "/help" },
-        { icon: Settings, label: "Settings", route: "/settings" },
-      ],
-    },
-  ];
         { icon: Bell, label: "Notifications", route: "/notification-settings" },
         { icon: Moon, label: "Dark Mode", toggle: true },
       ],
