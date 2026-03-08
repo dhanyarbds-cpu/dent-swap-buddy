@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Share2, Heart, MapPin, BadgeCheck, Tag, IndianRupee, Eye, Clock, Bookmark, ChevronLeft, ChevronRight, ShoppingCart, Truck, ShieldAlert, AlertTriangle, Flag, Building2 } from "lucide-react";
+import { ArrowLeft, Share2, Heart, MapPin, BadgeCheck, Tag, IndianRupee, Eye, Clock, Bookmark, ChevronLeft, ChevronRight, ShoppingCart, Truck, ShieldAlert, AlertTriangle, Flag, Building2, ShieldCheck, Loader2 } from "lucide-react";
 import { type Listing, formatPrice, timeAgo } from "@/lib/mockData";
 import NegotiateDialog from "@/components/NegotiateDialog";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,8 @@ import ReportProductDialog from "@/components/ReportProductDialog";
 import { useWishlist } from "@/hooks/useWishlist";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 interface ListingDetailProps {
   listing: Listing;
@@ -16,6 +18,7 @@ interface ListingDetailProps {
 
 const ListingDetail = ({ listing, onBack }: ListingDetailProps) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const initials = listing.seller.name.split(" ").map((n) => n[0]).join("");
   const isDbListing = listing.id.length > 10;
   const hasImages = listing.images && listing.images.length > 0 && listing.images[0];
@@ -24,6 +27,8 @@ const ListingDetail = ({ listing, onBack }: ListingDetailProps) => {
   const imageCount = hasImages ? listing.images.length : 0;
   const { wishlistedIds, toggle } = useWishlist();
   const wishlisted = wishlistedIds.has(listing.id);
+  const [certificate, setCertificate] = useState<any>(null);
+  const [generatingCert, setGeneratingCert] = useState(false);
 
   // Track product view
   useEffect(() => {
@@ -37,6 +42,33 @@ const ListingDetail = ({ listing, onBack }: ListingDetailProps) => {
       }).then(() => {});
     }
   }, [listing.id]);
+
+  // Fetch certificate
+  useEffect(() => {
+    if (!isDbListing) return;
+    supabase.from("product_certificates").select("*").eq("listing_id", listing.id).maybeSingle().then(({ data }) => {
+      setCertificate(data);
+    });
+  }, [listing.id, isDbListing]);
+
+  const generateCertificate = async () => {
+    if (!user) return;
+    setGeneratingCert(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-certificate", {
+        body: { listing_id: listing.id },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success("Authenticity certificate generated!");
+      // Refetch
+      const { data: cert } = await supabase.from("product_certificates").select("*").eq("listing_id", listing.id).maybeSingle();
+      setCertificate(cert);
+    } catch (e: any) {
+      toast.error(e.message || "Failed to generate certificate");
+    }
+    setGeneratingCert(false);
+  };
 
   // Delivery options from DB listing
   const pickupAvailable = (listing as any).pickup_available ?? true;
@@ -280,6 +312,43 @@ const ListingDetail = ({ listing, onBack }: ListingDetailProps) => {
               Report Product
             </button>
           </ReportProductDialog>
+        )}
+
+        {/* Authenticity Certificate */}
+        {isDbListing && (
+          <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-emerald-500" />
+              <h2 className="text-sm font-bold text-foreground">Authenticity Certificate</h2>
+            </div>
+            {certificate ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 px-3 py-2">
+                  <ShieldCheck className="h-4 w-4 text-emerald-500" />
+                  <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">Verified Authentic</span>
+                </div>
+                <p className="font-mono text-[10px] text-muted-foreground break-all">Hash: {certificate.certificate_hash?.slice(0, 24)}...</p>
+                <button
+                  onClick={() => navigate(`/verify-certificate?id=${certificate.id}`)}
+                  className="w-full rounded-xl bg-primary/10 py-2.5 text-xs font-semibold text-primary transition hover:bg-primary/20"
+                >
+                  View Full Certificate
+                </button>
+              </div>
+            ) : user?.id === ((listing as any).seller_id || listing.id) ? (
+              <button
+                onClick={generateCertificate}
+                disabled={generatingCert}
+                className="w-full rounded-xl border border-dashed border-primary/30 py-2.5 text-xs font-semibold text-primary transition hover:bg-primary/5 disabled:opacity-50"
+              >
+                {generatingCert ? (
+                  <span className="flex items-center justify-center gap-2"><Loader2 className="h-3 w-3 animate-spin" /> Generating...</span>
+                ) : "Generate Authenticity Certificate"}
+              </button>
+            ) : (
+              <p className="text-xs text-muted-foreground">No certificate issued yet</p>
+            )}
+          </div>
         )}
 
         {/* Safety Tips */}

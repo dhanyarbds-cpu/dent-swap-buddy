@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { MapPin, ChevronDown, Search, Mic, Heart, Bell, Loader2 } from "lucide-react";
+import { MapPin, ChevronDown, Search, Mic, Heart, Loader2 } from "lucide-react";
 import { listings, categories as fallbackCategories } from "@/lib/mockData";
 import ProductCard from "@/components/ProductCard";
 import ListingDetail from "@/components/ListingDetail";
@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import PromoBannerCarousel from "@/components/PromoBannerCarousel";
+import NotificationBell from "@/components/NotificationBell";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -125,10 +126,7 @@ const Index = () => {
               <button onClick={() => navigate("/wishlist")} className="rounded-full p-2.5 text-muted-foreground transition hover:text-primary hover:bg-primary/10">
                 <Heart className="h-5 w-5" />
               </button>
-              <button className="relative rounded-full p-2.5 text-muted-foreground transition hover:text-primary hover:bg-primary/10">
-                <Bell className="h-5 w-5" />
-                <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-destructive ring-2 ring-card" />
-              </button>
+              <NotificationBell />
             </div>
           </div>
 

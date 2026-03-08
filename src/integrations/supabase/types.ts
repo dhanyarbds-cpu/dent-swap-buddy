@@ -539,6 +539,39 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          created_at: string
+          data: Json | null
+          id: string
+          is_read: boolean
+          message: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data?: Json | null
+          id?: string
+          is_read?: boolean
+          message: string
+          title: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json | null
+          id?: string
+          is_read?: boolean
+          message?: string
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           buyer_id: string
@@ -679,6 +712,65 @@ export type Database = {
             foreignKeyName: "product_analytics_listing_id_fkey"
             columns: ["listing_id"]
             isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_certificates: {
+        Row: {
+          brand: string
+          certificate_hash: string
+          condition: string
+          created_at: string
+          id: string
+          is_valid: boolean
+          issued_at: string
+          listing_id: string
+          metadata: Json
+          previous_hash: string | null
+          product_name: string
+          seller_id: string
+          seller_name: string
+          verified_count: number
+        }
+        Insert: {
+          brand?: string
+          certificate_hash: string
+          condition?: string
+          created_at?: string
+          id?: string
+          is_valid?: boolean
+          issued_at?: string
+          listing_id: string
+          metadata?: Json
+          previous_hash?: string | null
+          product_name: string
+          seller_id: string
+          seller_name?: string
+          verified_count?: number
+        }
+        Update: {
+          brand?: string
+          certificate_hash?: string
+          condition?: string
+          created_at?: string
+          id?: string
+          is_valid?: boolean
+          issued_at?: string
+          listing_id?: string
+          metadata?: Json
+          previous_hash?: string | null
+          product_name?: string
+          seller_id?: string
+          seller_name?: string
+          verified_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_certificates_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: true
             referencedRelation: "listings"
             referencedColumns: ["id"]
           },
