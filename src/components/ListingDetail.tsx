@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowLeft, Share2, Heart, MapPin, BadgeCheck, Tag, IndianRupee, Eye, Clock, Bookmark, ChevronLeft, ChevronRight, ShoppingCart, Truck, ShieldAlert, AlertTriangle, Flag, Building2 } from "lucide-react";
 import { type Listing, formatPrice, timeAgo } from "@/lib/mockData";
 import NegotiateDialog from "@/components/NegotiateDialog";
@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import CheckoutPage from "@/pages/CheckoutPage";
 import ReportProductDialog from "@/components/ReportProductDialog";
 import { useWishlist } from "@/hooks/useWishlist";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface ListingDetailProps {
   listing: Listing;
