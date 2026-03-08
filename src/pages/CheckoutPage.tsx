@@ -504,6 +504,8 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
                 <><Loader2 className="h-4 w-4 animate-spin" /> Processing...</>
               ) : paymentMethod === "razorpay" ? (
                 <><Smartphone className="h-4 w-4" /> Pay {formatPrice(totalPayment)} via Razorpay</>
+              ) : paymentMethod === "upi_qr" ? (
+                <><QrCode className="h-4 w-4" /> Generate UPI QR — {formatPrice(totalPayment)}</>
               ) : (
                 <><CreditCard className="h-4 w-4" /> Pay {formatPrice(totalPayment)} via Stripe</>
               )}
