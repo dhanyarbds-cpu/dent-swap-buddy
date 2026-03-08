@@ -14,7 +14,7 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['"Inter"', 'system-ui', '-apple-system', 'sans-serif'],
+        sans: ['"Space Grotesk"', '"Inter"', 'system-ui', '-apple-system', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -57,6 +57,13 @@ export default {
         price: {
           DEFAULT: "hsl(var(--price))",
           foreground: "hsl(var(--price-foreground))",
+        },
+        galaxy: {
+          purple: "hsl(var(--galaxy-purple))",
+          blue: "hsl(var(--galaxy-blue))",
+          violet: "hsl(var(--galaxy-violet))",
+          nebula: "hsl(var(--galaxy-nebula))",
+          glow: "hsl(var(--galaxy-glow))",
         },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
@@ -103,6 +110,10 @@ export default {
           "0%": { transform: "translateX(100%)" },
           "100%": { transform: "translateX(0)" },
         },
+        "glow-pulse": {
+          "0%, 100%": { boxShadow: "0 0 12px hsl(260 70% 58% / 0.4), 0 0 30px hsl(260 70% 58% / 0.15)" },
+          "50%": { boxShadow: "0 0 20px hsl(260 70% 58% / 0.6), 0 0 50px hsl(260 70% 58% / 0.25)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -112,6 +123,7 @@ export default {
         "scale-in": "scale-in 0.2s ease-out",
         "slide-up": "slide-up 0.4s ease-out",
         "slide-in-right": "slide-in-right 0.3s ease-out",
+        "glow-pulse": "glow-pulse 3s ease-in-out infinite",
       },
     },
   },

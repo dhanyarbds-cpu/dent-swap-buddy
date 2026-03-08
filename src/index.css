@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,89 +6,88 @@
 
 @layer base {
   :root {
-    --background: 210 15% 97%;
-    --foreground: 210 40% 10%;
+    --background: 240 20% 4%;
+    --foreground: 220 20% 93%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 210 40% 10%;
+    --card: 240 18% 8%;
+    --card-foreground: 220 20% 93%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 210 40% 10%;
+    --popover: 240 18% 8%;
+    --popover-foreground: 220 20% 93%;
 
-    --primary: 207 74% 28%;
+    --primary: 260 70% 58%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 207 30% 94%;
-    --secondary-foreground: 207 74% 28%;
+    --secondary: 240 20% 14%;
+    --secondary-foreground: 260 50% 80%;
 
-    --muted: 210 14% 93%;
-    --muted-foreground: 210 10% 50%;
+    --muted: 240 18% 12%;
+    --muted-foreground: 220 15% 55%;
 
-    --accent: 207 30% 94%;
-    --accent-foreground: 207 74% 28%;
+    --accent: 240 20% 14%;
+    --accent-foreground: 260 50% 80%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 72% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 210 14% 91%;
-    --input: 210 14% 89%;
-    --ring: 207 74% 28%;
+    --border: 240 15% 15%;
+    --input: 240 15% 15%;
+    --ring: 260 70% 58%;
 
     --radius: 0.75rem;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 207 74% 28%;
+    --sidebar-background: 240 20% 4%;
+    --sidebar-foreground: 220 20% 93%;
+    --sidebar-primary: 260 70% 58%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 14% 93%;
-    --sidebar-accent-foreground: 210 40% 10%;
-    --sidebar-border: 210 14% 91%;
-    --sidebar-ring: 207 74% 28%;
+    --sidebar-accent: 240 18% 12%;
+    --sidebar-accent-foreground: 220 20% 93%;
+    --sidebar-border: 240 15% 15%;
+    --sidebar-ring: 260 70% 58%;
 
-    /* Custom tokens */
-    --dentzap-gradient: linear-gradient(135deg, hsl(207 74% 28%), hsl(207 60% 42%));
-    --dentzap-gradient-light: linear-gradient(135deg, hsl(207 74% 28% / 0.06), hsl(207 60% 42% / 0.06));
-    --dentzap-shadow: 0 4px 24px -4px hsl(207 74% 28% / 0.2);
-    --dentzap-shadow-lg: 0 8px 40px -8px hsl(207 74% 28% / 0.25);
-    --dentzap-card-shadow: 0 1px 3px 0 hsl(210 40% 10% / 0.06), 0 1px 2px -1px hsl(210 40% 10% / 0.06);
-    --dentzap-card-shadow-hover: 0 4px 12px -2px hsl(210 40% 10% / 0.1), 0 2px 4px -2px hsl(210 40% 10% / 0.06);
+    /* Galaxy tokens */
+    --galaxy-purple: 260 70% 58%;
+    --galaxy-blue: 220 80% 55%;
+    --galaxy-violet: 280 60% 50%;
+    --galaxy-nebula: 240 40% 20%;
+    --galaxy-glow: 260 100% 70%;
 
-    --verified: 152 60% 40%;
+    --dentzap-gradient: linear-gradient(135deg, hsl(260 70% 58%), hsl(220 80% 55%));
+    --dentzap-gradient-light: linear-gradient(135deg, hsl(260 70% 58% / 0.1), hsl(220 80% 55% / 0.1));
+    --dentzap-shadow: 0 4px 24px -4px hsl(260 70% 58% / 0.35);
+    --dentzap-shadow-lg: 0 8px 40px -8px hsl(260 70% 58% / 0.4);
+    --dentzap-card-shadow: 0 1px 3px 0 hsl(240 20% 4% / 0.5), 0 0 1px 0 hsl(260 70% 58% / 0.05);
+    --dentzap-card-shadow-hover: 0 4px 20px -4px hsl(260 70% 58% / 0.25), 0 0 1px 0 hsl(260 70% 58% / 0.15);
+
+    --verified: 152 60% 45%;
     --verified-foreground: 0 0% 100%;
-    --price: 207 74% 28%;
+    --price: 260 70% 58%;
     --price-foreground: 0 0% 100%;
 
     --tab-bar-height: 4.25rem;
   }
 
+  /* Dark mode is the default galaxy theme; light mode maps the same */
   .dark {
-    --background: 210 25% 7%;
-    --foreground: 210 14% 93%;
-    --card: 210 20% 11%;
-    --card-foreground: 210 14% 93%;
-    --popover: 210 20% 11%;
-    --popover-foreground: 210 14% 93%;
-    --primary: 207 70% 45%;
+    --background: 240 20% 4%;
+    --foreground: 220 20% 93%;
+    --card: 240 18% 8%;
+    --card-foreground: 220 20% 93%;
+    --popover: 240 18% 8%;
+    --popover-foreground: 220 20% 93%;
+    --primary: 260 70% 58%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 207 20% 18%;
-    --secondary-foreground: 207 70% 80%;
-    --muted: 210 20% 16%;
-    --muted-foreground: 210 10% 55%;
-    --accent: 207 20% 18%;
-    --accent-foreground: 207 70% 80%;
-    --destructive: 0 62% 30%;
+    --secondary: 240 20% 14%;
+    --secondary-foreground: 260 50% 80%;
+    --muted: 240 18% 12%;
+    --muted-foreground: 220 15% 55%;
+    --accent: 240 20% 14%;
+    --accent-foreground: 260 50% 80%;
+    --destructive: 0 72% 55%;
     --destructive-foreground: 0 0% 100%;
-    --border: 210 20% 18%;
-    --input: 210 20% 18%;
-    --ring: 207 70% 45%;
-    --sidebar-background: 210 25% 7%;
-    --sidebar-foreground: 210 14% 93%;
-    --sidebar-primary: 207 70% 45%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 20% 16%;
-    --sidebar-accent-foreground: 210 14% 93%;
-    --sidebar-border: 210 20% 18%;
-    --sidebar-ring: 207 70% 45%;
+    --border: 240 15% 15%;
+    --input: 240 15% 15%;
+    --ring: 260 70% 58%;
   }
 }
 
@@ -98,10 +97,79 @@
   }
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: 'Space Grotesk', 'Inter', system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+}
+
+/* ===== GALAXY STARFIELD BACKGROUND ===== */
+@keyframes twinkle {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+@keyframes drift {
+  0% { transform: translateY(0) translateX(0); }
+  100% { transform: translateY(-30px) translateX(10px); }
+}
+
+.galaxy-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 30%, hsl(260 50% 15% / 0.5), transparent),
+    radial-gradient(ellipse 60% 50% at 80% 70%, hsl(220 60% 12% / 0.5), transparent),
+    radial-gradient(ellipse 40% 40% at 50% 50%, hsl(280 40% 10% / 0.3), transparent),
+    hsl(240 20% 4%);
+}
+
+.galaxy-stars {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.galaxy-stars::before,
+.galaxy-stars::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 10% 15%, hsl(0 0% 100% / 0.6), transparent),
+    radial-gradient(1px 1px at 25% 40%, hsl(0 0% 100% / 0.4), transparent),
+    radial-gradient(1.5px 1.5px at 45% 10%, hsl(220 80% 80% / 0.7), transparent),
+    radial-gradient(1px 1px at 55% 55%, hsl(0 0% 100% / 0.3), transparent),
+    radial-gradient(1px 1px at 70% 25%, hsl(260 60% 80% / 0.5), transparent),
+    radial-gradient(1.5px 1.5px at 85% 60%, hsl(0 0% 100% / 0.6), transparent),
+    radial-gradient(1px 1px at 15% 75%, hsl(0 0% 100% / 0.4), transparent),
+    radial-gradient(1px 1px at 30% 90%, hsl(220 80% 85% / 0.5), transparent),
+    radial-gradient(1px 1px at 60% 80%, hsl(0 0% 100% / 0.3), transparent),
+    radial-gradient(1.5px 1.5px at 90% 85%, hsl(260 70% 75% / 0.6), transparent),
+    radial-gradient(1px 1px at 5% 50%, hsl(0 0% 100% / 0.5), transparent),
+    radial-gradient(1px 1px at 40% 65%, hsl(0 0% 100% / 0.3), transparent),
+    radial-gradient(1px 1px at 75% 45%, hsl(220 70% 90% / 0.4), transparent),
+    radial-gradient(1px 1px at 95% 15%, hsl(0 0% 100% / 0.5), transparent),
+    radial-gradient(1px 1px at 50% 30%, hsl(0 0% 100% / 0.35), transparent);
+  animation: twinkle 4s ease-in-out infinite;
+}
+
+.galaxy-stars::after {
+  background-image:
+    radial-gradient(1px 1px at 8% 22%, hsl(0 0% 100% / 0.5), transparent),
+    radial-gradient(1px 1px at 18% 58%, hsl(260 60% 85% / 0.4), transparent),
+    radial-gradient(1.5px 1.5px at 33% 12%, hsl(0 0% 100% / 0.7), transparent),
+    radial-gradient(1px 1px at 48% 72%, hsl(0 0% 100% / 0.3), transparent),
+    radial-gradient(1px 1px at 62% 38%, hsl(220 70% 80% / 0.5), transparent),
+    radial-gradient(1px 1px at 78% 82%, hsl(0 0% 100% / 0.4), transparent),
+    radial-gradient(1.5px 1.5px at 88% 48%, hsl(260 80% 80% / 0.6), transparent),
+    radial-gradient(1px 1px at 42% 92%, hsl(0 0% 100% / 0.35), transparent);
+  animation: twinkle 6s ease-in-out infinite reverse;
+  animation-delay: 2s;
 }
 
 @layer utilities {
@@ -135,6 +203,36 @@
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
+  }
+
+  /* Galaxy glow effects */
+  .glow-primary {
+    box-shadow: 0 0 12px hsl(260 70% 58% / 0.4), 0 0 30px hsl(260 70% 58% / 0.15);
+  }
+  .glow-primary-lg {
+    box-shadow: 0 0 20px hsl(260 70% 58% / 0.5), 0 0 50px hsl(260 70% 58% / 0.2);
+  }
+  .glow-blue {
+    box-shadow: 0 0 12px hsl(220 80% 55% / 0.4), 0 0 30px hsl(220 80% 55% / 0.15);
+  }
+  .glow-border {
+    border-color: hsl(260 70% 58% / 0.3);
+    box-shadow: 0 0 8px hsl(260 70% 58% / 0.15), inset 0 0 8px hsl(260 70% 58% / 0.05);
+  }
+
+  /* Glass morphism for space UI */
+  .glass-panel {
+    background: hsl(240 18% 8% / 0.7);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid hsl(260 70% 58% / 0.1);
+  }
+
+  .glass-search {
+    background: hsl(240 18% 12% / 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid hsl(260 70% 58% / 0.15);
   }
 
   /* Skeleton loading */

@@ -7,6 +7,7 @@ import { ThemeProvider } from "next-themes";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { WishlistProvider } from "@/hooks/useWishlist";
 import BottomTabBar from "@/components/BottomTabBar";
+import GalaxyBackground from "@/components/GalaxyBackground";
 import Index from "./pages/Index";
 import SearchPage from "./pages/SearchPage";
 import SellPage from "./pages/SellPage";
@@ -43,32 +44,35 @@ const AppRoutes = () => {
 
   return (
     <WishlistProvider>
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/search" element={<SearchPage />} />
-        <Route path="/sell" element={<SellPage />} />
-        <Route path="/messages" element={<MessagesPage />} />
-        <Route path="/my-ads" element={<MyAdsPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/edit-profile" element={<EditProfilePage />} />
-        <Route path="/elite" element={<EliteDashboardPage />} />
-        <Route path="/reviews" element={<ReviewsPage />} />
-        <Route path="/help" element={<HelpSupportPage />} />
-        <Route path="/notification-settings" element={<NotificationSettingsPage />} />
-        <Route path="/settings" element={<SettingsPage />} />
-        <Route path="/verification" element={<VerificationPage />} />
-        <Route path="/orders" element={<OrdersPage />} />
-        <Route path="/wishlist" element={<WishlistPage />} />
-        <Route path="/complaints" element={<ComplaintsPage />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-      <BottomTabBar />
+      <GalaxyBackground />
+      <div className="relative z-10">
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/search" element={<SearchPage />} />
+          <Route path="/sell" element={<SellPage />} />
+          <Route path="/messages" element={<MessagesPage />} />
+          <Route path="/my-ads" element={<MyAdsPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/edit-profile" element={<EditProfilePage />} />
+          <Route path="/elite" element={<EliteDashboardPage />} />
+          <Route path="/reviews" element={<ReviewsPage />} />
+          <Route path="/help" element={<HelpSupportPage />} />
+          <Route path="/notification-settings" element={<NotificationSettingsPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/verification" element={<VerificationPage />} />
+          <Route path="/orders" element={<OrdersPage />} />
+          <Route path="/wishlist" element={<WishlistPage />} />
+          <Route path="/complaints" element={<ComplaintsPage />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+        <BottomTabBar />
+      </div>
     </WishlistProvider>
   );
 };
 
 const App = () => (
-  <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} storageKey="dentzap-theme">
+  <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} storageKey="dentzap-theme">
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
