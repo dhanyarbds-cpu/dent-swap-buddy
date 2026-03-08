@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { ThemeProvider } from "next-themes";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import BottomTabBar from "@/components/BottomTabBar";
 import Index from "./pages/Index";
@@ -15,6 +16,13 @@ import EditProfilePage from "./pages/EditProfilePage";
 import EliteDashboardPage from "./pages/EliteDashboardPage";
 import AuthPage from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
+import ReviewsPage from "./pages/ReviewsPage";
+import HelpSupportPage from "./pages/HelpSupportPage";
+import NotificationSettingsPage from "./pages/NotificationSettingsPage";
+import SettingsPage from "./pages/SettingsPage";
+import VerificationPage from "./pages/VerificationPage";
+import OrdersPage from "./pages/OrdersPage";
+import WishlistPage from "./pages/WishlistPage";
 
 const queryClient = new QueryClient();
 
@@ -42,6 +50,13 @@ const AppRoutes = () => {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/edit-profile" element={<EditProfilePage />} />
         <Route path="/elite" element={<EliteDashboardPage />} />
+        <Route path="/reviews" element={<ReviewsPage />} />
+        <Route path="/help" element={<HelpSupportPage />} />
+        <Route path="/notification-settings" element={<NotificationSettingsPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/verification" element={<VerificationPage />} />
+        <Route path="/orders" element={<OrdersPage />} />
+        <Route path="/wishlist" element={<WishlistPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <BottomTabBar />
@@ -50,17 +65,19 @@ const AppRoutes = () => {
 };
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-          <AppRoutes />
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} storageKey="dentzap-theme">
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AuthProvider>
+            <AppRoutes />
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </ThemeProvider>
 );
 
 export default App;
