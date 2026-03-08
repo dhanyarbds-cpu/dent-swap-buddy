@@ -40,9 +40,8 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
   const [selectedMethod, setSelectedMethod] = useState("upi");
   const [processing, setProcessing] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
-  const [commissionInfo, setCommissionInfo] = useState<{ rate: number; min_price: number } | null>(null);
+  const [commissionInfo, setCommissionInfo] = useState<{ rate: number; buyer_fee_rate: number; min_price: number } | null>(null);
 
-  // Fetch commission settings
   useEffect(() => {
     const fetchSettings = async () => {
       const { data } = await supabase
@@ -55,9 +54,12 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
     fetchSettings();
   }, []);
 
-  const platformFee = commissionInfo && listing.price > (commissionInfo.min_price || 100)
-    ? Math.round((listing.price * (commissionInfo.rate || 2)) / 100 * 100) / 100
-    : 0;
+  const buyerFeeRate = commissionInfo?.buyer_fee_rate ?? 1;
+  const commissionRate = commissionInfo?.rate ?? 1;
+  const buyerServiceFee = Math.round((listing.price * buyerFeeRate) / 100 * 100) / 100;
+  const platformCommission = Math.round((listing.price * commissionRate) / 100 * 100) / 100;
+  const sellerGets = Math.round((listing.price - platformCommission) * 100) / 100;
+  const totalPayment = Math.round((listing.price + buyerServiceFee) * 100) / 100;
 
   const loadRazorpayScript = (): Promise<boolean> => {
     return new Promise((resolve) => {
@@ -210,35 +212,41 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
             </div>
           </div>
 
-          {/* Price Breakdown */}
+          {/* Price Breakdown - 3-way model */}
           <div className="mt-4 space-y-2 border-t border-border pt-3">
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Product Price</span>
               <span className="text-sm font-medium text-foreground">{formatPrice(listing.price)}</span>
             </div>
-            {platformFee > 0 && (
-              <div className="flex items-center justify-between">
-                <span className="flex items-center gap-1 text-sm text-muted-foreground">
-                  Platform Fee
-                  <span className="text-[10px] text-muted-foreground/60">({commissionInfo?.rate}%)</span>
-                </span>
-                <span className="text-sm font-medium text-muted-foreground">{formatPrice(platformFee)}</span>
-              </div>
-            )}
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1 text-sm text-muted-foreground">
+                Buyer Service Fee
+                <span className="text-[10px] text-muted-foreground/60">({buyerFeeRate}%)</span>
+              </span>
+              <span className="text-sm font-medium text-muted-foreground">+{formatPrice(buyerServiceFee)}</span>
+            </div>
             <div className="flex items-center justify-between border-t border-dashed border-border pt-2">
-              <span className="text-sm font-semibold text-foreground">Total</span>
-              <span className="text-lg font-bold text-foreground">{formatPrice(listing.price)}</span>
+              <span className="text-sm font-semibold text-foreground">Total Payment</span>
+              <span className="text-lg font-bold text-foreground">{formatPrice(totalPayment)}</span>
             </div>
           </div>
 
-          {platformFee > 0 && (
-            <div className="mt-2 flex items-start gap-2 rounded-xl bg-secondary/50 px-3 py-2">
-              <Info className="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground" />
-              <p className="text-[10px] text-muted-foreground leading-relaxed">
-                A {commissionInfo?.rate}% platform fee ({formatPrice(platformFee)}) is included. The seller receives {formatPrice(listing.price - platformFee)}.
-              </p>
+          {/* Distribution info */}
+          <div className="mt-3 space-y-1.5 rounded-xl bg-secondary/50 px-3 py-2.5">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Payment Distribution</p>
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] text-muted-foreground">Seller receives</span>
+              <span className="text-[11px] font-semibold text-verified">{formatPrice(sellerGets)}</span>
             </div>
-          )}
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] text-muted-foreground">Platform commission ({commissionRate}%)</span>
+              <span className="text-[11px] font-semibold text-primary">{formatPrice(platformCommission)}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] text-muted-foreground">Service fee</span>
+              <span className="text-[11px] font-semibold text-amber-600">{formatPrice(buyerServiceFee)}</span>
+            </div>
+          </div>
         </div>
 
         {/* Payment Method */}
@@ -301,7 +309,7 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
             {processing ? (
               <><Loader2 className="h-4 w-4 animate-spin" /> Processing...</>
             ) : (
-              <>Pay {formatPrice(listing.price)} Securely</>
+              <>Pay {formatPrice(totalPayment)} Securely</>
             )}
           </Button>
         </div>

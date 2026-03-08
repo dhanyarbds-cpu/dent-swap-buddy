@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Settings, ChevronRight, Package, Heart, Star, Shield, Crown, LogOut, BadgeCheck, ShoppingBag, BarChart3, Bell, HelpCircle, Moon, Pencil, MessageSquare } from "lucide-react";
+import { Settings, ChevronRight, Package, Heart, Star, Shield, Crown, LogOut, BadgeCheck, ShoppingBag, BarChart3, Bell, HelpCircle, Moon, Pencil, MessageSquare, Wallet, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/hooks/useAuth";
@@ -65,6 +65,8 @@ const ProfilePage = () => {
         { icon: MessageSquare, label: "Messages", route: "/messages" },
         { icon: BarChart3, label: "Seller Dashboard", route: "/my-ads" },
         { icon: Package, label: "My Listings", route: "/my-ads" },
+        { icon: Wallet, label: "Payout Details", route: "/payout-details" },
+        { icon: Receipt, label: "Admin Transactions", route: "/admin/transactions" },
       ],
     },
     {

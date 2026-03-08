@@ -33,7 +33,6 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "listing_id and amount required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Get listing details
     const { data: listing, error: listingError } = await supabase
       .from("listings")
       .select("id, title, price, seller_id, status")
@@ -52,31 +51,31 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Listing is no longer available" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Fetch commission settings
     const serviceSupabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    // Fetch commission settings
     const { data: settings } = await serviceSupabase
       .from("platform_settings")
       .select("value")
       .eq("key", "commission")
       .single();
 
-    const commissionRate = settings?.value?.rate ?? 2;
-    const minPrice = settings?.value?.min_price ?? 100;
+    const commissionRate = settings?.value?.rate ?? 1;
+    const buyerFeeRate = settings?.value?.buyer_fee_rate ?? 1;
 
-    // Calculate commission
-    let commissionAmount = 0;
-    let sellerPayout = amount;
-    let appliedRate = 0;
-
-    if (amount > minPrice) {
-      appliedRate = commissionRate;
-      commissionAmount = Math.round((amount * commissionRate) / 100 * 100) / 100;
-      sellerPayout = Math.round((amount - commissionAmount) * 100) / 100;
-    }
+    // New 3-way model:
+    // Product price = amount
+    // Commission from seller = amount * commissionRate / 100
+    // Buyer service fee = amount * buyerFeeRate / 100
+    // Seller gets = amount - commission
+    // Buyer pays = amount + buyerServiceFee
+    const commissionAmount = Math.round((amount * commissionRate) / 100 * 100) / 100;
+    const buyerServiceFee = Math.round((amount * buyerFeeRate) / 100 * 100) / 100;
+    const sellerPayout = Math.round((amount - commissionAmount) * 100) / 100;
+    const totalBuyerPayment = Math.round((amount + buyerServiceFee) * 100) / 100;
 
     // Create Razorpay order
     const RAZORPAY_KEY_ID = Deno.env.get("RAZORPAY_KEY_ID");
@@ -86,7 +85,7 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Payment gateway not configured" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const amountInPaise = Math.round(amount * 100);
+    const amountInPaise = Math.round(totalBuyerPayment * 100);
 
     const razorpayResponse = await fetch("https://api.razorpay.com/v1/orders", {
       method: "POST",
@@ -113,7 +112,7 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Failed to create payment order" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Create order record in DB
+    // Create order record
     const { data: order, error: orderError } = await serviceSupabase
       .from("orders")
       .insert({
@@ -124,9 +123,10 @@ serve(async (req) => {
         status: "pending",
         razorpay_order_id: razorpayOrder.id,
         escrow_status: "pending",
-        commission_rate: appliedRate,
+        commission_rate: commissionRate,
         commission_amount: commissionAmount,
         seller_payout: sellerPayout,
+        buyer_service_fee: buyerServiceFee,
       })
       .select("id")
       .single();
@@ -142,9 +142,12 @@ serve(async (req) => {
       order_id: order.id,
       amount: amountInPaise,
       currency: "INR",
-      commission_rate: appliedRate,
+      product_price: amount,
+      commission_rate: commissionRate,
       commission_amount: commissionAmount,
+      buyer_service_fee: buyerServiceFee,
       seller_payout: sellerPayout,
+      total_payment: totalBuyerPayment,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
