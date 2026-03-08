@@ -460,6 +460,26 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
                   </div>
                   {paymentMethod === "stripe" && <CheckCircle className="h-5 w-5 text-primary shrink-0" />}
                 </button>
+
+                <button
+                  onClick={() => setPaymentMethod("upi_qr")}
+                  className={`w-full flex items-start gap-4 rounded-2xl border p-4 text-left transition-all ${
+                    paymentMethod === "upi_qr" ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "border-border bg-card"
+                  }`}
+                >
+                  <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${paymentMethod === "upi_qr" ? "bg-primary/10" : "bg-secondary"}`}>
+                    <QrCode className={`h-5 w-5 ${paymentMethod === "upi_qr" ? "text-primary" : "text-muted-foreground"}`} />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-foreground">UPI QR Code</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">Scan QR with any UPI app — GPay, PhonePe, Paytm</p>
+                    <div className="mt-2 flex items-center gap-1.5">
+                      <span className="rounded-full bg-verified/10 px-2 py-0.5 text-[10px] font-semibold text-verified">Direct UPI</span>
+                      <span className="text-[10px] text-muted-foreground">No gateway fees</span>
+                    </div>
+                  </div>
+                  {paymentMethod === "upi_qr" && <CheckCircle className="h-5 w-5 text-primary shrink-0" />}
+                </button>
               </div>
             </div>
 
