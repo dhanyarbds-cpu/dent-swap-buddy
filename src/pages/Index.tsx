@@ -50,9 +50,9 @@ const Index = () => {
       if (a.seller?.verified) scoreA += 15;
       if (b.seller?.verified) scoreB += 15;
       
-      // Negotiable listing small boost (5 pts) - shows seller flexibility
-      if (a.isNegotiable) scoreA += 5;
-      if (b.isNegotiable) scoreB += 5;
+      // Price reasonableness small boost (5 pts)
+      if (a.price < 5000) scoreA += 5;
+      if (b.price < 5000) scoreB += 5;
       
       // Fair exposure for new sellers: slight randomization (5 pts)
       scoreA += Math.random() * 5;
