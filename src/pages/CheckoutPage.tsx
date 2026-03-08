@@ -480,14 +480,23 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
         {step === "pay" && (
           <div className="space-y-4">
             <div className="rounded-2xl border border-primary/30 bg-card p-5 text-center space-y-3">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Pay to UPI ID</p>
-              <div className="flex items-center justify-center gap-2">
-                <p className="text-lg font-bold text-primary font-mono">{upiId}</p>
-                <button onClick={copyUpi} className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 hover:bg-primary/20 transition-colors">
-                  <Copy className="h-4 w-4 text-primary" />
-                </button>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Scan QR Code to Pay</p>
+              <div className="flex justify-center">
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`upi://pay?pa=${upiId}&pn=DentSwap&am=${totalPayment}&cu=INR&tn=Payment for ${listing.title}`)}`}
+                  alt="UPI QR Code"
+                  className="h-48 w-48 rounded-xl border border-border"
+                />
               </div>
               <p className="text-2xl font-bold text-foreground">{formatPrice(totalPayment)}</p>
+              
+              <div className="flex items-center justify-center gap-2 pt-1">
+                <p className="text-[11px] text-muted-foreground">or pay to</p>
+                <p className="text-sm font-bold text-primary font-mono">{upiId}</p>
+                <button onClick={copyUpi} className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 hover:bg-primary/20 transition-colors">
+                  <Copy className="h-3.5 w-3.5 text-primary" />
+                </button>
+              </div>
             </div>
 
             <Button onClick={openUpiApp} variant="outline" className="w-full rounded-xl py-5 text-sm font-semibold gap-2 border-primary/30 text-primary hover:bg-primary/5">
@@ -497,7 +506,7 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
             <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4">
               <p className="text-xs font-semibold text-foreground mb-1">⚡ How to pay:</p>
               <ol className="text-[11px] text-muted-foreground space-y-1 list-decimal pl-4">
-                <li>Open any UPI app (Google Pay, PhonePe, Paytm)</li>
+                <li>Scan the QR code above or open any UPI app</li>
                 <li>Send <span className="font-bold text-foreground">{formatPrice(totalPayment)}</span> to <span className="font-bold text-foreground font-mono">{upiId}</span></li>
                 <li>Copy the UTR/Transaction Reference Number</li>
                 <li>Come back here and enter the UTR number</li>
