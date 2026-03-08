@@ -1,6 +1,6 @@
-import { ArrowLeft, Share2, Heart, MapPin, BadgeCheck, MessageSquare, Tag } from "lucide-react";
+import { ArrowLeft, Share2, Heart, MapPin, BadgeCheck, Tag, IndianRupee } from "lucide-react";
 import { type Listing, formatPrice, timeAgo } from "@/lib/mockData";
-import { Button } from "@/components/ui/button";
+import NegotiateDialog from "@/components/NegotiateDialog";
 
 interface ListingDetailProps {
   listing: Listing;
@@ -9,6 +9,10 @@ interface ListingDetailProps {
 
 const ListingDetail = ({ listing, onBack }: ListingDetailProps) => {
   const initials = listing.seller.name.split(" ").map((n) => n[0]).join("");
+
+  // For mock listings, we use listing.id as both listing_id and seller_id placeholder
+  // In production, these come from the database
+  const isDbListing = listing.id.length > 10; // UUID vs mock "1", "2", etc.
 
   return (
     <div className="safe-bottom min-h-screen bg-background">
@@ -35,7 +39,13 @@ const ListingDetail = ({ listing, onBack }: ListingDetailProps) => {
       <div className="mx-auto max-w-lg space-y-4 p-4">
         {/* Price & Title */}
         <div>
-          <p className="text-2xl font-extrabold text-primary">{formatPrice(listing.price)}</p>
+          <div className="flex items-center gap-2">
+            <p className="text-2xl font-extrabold text-primary">{formatPrice(listing.price)}</p>
+            <span className="rounded-full bg-verified/10 px-2 py-0.5 text-[10px] font-semibold text-verified flex items-center gap-1">
+              <IndianRupee className="h-3 w-3" />
+              Negotiable
+            </span>
+          </div>
           <h1 className="mt-1 text-lg font-bold text-foreground">{listing.title}</h1>
           <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
             <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{listing.location}</span>
@@ -83,11 +93,22 @@ const ListingDetail = ({ listing, onBack }: ListingDetailProps) => {
           </div>
         </div>
 
-        {/* Action */}
-        <Button className="dentzap-gradient dentzap-shadow w-full gap-2 rounded-xl py-6 text-base font-bold text-primary-foreground">
-          <MessageSquare className="h-5 w-5" />
-          Send Buy Request
-        </Button>
+        {/* Action - Negotiate button */}
+        {isDbListing ? (
+          <NegotiateDialog
+            listingId={listing.id}
+            sellerId={(listing as any).seller_id || listing.id}
+            askingPrice={listing.price}
+            listingTitle={listing.title}
+          />
+        ) : (
+          <NegotiateDialog
+            listingId={listing.id}
+            sellerId={listing.id}
+            askingPrice={listing.price}
+            listingTitle={listing.title}
+          />
+        )}
       </div>
     </div>
   );
