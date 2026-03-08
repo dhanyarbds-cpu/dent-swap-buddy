@@ -196,7 +196,9 @@ const SearchPage = () => {
               <span className="h-3 w-3 rounded-full bg-primary animate-pulse" style={{ animationDelay: "0.15s" }} />
               <span className="h-2 w-2 rounded-full bg-primary animate-pulse" style={{ animationDelay: "0.3s" }} />
             </div>
-            <p className="text-xs font-medium text-primary">Speak now...</p>
+            <p className="text-xs font-medium text-primary">
+              {interimText || "Speak now..."}
+            </p>
           </div>
         )}
 
