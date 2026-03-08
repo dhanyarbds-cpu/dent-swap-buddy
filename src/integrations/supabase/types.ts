@@ -298,9 +298,16 @@ export type Database = {
         Row: {
           buyer_id: string
           created_at: string
+          escrow_released_at: string | null
+          escrow_status: string
           id: string
           listing_id: string | null
+          payment_method: string | null
           price: number
+          razorpay_order_id: string | null
+          razorpay_payment_id: string | null
+          refund_amount: number | null
+          refund_status: string | null
           seller_id: string
           status: string
           updated_at: string
@@ -308,9 +315,16 @@ export type Database = {
         Insert: {
           buyer_id: string
           created_at?: string
+          escrow_released_at?: string | null
+          escrow_status?: string
           id?: string
           listing_id?: string | null
+          payment_method?: string | null
           price: number
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          refund_amount?: number | null
+          refund_status?: string | null
           seller_id: string
           status?: string
           updated_at?: string
@@ -318,9 +332,16 @@ export type Database = {
         Update: {
           buyer_id?: string
           created_at?: string
+          escrow_released_at?: string | null
+          escrow_status?: string
           id?: string
           listing_id?: string | null
+          payment_method?: string | null
           price?: number
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          refund_amount?: number | null
+          refund_status?: string | null
           seller_id?: string
           status?: string
           updated_at?: string
