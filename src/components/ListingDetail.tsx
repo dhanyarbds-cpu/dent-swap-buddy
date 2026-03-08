@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, Share2, Heart, MapPin, BadgeCheck, Tag, IndianRupee, Eye, Clock, Bookmark, ChevronLeft, ChevronRight, ShoppingCart } from "lucide-react";
+import { ArrowLeft, Share2, Heart, MapPin, BadgeCheck, Tag, IndianRupee, Eye, Clock, Bookmark, ChevronLeft, ChevronRight, ShoppingCart, Truck, ShieldAlert, AlertTriangle } from "lucide-react";
 import { type Listing, formatPrice, timeAgo } from "@/lib/mockData";
 import NegotiateDialog from "@/components/NegotiateDialog";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,10 @@ const ListingDetail = ({ listing, onBack }: ListingDetailProps) => {
   const imageCount = hasImages ? listing.images.length : 0;
   const { wishlistedIds, toggle } = useWishlist();
   const wishlisted = wishlistedIds.has(listing.id);
+
+  // Delivery options from DB listing
+  const pickupAvailable = (listing as any).pickup_available ?? true;
+  const shippingAvailable = (listing as any).shipping_available ?? false;
 
   if (showCheckout) {
     return (
@@ -137,6 +141,20 @@ const ListingDetail = ({ listing, onBack }: ListingDetailProps) => {
           </div>
         </div>
 
+        {/* Delivery Options Badges */}
+        <div className="flex flex-wrap gap-2">
+          {pickupAvailable && (
+            <span className="flex items-center gap-1.5 rounded-full bg-verified/10 px-3 py-1.5 text-[11px] font-semibold text-verified">
+              <MapPin className="h-3 w-3" /> Local Pickup
+            </span>
+          )}
+          {shippingAvailable && (
+            <span className="flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-[11px] font-semibold text-primary">
+              <Truck className="h-3 w-3" /> Shipping Available
+            </span>
+          )}
+        </div>
+
         {/* Details Grid */}
         <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
           <h2 className="text-sm font-bold text-foreground">Details</h2>
@@ -158,6 +176,31 @@ const ListingDetail = ({ listing, onBack }: ListingDetailProps) => {
         <div className="rounded-2xl border border-border bg-card p-4 space-y-2">
           <h2 className="text-sm font-bold text-foreground">Description</h2>
           <p className="text-sm leading-relaxed text-muted-foreground">{listing.description}</p>
+        </div>
+
+        {/* Delivery Info */}
+        <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
+          <h2 className="text-sm font-bold text-foreground">Delivery & Transaction</h2>
+          <div className="space-y-2">
+            {pickupAvailable && (
+              <div className="flex items-start gap-3">
+                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-verified" />
+                <div>
+                  <p className="text-sm font-medium text-foreground">Local Pickup</p>
+                  <p className="text-xs text-muted-foreground">Meet the seller in {listing.location}. Inspect the item before paying.</p>
+                </div>
+              </div>
+            )}
+            {shippingAvailable && (
+              <div className="flex items-start gap-3">
+                <Truck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                <div>
+                  <p className="text-sm font-medium text-foreground">Courier Shipping</p>
+                  <p className="text-xs text-muted-foreground">Shipping via India Post, DTDC, Delhivery, or other couriers. Discuss shipping cost and details in chat.</p>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Tags */}
@@ -186,6 +229,21 @@ const ListingDetail = ({ listing, onBack }: ListingDetailProps) => {
           <Button variant="outline" size="sm" className="rounded-xl text-xs">
             View Profile
           </Button>
+        </div>
+
+        {/* Safety Tips */}
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/30 dark:bg-amber-950/20">
+          <div className="flex items-center gap-2 mb-2">
+            <ShieldAlert className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+            <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">Safety Tips</p>
+          </div>
+          <ul className="space-y-1 text-xs text-amber-700 dark:text-amber-400/80">
+            <li>• Meet in public places for local pickups</li>
+            <li>• Inspect the item before making payment</li>
+            <li>• Avoid advance payments to unknown sellers</li>
+            <li>• Use trusted courier services for shipping</li>
+            <li>• Verify seller ratings and reviews</li>
+          </ul>
         </div>
       </div>
 
