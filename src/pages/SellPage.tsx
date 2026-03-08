@@ -49,11 +49,15 @@ const SellPage = () => {
     if (!user) return;
     supabase
       .from("seller_payout_details")
-      .select("upi_id")
+      .select("upi_id, account_holder_name, bank_name, bank_account_number, ifsc_code")
       .eq("seller_id", user.id)
       .maybeSingle()
       .then(({ data }) => {
         if (data?.upi_id) update("upiId", data.upi_id);
+        if (data?.account_holder_name) update("accountHolderName", data.account_holder_name);
+        if (data?.bank_name) update("bankName", data.bank_name);
+        if (data?.bank_account_number) update("bankAccountNumber", data.bank_account_number);
+        if (data?.ifsc_code) update("ifscCode", data.ifsc_code);
       });
   }, [user]);
 
@@ -109,10 +113,18 @@ const SellPage = () => {
         }).catch(console.error);
       }
 
-      // Save UPI ID to seller_payout_details
-      if (form.upiId) {
+      // Save payout details
+      if (form.upiId || form.bankAccountNumber) {
         await supabase.from("seller_payout_details").upsert(
-          { seller_id: user.id, upi_id: form.upiId, payout_method: "upi" },
+          {
+            seller_id: user.id,
+            upi_id: form.upiId || null,
+            payout_method: form.upiId ? "upi" : "bank",
+            account_holder_name: form.accountHolderName || null,
+            bank_name: form.bankName || null,
+            bank_account_number: form.bankAccountNumber || null,
+            ifsc_code: form.ifscCode || null,
+          },
           { onConflict: "seller_id" }
         );
       }
