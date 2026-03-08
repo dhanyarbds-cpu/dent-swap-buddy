@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from "react";
-import { ImagePlus, X, Loader2, GripVertical, Camera, Image as ImageIcon } from "lucide-react";
+import { ImagePlus, X, Loader2, GripVertical, ShieldCheck, ShieldAlert } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -39,11 +39,30 @@ async function compressImage(file: File): Promise<Blob> {
   });
 }
 
+async function validateImage(imageUrl: string): Promise<{ approved: boolean; reason: string; confidence: number; category: string }> {
+  const { data, error } = await supabase.functions.invoke("validate-image", {
+    body: { image_url: imageUrl },
+  });
+  if (error) {
+    console.error("Validation error:", error);
+    return { approved: true, reason: "Validation skipped", confidence: 100, category: "product" };
+  }
+  return data;
+}
+
+const rejectionMessages: Record<string, string> = {
+  human: "Human photos are not allowed. Upload product images only.",
+  inappropriate: "This image contains inappropriate content.",
+  irrelevant: "This image does not appear to be a product listing.",
+  low_quality: "This image is too blurry or low quality. Please upload a clearer photo.",
+};
+
 const ImageUploader = ({ images, onImagesChange, maxImages = 8 }: ImageUploaderProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [validatingIndex, setValidatingIndex] = useState<number | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number[]>([]);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
 
@@ -78,10 +97,10 @@ const ImageUploader = ({ images, onImagesChange, maxImages = 8 }: ImageUploaderP
 
     for (let i = 0; i < toUpload.length; i++) {
       try {
-        setUploadProgress((prev) => { const n = [...prev]; n[i] = 30; return n; });
+        setUploadProgress((prev) => { const n = [...prev]; n[i] = 20; return n; });
 
         const compressed = await compressImage(toUpload[i]);
-        setUploadProgress((prev) => { const n = [...prev]; n[i] = 60; return n; });
+        setUploadProgress((prev) => { const n = [...prev]; n[i] = 40; return n; });
 
         const ext = "webp";
         const fileName = `${user.id}/${Date.now()}-${i}.${ext}`;
@@ -92,8 +111,30 @@ const ImageUploader = ({ images, onImagesChange, maxImages = 8 }: ImageUploaderP
 
         if (error) throw error;
 
+        setUploadProgress((prev) => { const n = [...prev]; n[i] = 70; return n; });
+
+        const publicUrl = getPublicUrl(fileName);
+
+        // AI Validation
+        setValidatingIndex(i);
+        const validation = await validateImage(publicUrl);
+        setValidatingIndex(null);
+
+        if (!validation.approved) {
+          // Delete the rejected image from storage
+          await supabase.storage.from("listing-images").remove([fileName]);
+          const msg = rejectionMessages[validation.category] || validation.reason;
+          toast({
+            title: "Image Rejected",
+            description: msg,
+            variant: "destructive",
+          });
+          setUploadProgress((prev) => { const n = [...prev]; n[i] = 0; return n; });
+          continue;
+        }
+
         setUploadProgress((prev) => { const n = [...prev]; n[i] = 100; return n; });
-        newUrls.push(getPublicUrl(fileName));
+        newUrls.push(publicUrl);
       } catch (err: any) {
         console.error("Upload error:", err);
         toast({ title: "Upload failed", description: err.message, variant: "destructive" });
@@ -134,11 +175,16 @@ const ImageUploader = ({ images, onImagesChange, maxImages = 8 }: ImageUploaderP
             {images.length}/{maxImages} photos · Drag to reorder
           </p>
         </div>
-        {images.length > 0 && (
-          <span className="rounded-full bg-verified/10 px-2.5 py-0.5 text-[10px] font-semibold text-verified">
-            {images.length} uploaded
+        <div className="flex items-center gap-2">
+          <span className="flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
+            <ShieldCheck className="h-3 w-3" /> AI Verified
           </span>
-        )}
+          {images.length > 0 && (
+            <span className="rounded-full bg-verified/10 px-2.5 py-0.5 text-[10px] font-semibold text-verified">
+              {images.length} uploaded
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-4 gap-2">
@@ -151,7 +197,12 @@ const ImageUploader = ({ images, onImagesChange, maxImages = 8 }: ImageUploaderP
             className="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed border-primary/30 bg-primary/5 text-primary transition-all hover:border-primary/50 hover:bg-primary/10 press-scale disabled:opacity-50"
           >
             {uploading ? (
-              <Loader2 className="h-6 w-6 animate-spin" />
+              <div className="flex flex-col items-center gap-1">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                {validatingIndex !== null && (
+                  <span className="text-[8px] font-medium">Scanning…</span>
+                )}
+              </div>
             ) : (
               <>
                 <ImagePlus className="h-6 w-6" />
@@ -179,20 +230,17 @@ const ImageUploader = ({ images, onImagesChange, maxImages = 8 }: ImageUploaderP
               className="h-full w-full object-cover"
               loading="lazy"
             />
-            {/* First image badge */}
             {i === 0 && (
               <div className="absolute bottom-1 left-1 rounded-md bg-primary px-1.5 py-0.5 text-[8px] font-bold text-primary-foreground">
                 Cover
               </div>
             )}
-            {/* Remove button */}
             <button
               onClick={() => removeImage(i)}
               className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-foreground/70 text-background opacity-0 transition-opacity group-hover:opacity-100"
             >
               <X className="h-3 w-3" />
             </button>
-            {/* Drag handle */}
             <div className="absolute bottom-1 right-1 rounded-md bg-foreground/40 p-0.5 opacity-0 transition-opacity group-hover:opacity-100">
               <GripVertical className="h-3 w-3 text-background" />
             </div>
@@ -207,15 +255,23 @@ const ImageUploader = ({ images, onImagesChange, maxImages = 8 }: ImageUploaderP
 
       {/* Upload progress */}
       {uploading && uploadProgress.length > 0 && (
-        <div className="flex gap-1">
-          {uploadProgress.map((p, i) => (
-            <div key={i} className="h-1 flex-1 overflow-hidden rounded-full bg-secondary">
-              <div
-                className="h-full rounded-full bg-primary transition-all duration-300"
-                style={{ width: `${p}%` }}
-              />
-            </div>
-          ))}
+        <div className="space-y-1.5">
+          <div className="flex gap-1">
+            {uploadProgress.map((p, i) => (
+              <div key={i} className="h-1 flex-1 overflow-hidden rounded-full bg-secondary">
+                <div
+                  className="h-full rounded-full bg-primary transition-all duration-300"
+                  style={{ width: `${p}%` }}
+                />
+              </div>
+            ))}
+          </div>
+          {validatingIndex !== null && (
+            <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <ShieldCheck className="h-3.5 w-3.5 text-primary animate-pulse" />
+              AI scanning image for product relevance…
+            </p>
+          )}
         </div>
       )}
 
