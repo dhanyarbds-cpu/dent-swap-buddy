@@ -31,7 +31,7 @@ serve(async (req) => {
 1. **MODERATION**: Determine if the image is a valid product listing photo.
 2. **CONDITION ASSESSMENT**: If approved, assess the visible condition of the product.
 
-APPROVE images showing: durable medical equipment, dental instruments, laboratory tools, medical/dental books, clinic furniture, surgical instruments, diagnostic devices, student training equipment, educational models.
+APPROVE images showing: durable medical equipment, dental instruments, laboratory tools, medical/dental books, clinic furniture, surgical instruments, diagnostic devices, student training equipment, educational models, consumable/disposable medical products (syringes, gloves, masks, cotton, gauze, medicines, reagents, etc.).
 
 REJECT images showing:
 - Human faces, selfies, or people
