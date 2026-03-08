@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { MapPin, ChevronDown, Search, Mic, Heart, Bell } from "lucide-react";
 import { listings, categories as fallbackCategories } from "@/lib/mockData";
 import ProductCard from "@/components/ProductCard";
@@ -13,13 +13,6 @@ const bannerSlides = [
   { title: "Sell Your Old Instruments", subtitle: "List for free and reach thousands of buyers", tag: "New" },
   { title: "Verified Sellers Only", subtitle: "Shop with confidence from verified professionals", tag: "Featured" },
 ];
-
-interface Category {
-  id: string;
-  name: string;
-  icon: string;
-  sort_order: number;
-}
 
 const Index = () => {
   const navigate = useNavigate();
@@ -65,8 +58,8 @@ const Index = () => {
       <header className="sticky top-0 z-40 glass-panel border-b border-border">
         <div className="mx-auto max-w-lg">
           <div className="flex items-center justify-between px-4 pt-3 pb-2">
-            <button className="flex items-center gap-1.5 text-foreground">
-              <MapPin className="h-4 w-4 text-primary opacity-80" />
+            <button className="flex items-center gap-1.5">
+              <MapPin className="h-4 w-4 text-primary" />
               <div className="text-left">
                 <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Location</p>
                 <div className="flex items-center gap-0.5">
@@ -81,7 +74,7 @@ const Index = () => {
               </button>
               <button className="relative rounded-full p-2.5 text-muted-foreground transition hover:text-primary hover:bg-primary/10">
                 <Bell className="h-5 w-5" />
-                <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-destructive ring-2 ring-background" />
+                <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-destructive ring-2 ring-card" />
               </button>
             </div>
           </div>
@@ -91,10 +84,10 @@ const Index = () => {
               onClick={() => navigate("/search")}
               className="flex w-full items-center gap-3 rounded-xl glass-search px-4 py-3 transition-all hover:glow-border"
             >
-              <Search className="h-4 w-4 text-primary/70" />
+              <Search className="h-4 w-4 text-primary/60" />
               <span className="flex-1 text-left text-sm text-muted-foreground">Search equipment, books, devices...</span>
               <div className="h-5 w-px bg-border" />
-              <Mic className="h-4 w-4 text-primary/70" />
+              <Mic className="h-4 w-4 text-primary/60" />
             </button>
           </div>
         </div>
@@ -116,12 +109,12 @@ const Index = () => {
                 onClick={() => handleCategoryClick(cat.name)}
                 className={`flex flex-col items-center gap-1.5 rounded-2xl border p-3 transition-all duration-200 press-scale ${
                   activeCategory === cat.name
-                    ? "border-primary/40 bg-primary/10 glow-border"
-                    : "border-border/50 bg-card/60 hover:border-primary/20 hover:bg-card/80"
+                    ? "border-primary/30 bg-primary/8 glow-border"
+                    : "glass-card hover:border-primary/15 hover:glow-border"
                 }`}
               >
                 <div className={`flex h-10 w-10 items-center justify-center rounded-xl text-lg transition-colors ${
-                  activeCategory === cat.name ? "bg-primary/20" : "bg-secondary/50"
+                  activeCategory === cat.name ? "bg-primary/15" : "bg-secondary/60"
                 }`}>
                   {cat.icon}
                 </div>
@@ -135,16 +128,16 @@ const Index = () => {
 
         {/* Banner */}
         <div className="px-4 pt-4 pb-1">
-          <div className="relative overflow-hidden rounded-2xl glow-border">
-            <img src={heroBanner} alt="Promotional Banner" className="h-40 w-full object-cover opacity-80" />
-            <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-background/90 via-background/30 to-transparent p-5">
+          <div className="relative overflow-hidden rounded-2xl border border-border/50">
+            <img src={heroBanner} alt="Promotional Banner" className="h-40 w-full object-cover" />
+            <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-foreground/70 via-foreground/15 to-transparent p-5">
               <span className="mb-1.5 w-fit rounded-full dentzap-gradient px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-primary-foreground glow-primary">
                 {bannerSlides[currentSlide].tag}
               </span>
-              <p className="text-lg font-bold text-foreground leading-tight">
+              <p className="text-lg font-bold text-primary-foreground leading-tight">
                 {bannerSlides[currentSlide].title}
               </p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
+              <p className="mt-0.5 text-xs text-primary-foreground/80">
                 {bannerSlides[currentSlide].subtitle}
               </p>
             </div>
@@ -154,7 +147,7 @@ const Index = () => {
                   key={i}
                   onClick={() => setCurrentSlide(i)}
                   className={`h-1.5 rounded-full transition-all duration-300 ${
-                    i === currentSlide ? "w-5 bg-primary glow-primary" : "w-1.5 bg-muted-foreground/40"
+                    i === currentSlide ? "w-5 bg-primary-foreground" : "w-1.5 bg-primary-foreground/40"
                   }`}
                 />
               ))}
@@ -168,7 +161,7 @@ const Index = () => {
             <h2 className="text-sm font-bold text-foreground">
               {activeCategory || "Fresh Recommendations"}
             </h2>
-            <span className="rounded-full bg-primary/10 border border-primary/20 px-2.5 py-0.5 text-[11px] font-medium text-primary">
+            <span className="rounded-full bg-primary/10 border border-primary/15 px-2.5 py-0.5 text-[11px] font-medium text-primary">
               {filtered.length} items
             </span>
           </div>
@@ -181,7 +174,7 @@ const Index = () => {
           </div>
           {filtered.length === 0 && (
             <div className="flex flex-col items-center py-20 text-center animate-fade-in">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-secondary/50 text-3xl">🔍</div>
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-secondary text-3xl">🔍</div>
               <p className="mt-4 text-sm font-medium text-foreground">No listings found</p>
               <p className="mt-1 text-xs text-muted-foreground">Try browsing a different category</p>
             </div>

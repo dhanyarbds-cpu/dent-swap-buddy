@@ -6,88 +6,88 @@
 
 @layer base {
   :root {
-    --background: 240 20% 4%;
-    --foreground: 220 20% 93%;
+    --background: 250 40% 96%;
+    --foreground: 230 40% 16%;
 
-    --card: 240 18% 8%;
-    --card-foreground: 220 20% 93%;
+    --card: 260 40% 99%;
+    --card-foreground: 230 40% 16%;
 
-    --popover: 240 18% 8%;
-    --popover-foreground: 220 20% 93%;
+    --popover: 260 40% 99%;
+    --popover-foreground: 230 40% 16%;
 
-    --primary: 260 70% 58%;
+    --primary: 255 65% 58%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 240 20% 14%;
-    --secondary-foreground: 260 50% 80%;
+    --secondary: 250 35% 92%;
+    --secondary-foreground: 255 50% 45%;
 
-    --muted: 240 18% 12%;
-    --muted-foreground: 220 15% 55%;
+    --muted: 250 30% 93%;
+    --muted-foreground: 230 15% 48%;
 
-    --accent: 240 20% 14%;
-    --accent-foreground: 260 50% 80%;
+    --accent: 250 35% 92%;
+    --accent-foreground: 255 50% 45%;
 
     --destructive: 0 72% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 240 15% 15%;
-    --input: 240 15% 15%;
-    --ring: 260 70% 58%;
+    --border: 250 25% 89%;
+    --input: 250 25% 89%;
+    --ring: 255 65% 58%;
 
     --radius: 0.75rem;
 
-    --sidebar-background: 240 20% 4%;
-    --sidebar-foreground: 220 20% 93%;
-    --sidebar-primary: 260 70% 58%;
+    --sidebar-background: 250 40% 96%;
+    --sidebar-foreground: 230 40% 16%;
+    --sidebar-primary: 255 65% 58%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 18% 12%;
-    --sidebar-accent-foreground: 220 20% 93%;
-    --sidebar-border: 240 15% 15%;
-    --sidebar-ring: 260 70% 58%;
+    --sidebar-accent: 250 35% 92%;
+    --sidebar-accent-foreground: 230 40% 16%;
+    --sidebar-border: 250 25% 89%;
+    --sidebar-ring: 255 65% 58%;
 
     /* Galaxy tokens */
-    --galaxy-purple: 260 70% 58%;
-    --galaxy-blue: 220 80% 55%;
-    --galaxy-violet: 280 60% 50%;
-    --galaxy-nebula: 240 40% 20%;
-    --galaxy-glow: 260 100% 70%;
+    --galaxy-purple: 255 65% 58%;
+    --galaxy-blue: 215 75% 58%;
+    --galaxy-violet: 275 55% 55%;
+    --galaxy-lavender: 260 50% 85%;
+    --galaxy-pink: 320 50% 78%;
+    --galaxy-glow: 255 80% 68%;
 
-    --dentzap-gradient: linear-gradient(135deg, hsl(260 70% 58%), hsl(220 80% 55%));
-    --dentzap-gradient-light: linear-gradient(135deg, hsl(260 70% 58% / 0.1), hsl(220 80% 55% / 0.1));
-    --dentzap-shadow: 0 4px 24px -4px hsl(260 70% 58% / 0.35);
-    --dentzap-shadow-lg: 0 8px 40px -8px hsl(260 70% 58% / 0.4);
-    --dentzap-card-shadow: 0 1px 3px 0 hsl(240 20% 4% / 0.5), 0 0 1px 0 hsl(260 70% 58% / 0.05);
-    --dentzap-card-shadow-hover: 0 4px 20px -4px hsl(260 70% 58% / 0.25), 0 0 1px 0 hsl(260 70% 58% / 0.15);
+    --dentzap-gradient: linear-gradient(135deg, hsl(255 65% 58%), hsl(215 75% 58%));
+    --dentzap-gradient-light: linear-gradient(135deg, hsl(255 65% 58% / 0.08), hsl(215 75% 58% / 0.08));
+    --dentzap-shadow: 0 4px 24px -4px hsl(255 65% 58% / 0.25);
+    --dentzap-shadow-lg: 0 8px 40px -8px hsl(255 65% 58% / 0.3);
+    --dentzap-card-shadow: 0 2px 8px -2px hsl(255 40% 50% / 0.08), 0 0 0 1px hsl(255 40% 50% / 0.04);
+    --dentzap-card-shadow-hover: 0 8px 24px -4px hsl(255 65% 58% / 0.15), 0 0 0 1px hsl(255 65% 58% / 0.08);
 
-    --verified: 152 60% 45%;
+    --verified: 152 55% 42%;
     --verified-foreground: 0 0% 100%;
-    --price: 260 70% 58%;
+    --price: 255 65% 58%;
     --price-foreground: 0 0% 100%;
 
     --tab-bar-height: 4.25rem;
   }
 
-  /* Dark mode is the default galaxy theme; light mode maps the same */
   .dark {
-    --background: 240 20% 4%;
-    --foreground: 220 20% 93%;
-    --card: 240 18% 8%;
-    --card-foreground: 220 20% 93%;
-    --popover: 240 18% 8%;
-    --popover-foreground: 220 20% 93%;
-    --primary: 260 70% 58%;
+    --background: 250 40% 96%;
+    --foreground: 230 40% 16%;
+    --card: 260 40% 99%;
+    --card-foreground: 230 40% 16%;
+    --popover: 260 40% 99%;
+    --popover-foreground: 230 40% 16%;
+    --primary: 255 65% 58%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 240 20% 14%;
-    --secondary-foreground: 260 50% 80%;
-    --muted: 240 18% 12%;
-    --muted-foreground: 220 15% 55%;
-    --accent: 240 20% 14%;
-    --accent-foreground: 260 50% 80%;
+    --secondary: 250 35% 92%;
+    --secondary-foreground: 255 50% 45%;
+    --muted: 250 30% 93%;
+    --muted-foreground: 230 15% 48%;
+    --accent: 250 35% 92%;
+    --accent-foreground: 255 50% 45%;
     --destructive: 0 72% 55%;
     --destructive-foreground: 0 0% 100%;
-    --border: 240 15% 15%;
-    --input: 240 15% 15%;
-    --ring: 260 70% 58%;
+    --border: 250 25% 89%;
+    --input: 250 25% 89%;
+    --ring: 255 65% 58%;
   }
 }
 
@@ -103,15 +103,15 @@
   }
 }
 
-/* ===== GALAXY STARFIELD BACKGROUND ===== */
-@keyframes twinkle {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 1; }
+/* ===== LIGHT GALAXY BACKGROUND ===== */
+@keyframes twinkle-light {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 0.7; }
 }
 
-@keyframes drift {
-  0% { transform: translateY(0) translateX(0); }
-  100% { transform: translateY(-30px) translateX(10px); }
+@keyframes float-drift {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
 }
 
 .galaxy-bg {
@@ -120,10 +120,11 @@
   z-index: 0;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 80% 60% at 20% 30%, hsl(260 50% 15% / 0.5), transparent),
-    radial-gradient(ellipse 60% 50% at 80% 70%, hsl(220 60% 12% / 0.5), transparent),
-    radial-gradient(ellipse 40% 40% at 50% 50%, hsl(280 40% 10% / 0.3), transparent),
-    hsl(240 20% 4%);
+    radial-gradient(ellipse 90% 70% at 15% 20%, hsl(275 60% 88% / 0.7), transparent),
+    radial-gradient(ellipse 70% 60% at 85% 75%, hsl(215 65% 88% / 0.6), transparent),
+    radial-gradient(ellipse 50% 50% at 50% 40%, hsl(320 45% 90% / 0.4), transparent),
+    radial-gradient(ellipse 80% 80% at 60% 90%, hsl(255 50% 92% / 0.5), transparent),
+    linear-gradient(160deg, hsl(250 40% 96%), hsl(215 50% 94%), hsl(275 40% 95%), hsl(250 40% 96%));
 }
 
 .galaxy-stars {
@@ -140,36 +141,36 @@
   position: absolute;
   inset: 0;
   background-image:
-    radial-gradient(1px 1px at 10% 15%, hsl(0 0% 100% / 0.6), transparent),
-    radial-gradient(1px 1px at 25% 40%, hsl(0 0% 100% / 0.4), transparent),
-    radial-gradient(1.5px 1.5px at 45% 10%, hsl(220 80% 80% / 0.7), transparent),
-    radial-gradient(1px 1px at 55% 55%, hsl(0 0% 100% / 0.3), transparent),
-    radial-gradient(1px 1px at 70% 25%, hsl(260 60% 80% / 0.5), transparent),
-    radial-gradient(1.5px 1.5px at 85% 60%, hsl(0 0% 100% / 0.6), transparent),
-    radial-gradient(1px 1px at 15% 75%, hsl(0 0% 100% / 0.4), transparent),
-    radial-gradient(1px 1px at 30% 90%, hsl(220 80% 85% / 0.5), transparent),
-    radial-gradient(1px 1px at 60% 80%, hsl(0 0% 100% / 0.3), transparent),
-    radial-gradient(1.5px 1.5px at 90% 85%, hsl(260 70% 75% / 0.6), transparent),
-    radial-gradient(1px 1px at 5% 50%, hsl(0 0% 100% / 0.5), transparent),
-    radial-gradient(1px 1px at 40% 65%, hsl(0 0% 100% / 0.3), transparent),
-    radial-gradient(1px 1px at 75% 45%, hsl(220 70% 90% / 0.4), transparent),
-    radial-gradient(1px 1px at 95% 15%, hsl(0 0% 100% / 0.5), transparent),
-    radial-gradient(1px 1px at 50% 30%, hsl(0 0% 100% / 0.35), transparent);
-  animation: twinkle 4s ease-in-out infinite;
+    radial-gradient(1.5px 1.5px at 10% 15%, hsl(255 70% 65% / 0.35), transparent),
+    radial-gradient(1px 1px at 25% 40%, hsl(215 70% 60% / 0.25), transparent),
+    radial-gradient(2px 2px at 45% 10%, hsl(275 60% 70% / 0.4), transparent),
+    radial-gradient(1px 1px at 55% 55%, hsl(255 50% 65% / 0.2), transparent),
+    radial-gradient(1.5px 1.5px at 70% 25%, hsl(320 50% 70% / 0.3), transparent),
+    radial-gradient(2px 2px at 85% 60%, hsl(215 65% 65% / 0.35), transparent),
+    radial-gradient(1px 1px at 15% 75%, hsl(255 60% 70% / 0.25), transparent),
+    radial-gradient(1.5px 1.5px at 30% 90%, hsl(275 55% 68% / 0.3), transparent),
+    radial-gradient(1px 1px at 60% 80%, hsl(215 60% 60% / 0.2), transparent),
+    radial-gradient(2px 2px at 90% 85%, hsl(255 65% 72% / 0.35), transparent),
+    radial-gradient(1px 1px at 5% 50%, hsl(320 45% 72% / 0.3), transparent),
+    radial-gradient(1px 1px at 40% 65%, hsl(255 55% 68% / 0.2), transparent),
+    radial-gradient(1.5px 1.5px at 75% 45%, hsl(215 60% 70% / 0.3), transparent),
+    radial-gradient(1px 1px at 95% 15%, hsl(275 55% 65% / 0.25), transparent),
+    radial-gradient(1.5px 1.5px at 50% 30%, hsl(255 60% 60% / 0.3), transparent);
+  animation: twinkle-light 5s ease-in-out infinite;
 }
 
 .galaxy-stars::after {
   background-image:
-    radial-gradient(1px 1px at 8% 22%, hsl(0 0% 100% / 0.5), transparent),
-    radial-gradient(1px 1px at 18% 58%, hsl(260 60% 85% / 0.4), transparent),
-    radial-gradient(1.5px 1.5px at 33% 12%, hsl(0 0% 100% / 0.7), transparent),
-    radial-gradient(1px 1px at 48% 72%, hsl(0 0% 100% / 0.3), transparent),
-    radial-gradient(1px 1px at 62% 38%, hsl(220 70% 80% / 0.5), transparent),
-    radial-gradient(1px 1px at 78% 82%, hsl(0 0% 100% / 0.4), transparent),
-    radial-gradient(1.5px 1.5px at 88% 48%, hsl(260 80% 80% / 0.6), transparent),
-    radial-gradient(1px 1px at 42% 92%, hsl(0 0% 100% / 0.35), transparent);
-  animation: twinkle 6s ease-in-out infinite reverse;
-  animation-delay: 2s;
+    radial-gradient(1px 1px at 8% 22%, hsl(275 60% 68% / 0.25), transparent),
+    radial-gradient(1.5px 1.5px at 18% 58%, hsl(255 55% 65% / 0.3), transparent),
+    radial-gradient(2px 2px at 33% 12%, hsl(215 65% 62% / 0.35), transparent),
+    radial-gradient(1px 1px at 48% 72%, hsl(320 50% 70% / 0.2), transparent),
+    radial-gradient(1.5px 1.5px at 62% 38%, hsl(255 60% 68% / 0.3), transparent),
+    radial-gradient(1px 1px at 78% 82%, hsl(215 55% 65% / 0.25), transparent),
+    radial-gradient(2px 2px at 88% 48%, hsl(275 65% 72% / 0.35), transparent),
+    radial-gradient(1px 1px at 42% 92%, hsl(255 50% 60% / 0.2), transparent);
+  animation: twinkle-light 7s ease-in-out infinite reverse;
+  animation-delay: 2.5s;
 }
 
 @layer utilities {
@@ -205,34 +206,41 @@
     scrollbar-width: none;
   }
 
-  /* Galaxy glow effects */
+  /* Galaxy glow effects — light theme */
   .glow-primary {
-    box-shadow: 0 0 12px hsl(260 70% 58% / 0.4), 0 0 30px hsl(260 70% 58% / 0.15);
+    box-shadow: 0 0 10px hsl(255 65% 58% / 0.25), 0 0 25px hsl(255 65% 58% / 0.1);
   }
   .glow-primary-lg {
-    box-shadow: 0 0 20px hsl(260 70% 58% / 0.5), 0 0 50px hsl(260 70% 58% / 0.2);
+    box-shadow: 0 0 16px hsl(255 65% 58% / 0.3), 0 0 40px hsl(255 65% 58% / 0.12);
   }
   .glow-blue {
-    box-shadow: 0 0 12px hsl(220 80% 55% / 0.4), 0 0 30px hsl(220 80% 55% / 0.15);
+    box-shadow: 0 0 10px hsl(215 75% 58% / 0.25), 0 0 25px hsl(215 75% 58% / 0.1);
   }
   .glow-border {
-    border-color: hsl(260 70% 58% / 0.3);
-    box-shadow: 0 0 8px hsl(260 70% 58% / 0.15), inset 0 0 8px hsl(260 70% 58% / 0.05);
+    border-color: hsl(255 65% 58% / 0.25);
+    box-shadow: 0 0 8px hsl(255 65% 58% / 0.1), inset 0 0 8px hsl(255 65% 58% / 0.03);
   }
 
-  /* Glass morphism for space UI */
+  /* Glass morphism — light cosmic */
   .glass-panel {
-    background: hsl(240 18% 8% / 0.7);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid hsl(260 70% 58% / 0.1);
+    background: hsl(260 40% 99% / 0.75);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid hsl(255 40% 85% / 0.5);
   }
 
   .glass-search {
-    background: hsl(240 18% 12% / 0.6);
+    background: hsl(0 0% 100% / 0.55);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border: 1px solid hsl(260 70% 58% / 0.15);
+    border: 1px solid hsl(255 50% 80% / 0.3);
+  }
+
+  .glass-card {
+    background: hsl(0 0% 100% / 0.6);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid hsl(255 40% 85% / 0.4);
   }
 
   /* Skeleton loading */
