@@ -20,18 +20,49 @@ const Index = () => {
 
   const { location, detectLocation, setManualLocation, searchCities } = useUserLocation();
 
-  // Sort listings by proximity to selected location (simple city-name matching)
-  const sortByLocation = (items: Listing[]) => {
-    if (!location.city) return items;
-    const city = location.city.toLowerCase();
+  // Smart ranking algorithm: considers location match, completeness, recency, and seller quality
+  const smartRank = (items: Listing[]) => {
+    const now = Date.now();
+    const city = (location.city || "").toLowerCase();
+    
     return [...items].sort((a, b) => {
-      const aMatch = a.location.toLowerCase().includes(city) ? 0 : 1;
-      const bMatch = b.location.toLowerCase().includes(city) ? 0 : 1;
-      return aMatch - bMatch;
+      let scoreA = 0, scoreB = 0;
+      
+      // Location proximity boost (30 pts)
+      if (city) {
+        if (a.location.toLowerCase().includes(city)) scoreA += 30;
+        if (b.location.toLowerCase().includes(city)) scoreB += 30;
+      }
+      
+      // Listing completeness (20 pts): has images, description, brand
+      const completenessA = (a.images?.length > 0 ? 8 : 0) + (a.description?.length > 20 ? 6 : 0) + (a.brand ? 6 : 0);
+      const completenessB = (b.images?.length > 0 ? 8 : 0) + (b.description?.length > 20 ? 6 : 0) + (b.brand ? 6 : 0);
+      scoreA += completenessA;
+      scoreB += completenessB;
+      
+      // Recency boost (25 pts): newer listings score higher, decays over 14 days
+      const ageA = Math.max(0, 1 - (now - new Date(a.createdAt).getTime()) / (14 * 86400000));
+      const ageB = Math.max(0, 1 - (now - new Date(b.createdAt).getTime()) / (14 * 86400000));
+      scoreA += ageA * 25;
+      scoreB += ageB * 25;
+      
+      // Seller verification boost (15 pts)
+      if (a.seller?.verified) scoreA += 15;
+      if (b.seller?.verified) scoreB += 15;
+      
+      // Price reasonableness small boost (5 pts)
+      if (a.price < 5000) scoreA += 5;
+      if (b.price < 5000) scoreB += 5;
+      
+      // Fair exposure for new sellers: slight randomization (5 pts)
+      scoreA += Math.random() * 5;
+      scoreB += Math.random() * 5;
+      
+      return scoreB - scoreA;
     });
   };
 
-  const filtered = sortByLocation(
+  const filtered = smartRank(
     activeCategory ? listings.filter((l) => l.category === activeCategory) : listings
   );
 

@@ -88,11 +88,14 @@ const MessagesPage = () => {
   });
 
   if (activeChat) {
+    const otherUserId = activeChat.buyer_id === user?.id ? activeChat.seller_id : activeChat.buyer_id;
     return (
       <ChatWindow
         chatRequestId={activeChat.id}
+        otherUserId={otherUserId}
         otherUserName={activeChat.other_name || "User"}
         listingTitle={activeChat.listing_title || ""}
+        listingId={activeChat.listing_id}
         onBack={() => { setActiveChat(null); fetchRequests(); }}
       />
     );

@@ -32,6 +32,7 @@ import AdminCompaniesPage from "./pages/AdminCompaniesPage";
 import SellerPayoutPage from "./pages/SellerPayoutPage";
 import AdminTransactionsPage from "./pages/AdminTransactionsPage";
 import AdminReturnsPage from "./pages/AdminReturnsPage";
+import PoliciesPage from "./pages/PoliciesPage";
 
 const queryClient = new QueryClient();
 
@@ -75,6 +76,7 @@ const AppRoutes = () => {
           <Route path="/payout-details" element={<SellerPayoutPage />} />
           <Route path="/admin/transactions" element={<AdminTransactionsPage />} />
           <Route path="/returns" element={<AdminReturnsPage />} />
+          <Route path="/policies" element={<PoliciesPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <BottomTabBar />

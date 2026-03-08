@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Settings, ChevronRight, Package, Heart, Star, Shield, Crown, LogOut, BadgeCheck, ShoppingBag, BarChart3, Bell, HelpCircle, Moon, Pencil, MessageSquare, Wallet, Receipt, RotateCcw } from "lucide-react";
+import { Settings, ChevronRight, Package, Heart, Star, Shield, Crown, LogOut, BadgeCheck, ShoppingBag, BarChart3, Bell, HelpCircle, Moon, Pencil, MessageSquare, Wallet, Receipt, RotateCcw, ScrollText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/hooks/useAuth";
@@ -84,6 +84,7 @@ const ProfilePage = () => {
       title: "Support",
       items: [
         { icon: HelpCircle, label: "Help & Support", route: "/help" },
+        { icon: ScrollText, label: "Marketplace Policies", route: "/policies" },
         { icon: Settings, label: "Settings", route: "/settings" },
       ],
     },

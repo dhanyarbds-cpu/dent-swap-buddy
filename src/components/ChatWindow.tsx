@@ -1,14 +1,24 @@
 import { useState, useEffect, useRef } from "react";
-import { ArrowLeft, Send, IndianRupee, Check, CheckCheck, ShieldAlert } from "lucide-react";
+import { ArrowLeft, Send, IndianRupee, Check, CheckCheck, ShieldAlert, Flag, Ban, MoreVertical } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import ReportUserDialog from "@/components/ReportUserDialog";
+import { useToast } from "@/hooks/use-toast";
 
 interface ChatWindowProps {
   chatRequestId: string;
+  otherUserId: string;
   otherUserName: string;
   listingTitle: string;
+  listingId?: string;
   onBack: () => void;
 }
 
@@ -42,16 +52,38 @@ function detectSuspiciousContent(text: string): string | null {
   return null;
 }
 
+// Spam detection
+function isSpamMessage(content: string, recentMessages: Message[], userId: string): boolean {
+  const userRecent = recentMessages.filter(m => m.sender_id === userId).slice(-5);
+  // Check for repeated identical messages
+  const duplicateCount = userRecent.filter(m => m.content.toLowerCase().trim() === content.toLowerCase().trim()).length;
+  if (duplicateCount >= 2) return true;
+  // Check for very short repetitive messages like "hi" "hello"
+  if (content.trim().length <= 3 && userRecent.filter(m => m.content.trim().length <= 3).length >= 3) return true;
+  return false;
+}
+
+const PRESET_MESSAGES = [
+  "Is this still available?",
+  "What is the final price?",
+  "Can you share more photos?",
+  "Where is the pickup location?",
+  "What's the condition of the item?",
+];
+
 const SAFETY_BANNER = "Never share OTP, bank details, or make advance payments outside the platform.";
 
-const ChatWindow = ({ chatRequestId, otherUserName, listingTitle, onBack }: ChatWindowProps) => {
+const ChatWindow = ({ chatRequestId, otherUserId, otherUserName, listingTitle, listingId, onBack }: ChatWindowProps) => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [showPriceOffer, setShowPriceOffer] = useState(false);
+  const [showPresets, setShowPresets] = useState(false);
   const [priceOffer, setPriceOffer] = useState("");
   const [sending, setSending] = useState(false);
   const [inputWarning, setInputWarning] = useState<string | null>(null);
+  const [isBlocked, setIsBlocked] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -84,7 +116,6 @@ const ChatWindow = ({ chatRequestId, otherUserName, listingTitle, onBack }: Chat
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Check input for suspicious content as user types
   useEffect(() => {
     if (newMessage.length > 5) {
       const warning = detectSuspiciousContent(newMessage);
@@ -96,6 +127,11 @@ const ChatWindow = ({ chatRequestId, otherUserName, listingTitle, onBack }: Chat
 
   const sendMessage = async (type: string = "text", priceAmount?: number) => {
     if (!user) return;
+    if (isBlocked) {
+      toast({ title: "User blocked", description: "Unblock this user to send messages.", variant: "destructive" });
+      return;
+    }
+
     const content = type === "price_offer"
       ? `Offered ₹${priceAmount?.toLocaleString("en-IN")}`
       : type === "price_accepted"
@@ -103,6 +139,12 @@ const ChatWindow = ({ chatRequestId, otherUserName, listingTitle, onBack }: Chat
       : newMessage.trim();
 
     if (!content) return;
+
+    // Spam check
+    if (type === "text" && isSpamMessage(content, messages, user.id)) {
+      toast({ title: "Slow down", description: "Please avoid sending repetitive messages.", variant: "destructive" });
+      return;
+    }
 
     setSending(true);
     await supabase.from("chat_messages").insert({
@@ -114,6 +156,7 @@ const ChatWindow = ({ chatRequestId, otherUserName, listingTitle, onBack }: Chat
     });
     setNewMessage("");
     setShowPriceOffer(false);
+    setShowPresets(false);
     setPriceOffer("");
     setSending(false);
     setInputWarning(null);
@@ -127,10 +170,17 @@ const ChatWindow = ({ chatRequestId, otherUserName, listingTitle, onBack }: Chat
     return new Date(date).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
   };
 
-  // Check if a received message is suspicious
   const getMessageWarning = (msg: Message): string | null => {
     if (msg.sender_id === user?.id) return null;
     return detectSuspiciousContent(msg.content);
+  };
+
+  const handleBlock = () => {
+    setIsBlocked(!isBlocked);
+    toast({
+      title: isBlocked ? "User unblocked" : "User blocked",
+      description: isBlocked ? "You can now receive messages." : "You won't receive messages from this user.",
+    });
   };
 
   return (
@@ -149,8 +199,26 @@ const ChatWindow = ({ chatRequestId, otherUserName, listingTitle, onBack }: Chat
           className="rounded-xl bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary"
         >
           <IndianRupee className="mr-1 inline h-3 w-3" />
-          Offer Price
+          Offer
         </button>
+        {/* More menu: Report + Block */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="rounded-full p-1.5 text-muted-foreground hover:bg-muted">
+              <MoreVertical className="h-5 w-5" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <ReportUserDialog reportedUserId={otherUserId} reportedUserName={otherUserName} listingId={listingId}>
+              <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="gap-2 text-destructive">
+                <Flag className="h-4 w-4" /> Report User
+              </DropdownMenuItem>
+            </ReportUserDialog>
+            <DropdownMenuItem onClick={handleBlock} className="gap-2">
+              <Ban className="h-4 w-4" /> {isBlocked ? "Unblock User" : "Block User"}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </header>
 
       {/* Safety banner */}
@@ -158,6 +226,14 @@ const ChatWindow = ({ chatRequestId, otherUserName, listingTitle, onBack }: Chat
         <ShieldAlert className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
         <p className="text-[11px] text-amber-700 dark:text-amber-400 font-medium">{SAFETY_BANNER}</p>
       </div>
+
+      {/* Blocked banner */}
+      {isBlocked && (
+        <div className="flex items-center gap-2 bg-destructive/10 px-4 py-2 border-b border-destructive/20">
+          <Ban className="h-4 w-4 text-destructive shrink-0" />
+          <p className="text-[11px] text-destructive font-medium">You have blocked this user. <button onClick={handleBlock} className="underline">Unblock</button></p>
+        </div>
+      )}
 
       {/* Price offer bar */}
       {showPriceOffer && (
@@ -182,6 +258,11 @@ const ChatWindow = ({ chatRequestId, otherUserName, listingTitle, onBack }: Chat
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+        {messages.length === 0 && (
+          <div className="text-center py-8">
+            <p className="text-sm text-muted-foreground">Start the conversation!</p>
+          </div>
+        )}
         {messages.map((msg) => {
           const isMe = msg.sender_id === user?.id;
           const isPriceOffer = msg.message_type === "price_offer";
@@ -222,7 +303,6 @@ const ChatWindow = ({ chatRequestId, otherUserName, listingTitle, onBack }: Chat
                   )}
                 </div>
               </div>
-              {/* Scam warning for received messages */}
               {warning && (
                 <div className={`mt-1 flex items-start gap-1.5 ${isMe ? "justify-end" : "justify-start"}`}>
                   <div className="flex items-center gap-1.5 rounded-lg bg-destructive/10 px-2.5 py-1.5 max-w-[75%]">
@@ -237,6 +317,23 @@ const ChatWindow = ({ chatRequestId, otherUserName, listingTitle, onBack }: Chat
         <div ref={bottomRef} />
       </div>
 
+      {/* Preset quick messages */}
+      {showPresets && (
+        <div className="border-t border-border bg-card px-4 py-2">
+          <div className="flex flex-wrap gap-1.5">
+            {PRESET_MESSAGES.map((preset) => (
+              <button
+                key={preset}
+                onClick={() => { setNewMessage(preset); setShowPresets(false); }}
+                className="rounded-full bg-secondary px-3 py-1.5 text-[11px] font-medium text-foreground hover:bg-secondary/80 transition"
+              >
+                {preset}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Input warning */}
       {inputWarning && (
         <div className="flex items-center gap-2 bg-destructive/10 px-4 py-2 border-t border-destructive/20">
@@ -248,16 +345,23 @@ const ChatWindow = ({ chatRequestId, otherUserName, listingTitle, onBack }: Chat
       {/* Input */}
       <div className="border-t border-border bg-card px-4 py-3">
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowPresets(!showPresets)}
+            className={`shrink-0 rounded-xl px-2.5 py-2 text-[10px] font-semibold transition ${showPresets ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"}`}
+          >
+            Quick
+          </button>
           <Input
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
-            placeholder="Type a message..."
+            placeholder={isBlocked ? "User blocked" : "Type a message..."}
             className="flex-1 rounded-xl"
+            disabled={isBlocked}
           />
           <Button
             onClick={() => sendMessage()}
-            disabled={sending || !newMessage.trim()}
+            disabled={sending || !newMessage.trim() || isBlocked}
             size="icon"
             className="dentzap-gradient h-10 w-10 rounded-xl text-primary-foreground"
           >
