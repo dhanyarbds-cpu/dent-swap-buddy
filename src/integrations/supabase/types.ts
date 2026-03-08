@@ -843,6 +843,8 @@ export type Database = {
           is_elite: boolean
           location: string
           phone: string | null
+          stripe_account_id: string | null
+          stripe_onboarding_complete: boolean | null
           updated_at: string
           user_id: string
           username: string | null
@@ -861,6 +863,8 @@ export type Database = {
           is_elite?: boolean
           location?: string
           phone?: string | null
+          stripe_account_id?: string | null
+          stripe_onboarding_complete?: boolean | null
           updated_at?: string
           user_id: string
           username?: string | null
@@ -879,6 +883,8 @@ export type Database = {
           is_elite?: boolean
           location?: string
           phone?: string | null
+          stripe_account_id?: string | null
+          stripe_onboarding_complete?: boolean | null
           updated_at?: string
           user_id?: string
           username?: string | null
