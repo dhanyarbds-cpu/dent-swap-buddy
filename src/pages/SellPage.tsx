@@ -232,6 +232,14 @@ const SellPage = () => {
                 <div className={`h-5 w-5 rounded-full bg-primary-foreground shadow-sm transition-transform ${form.negotiable ? "translate-x-5" : "translate-x-0"}`} />
               </div>
             </button>
+
+            {/* Commission Info */}
+            <div className="flex items-start gap-3 rounded-2xl border border-border bg-secondary/30 p-4">
+              <span className="text-base">💡</span>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                A small platform commission (1.5%–2%) is charged on successful sales above ₹100. This helps keep the platform secure and running smoothly.
+              </p>
+            </div>
           </div>
         )}
 

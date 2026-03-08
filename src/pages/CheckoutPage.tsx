@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { ArrowLeft, ShieldCheck, CreditCard, Smartphone, Building2, Loader2, CheckCircle, Package } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ArrowLeft, ShieldCheck, CreditCard, Smartphone, Building2, Loader2, CheckCircle, Package, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/mockData";
 import { supabase } from "@/integrations/supabase/client";
@@ -40,6 +40,24 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
   const [selectedMethod, setSelectedMethod] = useState("upi");
   const [processing, setProcessing] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [commissionInfo, setCommissionInfo] = useState<{ rate: number; min_price: number } | null>(null);
+
+  // Fetch commission settings
+  useEffect(() => {
+    const fetchSettings = async () => {
+      const { data } = await supabase
+        .from("platform_settings")
+        .select("value")
+        .eq("key", "commission")
+        .single();
+      if (data?.value) setCommissionInfo(data.value as any);
+    };
+    fetchSettings();
+  }, []);
+
+  const platformFee = commissionInfo && listing.price > (commissionInfo.min_price || 100)
+    ? Math.round((listing.price * (commissionInfo.rate || 2)) / 100 * 100) / 100
+    : 0;
 
   const loadRazorpayScript = (): Promise<boolean> => {
     return new Promise((resolve) => {
@@ -60,7 +78,6 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
       const loaded = await loadRazorpayScript();
       if (!loaded) throw new Error("Failed to load payment gateway");
 
-      // Create order
       const { data, error } = await supabase.functions.invoke("create-order", {
         body: { listing_id: listing.id, amount: listing.price },
       });
@@ -192,10 +209,36 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
               </p>
             </div>
           </div>
-          <div className="mt-4 flex items-center justify-between border-t border-border pt-3">
-            <span className="text-sm font-medium text-muted-foreground">Total</span>
-            <span className="text-lg font-bold text-foreground">{formatPrice(listing.price)}</span>
+
+          {/* Price Breakdown */}
+          <div className="mt-4 space-y-2 border-t border-border pt-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Product Price</span>
+              <span className="text-sm font-medium text-foreground">{formatPrice(listing.price)}</span>
+            </div>
+            {platformFee > 0 && (
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-1 text-sm text-muted-foreground">
+                  Platform Fee
+                  <span className="text-[10px] text-muted-foreground/60">({commissionInfo?.rate}%)</span>
+                </span>
+                <span className="text-sm font-medium text-muted-foreground">{formatPrice(platformFee)}</span>
+              </div>
+            )}
+            <div className="flex items-center justify-between border-t border-dashed border-border pt-2">
+              <span className="text-sm font-semibold text-foreground">Total</span>
+              <span className="text-lg font-bold text-foreground">{formatPrice(listing.price)}</span>
+            </div>
           </div>
+
+          {platformFee > 0 && (
+            <div className="mt-2 flex items-start gap-2 rounded-xl bg-secondary/50 px-3 py-2">
+              <Info className="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground" />
+              <p className="text-[10px] text-muted-foreground leading-relaxed">
+                A {commissionInfo?.rate}% platform fee ({formatPrice(platformFee)}) is included. The seller receives {formatPrice(listing.price - platformFee)}.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Payment Method */}
