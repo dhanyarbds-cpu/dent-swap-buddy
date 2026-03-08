@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from "react";
-import { ImagePlus, X, Loader2, GripVertical, ShieldCheck, ShieldAlert } from "lucide-react";
+import { ImagePlus, X, Loader2, GripVertical, ShieldCheck, ShieldAlert, AlertTriangle, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -8,6 +8,20 @@ interface ImageUploaderProps {
   images: string[];
   onImagesChange: (images: string[]) => void;
   maxImages?: number;
+  onConditionDetected?: (rating: string, details: string) => void;
+}
+
+interface ValidationResult {
+  approved: boolean;
+  reason: string;
+  confidence: number;
+  category: string;
+  condition_rating?: string;
+  condition_details?: string;
+  counterfeit_flag?: boolean;
+  counterfeit_reason?: string;
+  improvement_suggestions?: string[];
+  needs_admin_review?: boolean;
 }
 
 const MAX_SIZE = 1920;
@@ -39,7 +53,7 @@ async function compressImage(file: File): Promise<Blob> {
   });
 }
 
-async function validateImage(imageUrl: string): Promise<{ approved: boolean; reason: string; confidence: number; category: string }> {
+async function validateImage(imageUrl: string): Promise<ValidationResult> {
   const { data, error } = await supabase.functions.invoke("validate-image", {
     body: { image_url: imageUrl },
   });
@@ -51,13 +65,22 @@ async function validateImage(imageUrl: string): Promise<{ approved: boolean; rea
 }
 
 const rejectionMessages: Record<string, string> = {
-  human: "Human photos are not allowed. Upload product images only.",
-  inappropriate: "This image contains inappropriate content.",
-  irrelevant: "This image does not appear to be a product listing.",
+  human: "Human photos are not allowed. Please upload product images only.",
+  inappropriate: "This image contains inappropriate content and cannot be used.",
+  irrelevant: "This image does not appear to be a relevant product listing.",
   low_quality: "This image is too blurry or low quality. Please upload a clearer photo.",
+  stock_image: "Stock images are not allowed. Please upload original photos of your actual product.",
+  consumable: "Consumable/disposable products cannot be listed on this platform.",
 };
 
-const ImageUploader = ({ images, onImagesChange, maxImages = 8 }: ImageUploaderProps) => {
+const conditionColors: Record<string, string> = {
+  Excellent: "text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-950/30",
+  Good: "text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-950/30",
+  Fair: "text-amber-600 bg-amber-50 dark:text-amber-400 dark:bg-amber-950/30",
+  Poor: "text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-950/30",
+};
+
+const ImageUploader = ({ images, onImagesChange, maxImages = 8, onConditionDetected }: ImageUploaderProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -65,6 +88,8 @@ const ImageUploader = ({ images, onImagesChange, maxImages = 8 }: ImageUploaderP
   const [validatingIndex, setValidatingIndex] = useState<number | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number[]>([]);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [conditionRatings, setConditionRatings] = useState<Record<string, { rating: string; details: string }>>({});
+  const [showSuggestions, setShowSuggestions] = useState<string[] | null>(null);
 
   const getPublicUrl = (path: string) => {
     const { data } = supabase.storage.from("listing-images").getPublicUrl(path);
@@ -115,22 +140,53 @@ const ImageUploader = ({ images, onImagesChange, maxImages = 8 }: ImageUploaderP
 
         const publicUrl = getPublicUrl(fileName);
 
-        // AI Validation
+        // AI Validation with condition assessment
         setValidatingIndex(i);
         const validation = await validateImage(publicUrl);
         setValidatingIndex(null);
 
         if (!validation.approved) {
-          // Delete the rejected image from storage
           await supabase.storage.from("listing-images").remove([fileName]);
           const msg = rejectionMessages[validation.category] || validation.reason;
           toast({
-            title: "Image Rejected",
+            title: "❌ Image Rejected",
             description: msg,
             variant: "destructive",
           });
+
+          // Show improvement suggestions if available
+          if (validation.improvement_suggestions && validation.improvement_suggestions.length > 0) {
+            setShowSuggestions(validation.improvement_suggestions);
+            setTimeout(() => setShowSuggestions(null), 8000);
+          }
+
           setUploadProgress((prev) => { const n = [...prev]; n[i] = 0; return n; });
           continue;
+        }
+
+        // Store condition rating
+        if (validation.condition_rating && validation.condition_rating !== "Unknown") {
+          setConditionRatings((prev) => ({
+            ...prev,
+            [publicUrl]: { rating: validation.condition_rating!, details: validation.condition_details || "" },
+          }));
+          onConditionDetected?.(validation.condition_rating, validation.condition_details || "");
+        }
+
+        // Handle counterfeit flag
+        if (validation.counterfeit_flag) {
+          toast({
+            title: "⚠️ Authenticity Warning",
+            description: validation.counterfeit_reason || "This product has been flagged for admin review.",
+          });
+        }
+
+        // Handle admin review needed
+        if (validation.needs_admin_review) {
+          toast({
+            title: "Under Review",
+            description: "This image has been flagged for additional review. Your listing may take longer to go live.",
+          });
         }
 
         setUploadProgress((prev) => { const n = [...prev]; n[i] = 100; return n; });
@@ -143,14 +199,20 @@ const ImageUploader = ({ images, onImagesChange, maxImages = 8 }: ImageUploaderP
 
     if (newUrls.length > 0) {
       onImagesChange([...images, ...newUrls]);
-      toast({ title: `${newUrls.length} image(s) uploaded ✓` });
+      toast({ title: `${newUrls.length} image(s) verified & uploaded ✓` });
     }
 
     setUploading(false);
     setUploadProgress([]);
-  }, [images, maxImages, user, onImagesChange, toast]);
+  }, [images, maxImages, user, onImagesChange, toast, onConditionDetected]);
 
   const removeImage = (index: number) => {
+    const url = images[index];
+    setConditionRatings((prev) => {
+      const next = { ...prev };
+      delete next[url];
+      return next;
+    });
     onImagesChange(images.filter((_, i) => i !== index));
   };
 
@@ -172,7 +234,7 @@ const ImageUploader = ({ images, onImagesChange, maxImages = 8 }: ImageUploaderP
         <div>
           <p className="text-base font-bold text-foreground">Product Photos</p>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            {images.length}/{maxImages} photos · Drag to reorder
+            {images.length}/{maxImages} photos · AI verified · Drag to reorder
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -186,6 +248,20 @@ const ImageUploader = ({ images, onImagesChange, maxImages = 8 }: ImageUploaderP
           )}
         </div>
       </div>
+
+      {/* Improvement suggestions banner */}
+      {showSuggestions && (
+        <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 animate-fade-in">
+          <p className="text-xs font-semibold text-foreground mb-1.5 flex items-center gap-1.5">
+            <Star className="h-3.5 w-3.5 text-primary" /> Tips for better photos
+          </p>
+          <ul className="space-y-0.5">
+            {showSuggestions.map((s, i) => (
+              <li key={i} className="text-[11px] text-muted-foreground">• {s}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="grid grid-cols-4 gap-2">
         {/* Upload Button */}
@@ -213,39 +289,43 @@ const ImageUploader = ({ images, onImagesChange, maxImages = 8 }: ImageUploaderP
         )}
 
         {/* Image Previews */}
-        {images.map((url, i) => (
-          <div
-            key={url}
-            draggable
-            onDragStart={() => handleDragStart(i)}
-            onDragOver={(e) => handleDragOver(e, i)}
-            onDragEnd={handleDragEnd}
-            className={`group relative aspect-square overflow-hidden rounded-2xl border transition-all duration-200 ${
-              dragIndex === i ? "border-primary ring-2 ring-primary/20 scale-95" : "border-border"
-            }`}
-          >
-            <img
-              src={url}
-              alt={`Product ${i + 1}`}
-              className="h-full w-full object-cover"
-              loading="lazy"
-            />
-            {i === 0 && (
-              <div className="absolute bottom-1 left-1 rounded-md bg-primary px-1.5 py-0.5 text-[8px] font-bold text-primary-foreground">
-                Cover
-              </div>
-            )}
-            <button
-              onClick={() => removeImage(i)}
-              className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-foreground/70 text-background opacity-0 transition-opacity group-hover:opacity-100"
+        {images.map((url, i) => {
+          const condition = conditionRatings[url];
+          return (
+            <div
+              key={url}
+              draggable
+              onDragStart={() => handleDragStart(i)}
+              onDragOver={(e) => handleDragOver(e, i)}
+              onDragEnd={handleDragEnd}
+              className={`group relative aspect-square overflow-hidden rounded-2xl border transition-all duration-200 ${
+                dragIndex === i ? "border-primary ring-2 ring-primary/20 scale-95" : "border-border"
+              }`}
             >
-              <X className="h-3 w-3" />
-            </button>
-            <div className="absolute bottom-1 right-1 rounded-md bg-foreground/40 p-0.5 opacity-0 transition-opacity group-hover:opacity-100">
-              <GripVertical className="h-3 w-3 text-background" />
+              <img src={url} alt={`Product ${i + 1}`} className="h-full w-full object-cover" loading="lazy" />
+              {i === 0 && (
+                <div className="absolute bottom-1 left-1 rounded-md bg-primary px-1.5 py-0.5 text-[8px] font-bold text-primary-foreground">
+                  Cover
+                </div>
+              )}
+              {/* Condition badge */}
+              {condition && (
+                <div className={`absolute top-1 left-1 rounded-md px-1.5 py-0.5 text-[7px] font-bold ${conditionColors[condition.rating] || "text-muted-foreground bg-secondary"}`}>
+                  {condition.rating}
+                </div>
+              )}
+              <button
+                onClick={() => removeImage(i)}
+                className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-foreground/70 text-background opacity-0 transition-opacity group-hover:opacity-100"
+              >
+                <X className="h-3 w-3" />
+              </button>
+              <div className="absolute bottom-1 right-1 rounded-md bg-foreground/40 p-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+                <GripVertical className="h-3 w-3 text-background" />
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
 
         {/* Empty Slots */}
         {Array.from({ length: Math.max(0, Math.min(maxImages, 4) - images.length - 1) }).map((_, i) => (
@@ -259,17 +339,33 @@ const ImageUploader = ({ images, onImagesChange, maxImages = 8 }: ImageUploaderP
           <div className="flex gap-1">
             {uploadProgress.map((p, i) => (
               <div key={i} className="h-1 flex-1 overflow-hidden rounded-full bg-secondary">
-                <div
-                  className="h-full rounded-full bg-primary transition-all duration-300"
-                  style={{ width: `${p}%` }}
-                />
+                <div className="h-full rounded-full bg-primary transition-all duration-300" style={{ width: `${p}%` }} />
               </div>
             ))}
           </div>
           {validatingIndex !== null && (
             <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <ShieldCheck className="h-3.5 w-3.5 text-primary animate-pulse" />
-              AI scanning image for product relevance…
+              AI verifying image quality, content & condition…
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Condition summary */}
+      {Object.keys(conditionRatings).length > 0 && (
+        <div className="rounded-xl border border-border bg-secondary/30 p-3">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5">AI Condition Assessment</p>
+          <div className="flex flex-wrap gap-1.5">
+            {Object.values(conditionRatings).map((cr, i) => (
+              <span key={i} className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${conditionColors[cr.rating] || "text-muted-foreground bg-secondary"}`}>
+                {cr.rating}
+              </span>
+            ))}
+          </div>
+          {Object.values(conditionRatings)[0]?.details && (
+            <p className="mt-1.5 text-[11px] text-muted-foreground">
+              {Object.values(conditionRatings)[0].details}
             </p>
           )}
         </div>
