@@ -49,15 +49,8 @@ const CARD_METHOD = {
   tokenizationSpecification: TOKEN_PARAMS,
 };
 
-const UPI_METHOD = {
-  type: "UPI",
-  parameters: {
-    payeeVpa: "kharmugilanr2005@oksbi",
-    payeeName: "DentSwap",
-    referenceUrl: "https://dent-swap-buddy.lovable.app",
-    transactionReferenceId: `DS${Date.now()}`,
-  },
-};
+// UPI is only supported on Android Google Pay app, not web SDK
+// So we only use CARD method for web payments
 
 const GooglePayButton = ({ amount, onSuccess, onError, disabled }: GooglePayButtonProps) => {
   const buttonRef = useRef<HTMLDivElement>(null);
@@ -81,7 +74,7 @@ const GooglePayButton = ({ amount, onSuccess, onError, disabled }: GooglePayButt
       client
         .isReadyToPay({
           ...BASE_REQUEST,
-          allowedPaymentMethods: [BASE_CARD_METHOD, { type: "UPI" }],
+          allowedPaymentMethods: [BASE_CARD_METHOD],
         })
         .then((res: any) => {
           if (res.result) {
@@ -113,7 +106,7 @@ const GooglePayButton = ({ amount, onSuccess, onError, disabled }: GooglePayButt
 
     const paymentDataRequest = {
       ...BASE_REQUEST,
-      allowedPaymentMethods: [CARD_METHOD, UPI_METHOD],
+      allowedPaymentMethods: [CARD_METHOD],
       transactionInfo: {
         totalPriceStatus: "FINAL",
         totalPrice: amount.toFixed(2),
