@@ -239,6 +239,27 @@ const EliteDashboardPage = () => {
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 
+  // Payment success screen
+  if (paymentSuccess && !isElite) {
+    return (
+      <div className="safe-bottom flex min-h-screen flex-col items-center justify-center p-6 text-center animate-fade-in">
+        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 animate-glow-pulse">
+          <CheckCircle className="h-10 w-10 text-primary" />
+        </div>
+        <h1 className="mt-6 text-xl font-bold text-foreground">Payment Successful!</h1>
+        <p className="mt-2 text-sm text-muted-foreground max-w-[280px]">
+          Elite Membership Activated. Enjoy AI-powered alerts and priority features for 30 days!
+        </p>
+        <Button
+          onClick={() => window.location.reload()}
+          className="mt-6 w-full max-w-xs dentzap-gradient rounded-xl py-5 text-sm font-semibold text-primary-foreground"
+        >
+          <Crown className="mr-2 h-4 w-4" /> Go to Elite Dashboard
+        </Button>
+      </div>
+    );
+  }
+
   // Non-elite upgrade page
   if (!isElite) {
     return (
@@ -250,7 +271,7 @@ const EliteDashboardPage = () => {
           <h1 className="text-lg font-bold text-foreground">Elite Membership</h1>
         </header>
 
-        <div className="flex flex-col items-center px-6 py-16 text-center animate-fade-in">
+        <div className="flex flex-col items-center px-6 py-10 text-center animate-fade-in">
           <div className="flex h-20 w-20 items-center justify-center rounded-3xl dentzap-gradient dentzap-shadow-lg animate-glow-pulse">
             <Crown className="h-10 w-10 text-primary-foreground" />
           </div>
@@ -262,17 +283,19 @@ const EliteDashboardPage = () => {
           {/* Price Card */}
           <div className="mt-6 w-full max-w-sm rounded-2xl glass-card p-5 glow-border">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-lg font-bold text-foreground">₹100</p>
-                <p className="text-xs text-muted-foreground">per month · 30 days</p>
+              <div className="text-left">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Plan</p>
+                <p className="text-lg font-bold text-foreground mt-0.5">Elite Membership</p>
               </div>
-              <div className="rounded-full bg-primary/10 border border-primary/20 px-3 py-1">
-                <p className="text-xs font-bold text-primary">Best Value</p>
+              <div className="text-right">
+                <p className="text-2xl font-bold text-foreground">₹100</p>
+                <p className="text-[10px] text-muted-foreground">30 days</p>
               </div>
             </div>
           </div>
 
-          <div className="mt-6 w-full max-w-sm space-y-3">
+          {/* Features */}
+          <div className="mt-5 w-full max-w-sm space-y-2.5">
             {[
               { icon: Sparkles, text: "AI-powered product matching" },
               { icon: Bell, text: "Instant notifications for new listings" },
@@ -280,8 +303,8 @@ const EliteDashboardPage = () => {
               { icon: TrendingUp, text: "Priority search placement" },
               { icon: Shield, text: "Elite badge on your profile" },
             ].map((item) => (
-              <div key={item.text} className="flex items-center gap-3 rounded-2xl glass-card p-3.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
+              <div key={item.text} className="flex items-center gap-3 rounded-2xl glass-card p-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10">
                   <item.icon className="h-4 w-4 text-primary" />
                 </div>
                 <span className="text-sm font-medium text-foreground">{item.text}</span>
@@ -289,18 +312,55 @@ const EliteDashboardPage = () => {
             ))}
           </div>
 
+          {/* Payment Method Selection */}
+          <div className="mt-6 w-full max-w-sm">
+            <p className="mb-3 text-left text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Select Payment Method</p>
+            <div className="space-y-2">
+              {paymentMethods.map((method) => (
+                <button
+                  key={method.id}
+                  onClick={() => setSelectedMethod(method.id)}
+                  className={`flex w-full items-center gap-3 rounded-2xl border p-3.5 transition-all ${
+                    selectedMethod === method.id
+                      ? "border-primary bg-primary/5 ring-1 ring-primary/20"
+                      : "border-border glass-card"
+                  }`}
+                >
+                  <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${
+                    selectedMethod === method.id ? "bg-primary/10 text-primary" : "bg-secondary text-muted-foreground"
+                  }`}>
+                    <method.icon className="h-4 w-4" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <p className="text-sm font-semibold text-foreground">{method.label}</p>
+                    <p className="text-[10px] text-muted-foreground">{method.desc}</p>
+                  </div>
+                  <div className={`h-5 w-5 rounded-full border-2 ${
+                    selectedMethod === method.id ? "border-primary bg-primary" : "border-muted-foreground/30"
+                  }`}>
+                    {selectedMethod === method.id && (
+                      <div className="flex h-full items-center justify-center">
+                        <div className="h-2 w-2 rounded-full bg-primary-foreground" />
+                      </div>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
           <Button
             onClick={handlePurchase}
             disabled={purchasing}
-            className="mt-8 w-full max-w-sm gap-2 dentzap-gradient rounded-xl py-5 text-sm font-bold text-primary-foreground dentzap-shadow glow-primary"
+            className="mt-6 w-full max-w-sm gap-2 dentzap-gradient rounded-xl py-5 text-sm font-bold text-primary-foreground dentzap-shadow glow-primary"
           >
             {purchasing ? (
-              <><Loader2 className="h-4 w-4 animate-spin" /> Processing...</>
+              <><Loader2 className="h-4 w-4 animate-spin" /> Processing Payment...</>
             ) : (
-              <><Crown className="h-4 w-4" /> Upgrade to Elite · ₹100/month</>
+              <><Crown className="h-4 w-4" /> Pay ₹100 & Activate Elite</>
             )}
           </Button>
-          <p className="mt-3 text-[11px] text-muted-foreground">Auto-expires after 30 days. Cancel anytime.</p>
+          <p className="mt-3 text-[11px] text-muted-foreground">Secure payment via Razorpay. Auto-expires after 30 days.</p>
         </div>
       </div>
     );
