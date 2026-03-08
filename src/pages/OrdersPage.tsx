@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, ShoppingBag, Loader2, MessageSquare, Star, ShieldCheck, CheckCircle, MapPin, Truck, Package, AlertTriangle, RotateCcw } from "lucide-react";
+import { ArrowLeft, ShoppingBag, Loader2, MessageSquare, Star, ShieldCheck, CheckCircle, MapPin, Truck, Package, AlertTriangle, RotateCcw, ChevronDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -14,6 +14,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import RaiseComplaintDialog from "@/components/RaiseComplaintDialog";
 import ReturnRequestDialog from "@/components/ReturnRequestDialog";
 import OrderTrackingTimeline from "@/components/OrderTrackingTimeline";
@@ -31,6 +38,10 @@ interface Order {
   delivery_method: string;
   courier_name: string | null;
   tracking_number: string | null;
+  tracking_status: string;
+  estimated_delivery: string | null;
+  tracking_history: any[];
+  shipping_address: string | null;
   listing: {
     id: string;
     title: string;
@@ -59,6 +70,10 @@ const escrowLabels: Record<string, string> = {
   refunded: "Refunded",
 };
 
+const TRACKING_STATUSES_SHIPPING = ["pending", "packed", "shipped", "in_transit", "out_for_delivery", "delivered"];
+const TRACKING_STATUSES_PICKUP = ["pending", "confirmed", "ready", "delivered"];
+const COURIER_OPTIONS = ["India Post", "DTDC", "Blue Dart", "FedEx", "Delhivery", "Ekart", "Other"];
+
 const OrdersPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -66,37 +81,32 @@ const OrdersPage = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
-  const [trackingForm, setTrackingForm] = useState({ orderId: "", courier: "", tracking: "" });
+  const [trackingForm, setTrackingForm] = useState({ orderId: "", courier: "", tracking: "", estimatedDays: "" });
   const [trackingOpen, setTrackingOpen] = useState(false);
   const [savingTracking, setSavingTracking] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
     const fetchOrders = async () => {
-      // Fetch orders where user is buyer OR seller
       const { data: buyerOrders } = await supabase
         .from("orders")
-        .select("id, status, price, created_at, seller_id, buyer_id, escrow_status, razorpay_payment_id, payment_method, delivery_method, courier_name, tracking_number, tracking_status, estimated_delivery, tracking_history, listing:listings(id, title, images, category)")
+        .select("id, status, price, created_at, seller_id, buyer_id, escrow_status, razorpay_payment_id, payment_method, delivery_method, courier_name, tracking_number, tracking_status, estimated_delivery, tracking_history, shipping_address, listing:listings(id, title, images, category)")
         .eq("buyer_id", user.id)
         .order("created_at", { ascending: false });
 
       const { data: sellerOrders } = await supabase
         .from("orders")
-        .select("id, status, price, created_at, seller_id, buyer_id, escrow_status, razorpay_payment_id, payment_method, delivery_method, courier_name, tracking_number, tracking_status, estimated_delivery, tracking_history, listing:listings(id, title, images, category)")
+        .select("id, status, price, created_at, seller_id, buyer_id, escrow_status, razorpay_payment_id, payment_method, delivery_method, courier_name, tracking_number, tracking_status, estimated_delivery, tracking_history, shipping_address, listing:listings(id, title, images, category)")
         .eq("seller_id", user.id)
         .order("created_at", { ascending: false });
 
       const allOrders = [...(buyerOrders || []), ...(sellerOrders || [])];
-      // Deduplicate
       const uniqueMap = new Map(allOrders.map((o: any) => [o.id, o]));
       const unique = Array.from(uniqueMap.values());
 
-      // Fetch profiles for all counterparts
       const userIds = new Set<string>();
-      unique.forEach((o: any) => {
-        userIds.add(o.seller_id);
-        userIds.add(o.buyer_id);
-      });
+      unique.forEach((o: any) => { userIds.add(o.seller_id); userIds.add(o.buyer_id); });
       userIds.delete(user.id);
 
       const { data: profiles } = await supabase
@@ -109,6 +119,7 @@ const OrdersPage = () => {
       setOrders(
         unique.map((o: any) => ({
           ...o,
+          tracking_history: o.tracking_history || [],
           seller_profile: profileMap.get(o.seller_id) || null,
         }))
       );
@@ -141,12 +152,22 @@ const OrdersPage = () => {
     if (!trackingForm.courier || !trackingForm.tracking) return;
     setSavingTracking(true);
     try {
+      const estimatedDelivery = trackingForm.estimatedDays
+        ? new Date(Date.now() + parseInt(trackingForm.estimatedDays) * 86400000).toISOString()
+        : null;
+
       const { error } = await supabase
         .from("orders")
         .update({
           courier_name: trackingForm.courier,
           tracking_number: trackingForm.tracking,
           delivery_method: "shipping",
+          tracking_status: "shipped",
+          estimated_delivery: estimatedDelivery,
+          tracking_history: [
+            { status: "pending", timestamp: new Date().toISOString(), note: "Order placed" },
+            { status: "shipped", timestamp: new Date().toISOString(), note: `Shipped via ${trackingForm.courier}` },
+          ],
         })
         .eq("id", trackingForm.orderId)
         .eq("seller_id", user!.id);
@@ -156,20 +177,64 @@ const OrdersPage = () => {
       setOrders((prev) =>
         prev.map((o) =>
           o.id === trackingForm.orderId
-            ? { ...o, courier_name: trackingForm.courier, tracking_number: trackingForm.tracking, delivery_method: "shipping" }
+            ? {
+                ...o,
+                courier_name: trackingForm.courier,
+                tracking_number: trackingForm.tracking,
+                delivery_method: "shipping",
+                tracking_status: "shipped",
+                estimated_delivery: estimatedDelivery,
+              }
             : o
         )
       );
-      toast({ title: "Tracking Added ✓" });
+      toast({ title: "Tracking Added ✓", description: "Buyer will be notified." });
       setTrackingOpen(false);
-      setTrackingForm({ orderId: "", courier: "", tracking: "" });
+      setTrackingForm({ orderId: "", courier: "", tracking: "", estimatedDays: "" });
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     }
     setSavingTracking(false);
   };
 
+  const handleUpdateTrackingStatus = async (orderId: string, newStatus: string, deliveryMethod: string) => {
+    setUpdatingStatus(orderId);
+    try {
+      const order = orders.find((o) => o.id === orderId);
+      const existingHistory = Array.isArray(order?.tracking_history) ? order.tracking_history : [];
+      const newHistory = [
+        ...existingHistory,
+        { status: newStatus, timestamp: new Date().toISOString(), note: `Status updated to ${newStatus}` },
+      ];
+
+      const { error } = await supabase
+        .from("orders")
+        .update({ tracking_status: newStatus, tracking_history: newHistory })
+        .eq("id", orderId)
+        .eq("seller_id", user!.id);
+
+      if (error) throw error;
+
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === orderId ? { ...o, tracking_status: newStatus, tracking_history: newHistory } : o
+        )
+      );
+      toast({ title: "Status Updated ✓" });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+    setUpdatingStatus(null);
+  };
+
   const isSeller = (order: Order) => order.seller_id === user?.id;
+
+  const getNextStatuses = (order: Order) => {
+    const statuses = order.delivery_method === "shipping" ? TRACKING_STATUSES_SHIPPING : TRACKING_STATUSES_PICKUP;
+    const currentIdx = statuses.indexOf(order.tracking_status);
+    if (currentIdx < 0) return statuses.slice(1);
+    return statuses.slice(currentIdx + 1);
+  };
 
   return (
     <div className="safe-bottom min-h-screen bg-background">
@@ -207,6 +272,7 @@ const OrdersPage = () => {
               const listing = order.listing;
               const img = listing?.images?.[0];
               const seller = isSeller(order);
+              const nextStatuses = getNextStatuses(order);
               return (
                 <div
                   key={order.id}
@@ -248,30 +314,44 @@ const OrdersPage = () => {
                         <MapPin className="h-3 w-3" /> Local Pickup
                       </span>
                     )}
+                    {order.shipping_address && order.delivery_method === "shipping" && (
+                      <span className="text-[10px] text-muted-foreground truncate max-w-[150px]">
+                        📍 {order.shipping_address}
+                      </span>
+                    )}
                   </div>
 
-                  {/* Smart Tracking Timeline */}
-                  {order.delivery_method === "shipping" || order.tracking_number ? (
-                    <OrderTrackingTimeline
-                      trackingStatus={(order as any).tracking_status || (order.status === "completed" ? "delivered" : "pending")}
-                      deliveryMethod={order.delivery_method}
-                      estimatedDelivery={(order as any).estimated_delivery}
-                      trackingHistory={(order as any).tracking_history || []}
-                      courierName={order.courier_name}
-                      trackingNumber={order.tracking_number}
-                    />
-                  ) : order.courier_name && order.tracking_number ? (
-                    <div className="rounded-xl bg-secondary/50 px-3 py-2 space-y-1">
-                      <div className="flex items-center gap-2">
-                        <Package className="h-3.5 w-3.5 text-primary" />
-                        <span className="text-[11px] font-semibold text-foreground">Shipment Tracking</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] text-muted-foreground">Courier: <span className="font-medium text-foreground">{order.courier_name}</span></span>
-                        <span className="text-[10px] font-mono text-primary">{order.tracking_number}</span>
-                      </div>
+                  {/* Tracking Timeline */}
+                  <OrderTrackingTimeline
+                    trackingStatus={order.tracking_status || (order.status === "completed" ? "delivered" : "pending")}
+                    deliveryMethod={order.delivery_method}
+                    estimatedDelivery={order.estimated_delivery}
+                    trackingHistory={order.tracking_history || []}
+                    courierName={order.courier_name}
+                    trackingNumber={order.tracking_number}
+                  />
+
+                  {/* Seller: Update Tracking Status */}
+                  {seller && order.escrow_status === "held" && nextStatuses.length > 0 && order.status !== "completed" && (
+                    <div className="flex items-center gap-2">
+                      <Select
+                        onValueChange={(val) => handleUpdateTrackingStatus(order.id, val, order.delivery_method)}
+                        disabled={updatingStatus === order.id}
+                      >
+                        <SelectTrigger className="h-8 rounded-xl text-[11px] flex-1">
+                          <SelectValue placeholder="Update delivery status..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {nextStatuses.map((s) => (
+                            <SelectItem key={s} value={s} className="text-xs capitalize">
+                              {s.replace(/_/g, " ")}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {updatingStatus === order.id && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
                     </div>
-                  ) : null}
+                  )}
 
                   {/* Escrow Status */}
                   <div className="flex items-center gap-2 rounded-xl bg-secondary/50 px-3 py-2">
@@ -301,7 +381,7 @@ const OrdersPage = () => {
                       </div>
                     )}
                     {seller && <span className="text-[10px] text-muted-foreground">You are the seller</span>}
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-wrap">
                       <button
                         onClick={() => navigate("/messages")}
                         className="flex items-center gap-1 text-[10px] font-medium text-primary hover:underline"
@@ -313,7 +393,7 @@ const OrdersPage = () => {
                       {seller && order.escrow_status === "held" && !order.tracking_number && (
                         <Dialog open={trackingOpen && trackingForm.orderId === order.id} onOpenChange={(open) => {
                           setTrackingOpen(open);
-                          if (open) setTrackingForm({ orderId: order.id, courier: "", tracking: "" });
+                          if (open) setTrackingForm({ orderId: order.id, courier: "", tracking: "", estimatedDays: "" });
                         }}>
                           <DialogTrigger asChild>
                             <button className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-semibold text-primary hover:bg-primary/20">
@@ -326,13 +406,17 @@ const OrdersPage = () => {
                             </DialogHeader>
                             <div className="space-y-4 pt-2">
                               <div>
-                                <label className="mb-1 block text-sm font-medium text-foreground">Courier Name</label>
-                                <Input
-                                  value={trackingForm.courier}
-                                  onChange={(e) => setTrackingForm((f) => ({ ...f, courier: e.target.value }))}
-                                  placeholder="e.g. India Post, DTDC, Delhivery"
-                                  className="rounded-xl"
-                                />
+                                <label className="mb-1 block text-sm font-medium text-foreground">Courier Service</label>
+                                <Select onValueChange={(val) => setTrackingForm((f) => ({ ...f, courier: val }))}>
+                                  <SelectTrigger className="rounded-xl">
+                                    <SelectValue placeholder="Select courier..." />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {COURIER_OPTIONS.map((c) => (
+                                      <SelectItem key={c} value={c}>{c}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
                               </div>
                               <div>
                                 <label className="mb-1 block text-sm font-medium text-foreground">Tracking Number</label>
@@ -343,12 +427,22 @@ const OrdersPage = () => {
                                   className="rounded-xl"
                                 />
                               </div>
+                              <div>
+                                <label className="mb-1 block text-sm font-medium text-foreground">Estimated Delivery (days)</label>
+                                <Input
+                                  type="number"
+                                  value={trackingForm.estimatedDays}
+                                  onChange={(e) => setTrackingForm((f) => ({ ...f, estimatedDays: e.target.value }))}
+                                  placeholder="e.g. 5"
+                                  className="rounded-xl"
+                                />
+                              </div>
                               <Button
                                 onClick={handleAddTracking}
                                 disabled={!trackingForm.courier || !trackingForm.tracking || savingTracking}
                                 className="w-full dentzap-gradient rounded-xl py-5 text-sm font-semibold text-primary-foreground"
                               >
-                                {savingTracking ? "Saving..." : "Save Tracking"}
+                                {savingTracking ? "Saving..." : "Save & Notify Buyer"}
                               </Button>
                             </div>
                           </DialogContent>
@@ -367,7 +461,7 @@ const OrdersPage = () => {
                           ) : (
                             <CheckCircle className="h-3 w-3" />
                           )}
-                          Confirm Delivery
+                          Confirm {order.delivery_method === "shipping" ? "Delivery" : "Pickup"}
                         </button>
                       )}
                       {order.status === "completed" && !seller && (
