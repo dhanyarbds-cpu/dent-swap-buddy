@@ -1,14 +1,34 @@
-import { Settings, ChevronRight, Package, Heart, Star, Shield, LogOut, BadgeCheck, Crown } from "lucide-react";
+import { Settings, ChevronRight, Package, Heart, Star, Shield, Crown, LogOut, BadgeCheck, ShoppingBag, BarChart3, Languages, HelpCircle, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 
-const menuItems = [
-  { icon: Package, label: "My Listings", count: 3 },
-  { icon: Heart, label: "Wishlist", count: 5 },
-  { icon: Star, label: "Reviews" },
-  { icon: Shield, label: "Verification", badge: "Verified" },
-  { icon: Crown, label: "Elite Pass", badge: "Upgrade" },
-  { icon: Settings, label: "Settings" },
+const menuSections = [
+  {
+    title: "Activity",
+    items: [
+      { icon: ShoppingBag, label: "My Orders" },
+      { icon: Heart, label: "Wishlist", count: 5 },
+      { icon: BarChart3, label: "Seller Dashboard" },
+      { icon: Package, label: "My Listings", count: 3 },
+    ],
+  },
+  {
+    title: "Preferences",
+    items: [
+      { icon: Crown, label: "Premium Membership", badge: "Upgrade" },
+      { icon: Shield, label: "Verification", badge: "Verified" },
+      { icon: Star, label: "Reviews & Ratings" },
+      { icon: Moon, label: "Dark Mode" },
+      { icon: Languages, label: "Language" },
+    ],
+  },
+  {
+    title: "Support",
+    items: [
+      { icon: HelpCircle, label: "Help & Support" },
+      { icon: Settings, label: "Settings" },
+    ],
+  },
 ];
 
 const ProfilePage = () => {
@@ -22,15 +42,15 @@ const ProfilePage = () => {
 
   return (
     <div className="safe-bottom min-h-screen bg-background">
-      <header className="sticky top-0 z-40 border-b border-border bg-card/95 px-4 py-3 backdrop-blur-lg">
-        <h1 className="mx-auto max-w-lg text-lg font-bold text-foreground">Profile</h1>
+      <header className="sticky top-0 z-40 bg-card/95 px-4 py-3 backdrop-blur-xl">
+        <h1 className="mx-auto max-w-lg text-lg font-bold text-foreground">Account</h1>
       </header>
 
       <main className="mx-auto max-w-lg">
         {/* Profile Card */}
-        <div className="mx-4 mt-4 rounded-2xl dentzap-gradient p-5 dentzap-shadow-lg">
+        <div className="mx-4 mt-4 rounded-3xl dentzap-gradient p-6 dentzap-shadow-lg animate-fade-in">
           <div className="flex items-center gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-foreground/20 text-2xl font-bold text-primary-foreground">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-foreground/20 text-2xl font-bold text-primary-foreground ring-2 ring-primary-foreground/10">
               {initials}
             </div>
             <div className="flex-1">
@@ -43,56 +63,62 @@ const ProfilePage = () => {
             </div>
           </div>
 
-          <div className="mt-4 flex gap-4">
+          {/* Stats */}
+          <div className="mt-5 flex gap-3">
             {[
               { label: "Listed", value: "0" },
               { label: "Sold", value: "0" },
-              { label: "Bought", value: "0" },
+              { label: "Rating", value: "—" },
             ].map((stat) => (
-              <div key={stat.label} className="flex-1 rounded-xl bg-primary-foreground/10 px-3 py-2 text-center">
+              <div key={stat.label} className="flex-1 rounded-2xl bg-primary-foreground/10 px-3 py-2.5 text-center backdrop-blur-sm">
                 <p className="text-lg font-bold text-primary-foreground">{stat.value}</p>
-                <p className="text-[10px] text-primary-foreground/60">{stat.label}</p>
+                <p className="text-[10px] font-medium text-primary-foreground/60">{stat.label}</p>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Menu */}
-        <div className="mt-4 mx-4 overflow-hidden rounded-2xl border border-border bg-card">
-          {menuItems.map((item, i) => (
-            <button
-              key={item.label}
-              className={`flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-muted/50 ${
-                i < menuItems.length - 1 ? "border-b border-border" : ""
-              }`}
-            >
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
-                <item.icon className="h-4 w-4 text-primary" />
-              </div>
-              <span className="flex-1 text-sm font-medium text-foreground">{item.label}</span>
-              {item.count !== undefined && (
-                <span className="text-xs text-muted-foreground">{item.count}</span>
-              )}
-              {item.badge && (
-                <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                  item.badge === "Verified"
-                    ? "bg-verified/10 text-verified"
-                    : "dentzap-gradient text-primary-foreground"
-                }`}>
-                  {item.badge}
-                </span>
-              )}
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            </button>
-          ))}
-        </div>
+        {/* Menu Sections */}
+        {menuSections.map((section) => (
+          <div key={section.title} className="mt-5 mx-4">
+            <p className="mb-2 px-1 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">{section.title}</p>
+            <div className="overflow-hidden rounded-2xl border border-border bg-card dentzap-card-shadow">
+              {section.items.map((item, i) => (
+                <button
+                  key={item.label}
+                  className={`flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-secondary/50 ${
+                    i < section.items.length - 1 ? "border-b border-border" : ""
+                  }`}
+                >
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-secondary">
+                    <item.icon className="h-4 w-4 text-secondary-foreground" />
+                  </div>
+                  <span className="flex-1 text-sm font-medium text-foreground">{item.label}</span>
+                  {"count" in item && item.count !== undefined && (
+                    <span className="text-xs text-muted-foreground">{item.count}</span>
+                  )}
+                  {"badge" in item && item.badge && (
+                    <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${
+                      item.badge === "Verified"
+                        ? "bg-verified/10 text-verified"
+                        : "dentzap-gradient text-primary-foreground"
+                    }`}>
+                      {item.badge}
+                    </span>
+                  )}
+                  <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
 
         {/* Sign Out */}
-        <div className="p-4">
+        <div className="p-4 mt-2">
           <Button
             variant="outline"
             onClick={signOut}
-            className="w-full gap-2 rounded-xl border-destructive/30 text-destructive hover:bg-destructive/10"
+            className="w-full gap-2 rounded-2xl border-destructive/20 py-5 text-destructive hover:bg-destructive/5"
           >
             <LogOut className="h-4 w-4" />
             Sign Out

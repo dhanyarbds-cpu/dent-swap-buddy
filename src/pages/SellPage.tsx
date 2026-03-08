@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Camera, X, ChevronDown } from "lucide-react";
+import { Camera, X, ChevronDown, ArrowLeft, ArrowRight, Check, ImagePlus } from "lucide-react";
 import { categories } from "@/lib/mockData";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,9 +7,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 
 const conditions = ["New", "Used"];
+const steps = ["Category", "Photos", "Details", "Price", "Location"];
 
 const SellPage = () => {
   const { toast } = useToast();
+  const [step, setStep] = useState(0);
   const [form, setForm] = useState({
     title: "",
     category: "",
@@ -19,87 +21,164 @@ const SellPage = () => {
     description: "",
     location: "",
     hashtags: "",
+    negotiable: true,
   });
 
-  const update = (key: string, value: string) => setForm((f) => ({ ...f, [key]: value }));
+  const update = (key: string, value: any) => setForm((f) => ({ ...f, [key]: value }));
+  const canNext = () => {
+    if (step === 0) return !!form.category;
+    if (step === 1) return true;
+    if (step === 2) return !!form.title && !!form.condition;
+    if (step === 3) return !!form.price;
+    if (step === 4) return !!form.location;
+    return false;
+  };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    toast({ title: "Listing submitted!", description: "Your listing is pending review." });
+  const handleSubmit = () => {
+    toast({ title: "Listing Published! 🎉", description: "Your listing is now live." });
+    setStep(0);
+    setForm({ title: "", category: "", condition: "", brand: "", price: "", description: "", location: "", hashtags: "", negotiable: true });
   };
 
   return (
     <div className="safe-bottom min-h-screen bg-background">
-      <header className="sticky top-0 z-40 border-b border-border bg-card/95 px-4 py-3 backdrop-blur-lg">
-        <h1 className="mx-auto max-w-lg text-lg font-bold text-foreground">Create Listing</h1>
+      <header className="sticky top-0 z-40 border-b border-border bg-card/95 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-lg items-center gap-3 px-4 py-3">
+          {step > 0 && (
+            <button onClick={() => setStep(step - 1)} className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary">
+              <ArrowLeft className="h-4 w-4" />
+            </button>
+          )}
+          <h1 className="flex-1 text-lg font-bold text-foreground">Post Your Ad</h1>
+          <span className="text-xs font-medium text-muted-foreground">{step + 1}/{steps.length}</span>
+        </div>
+        {/* Progress */}
+        <div className="mx-auto flex max-w-lg gap-1 px-4 pb-2">
+          {steps.map((s, i) => (
+            <div
+              key={s}
+              className={`h-1 flex-1 rounded-full transition-all duration-500 ${
+                i <= step ? "bg-primary" : "bg-secondary"
+              }`}
+            />
+          ))}
+        </div>
       </header>
 
-      <form onSubmit={handleSubmit} className="mx-auto max-w-lg space-y-5 p-4">
-        {/* Image Upload */}
-        <div>
-          <p className="mb-2 text-sm font-semibold text-foreground">Photos (up to 6)</p>
-          <div className="grid grid-cols-3 gap-2">
-            <button
-              type="button"
-              className="flex aspect-square flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 text-primary transition-colors hover:border-primary/50"
-            >
-              <Camera className="h-6 w-6" />
-              <span className="text-[10px] font-medium">Add Photo</span>
-            </button>
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="aspect-square rounded-xl border border-border bg-muted/50" />
-            ))}
-          </div>
-        </div>
-
-        {/* Fields */}
-        <div className="space-y-4">
-          <div>
-            <label className="mb-1.5 block text-sm font-semibold text-foreground">Title</label>
-            <Input
-              value={form.title}
-              onChange={(e) => update("title", e.target.value)}
-              placeholder="e.g. Complete BDS Instrument Kit"
-              className="rounded-xl"
-            />
-          </div>
-
-          <div>
-            <label className="mb-1.5 block text-sm font-semibold text-foreground">Category</label>
-            <div className="relative">
-              <select
-                value={form.category}
-                onChange={(e) => update("category", e.target.value)}
-                className="w-full appearance-none rounded-xl border border-input bg-background px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring"
-              >
-                <option value="">Select category</option>
-                {categories.map((c) => (
-                  <option key={c.name} value={c.name}>{c.icon} {c.name}</option>
-                ))}
-              </select>
-              <ChevronDown className="pointer-events-none absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
+      <div className="mx-auto max-w-lg p-4 animate-fade-in" key={step}>
+        {/* Step 0: Category */}
+        {step === 0 && (
+          <div className="space-y-4">
+            <div>
+              <p className="text-base font-bold text-foreground">Select a Category</p>
+              <p className="mt-1 text-sm text-muted-foreground">Choose the best category for your listing</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {categories.map((c) => (
+                <button
+                  key={c.name}
+                  onClick={() => update("category", c.name)}
+                  className={`flex items-center gap-3 rounded-2xl border p-4 text-left transition-all duration-200 press-scale ${
+                    form.category === c.name
+                      ? "border-primary bg-primary/5 ring-1 ring-primary/20"
+                      : "border-border bg-card dentzap-card-shadow hover:dentzap-card-shadow-hover"
+                  }`}
+                >
+                  <span className="text-2xl">{c.icon}</span>
+                  <span className="text-xs font-medium text-foreground leading-tight">{c.name}</span>
+                </button>
+              ))}
             </div>
           </div>
+        )}
 
-          <div className="grid grid-cols-2 gap-3">
+        {/* Step 1: Photos */}
+        {step === 1 && (
+          <div className="space-y-4">
             <div>
-              <label className="mb-1.5 block text-sm font-semibold text-foreground">Condition</label>
-              <div className="flex gap-2">
-                {conditions.map((c) => (
-                  <button
-                    key={c}
-                    type="button"
-                    onClick={() => update("condition", c)}
-                    className={`flex-1 rounded-xl border px-3 py-2.5 text-sm font-medium transition-all ${
-                      form.condition === c
-                        ? "dentzap-gradient border-transparent text-primary-foreground"
-                        : "border-input bg-background text-foreground hover:bg-muted"
-                    }`}
-                  >
-                    {c}
-                  </button>
-                ))}
+              <p className="text-base font-bold text-foreground">Add Photos</p>
+              <p className="mt-1 text-sm text-muted-foreground">Add up to 6 photos to attract buyers</p>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <button
+                type="button"
+                className="flex aspect-square flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-primary/30 bg-primary/5 text-primary transition-colors hover:border-primary/50 press-scale"
+              >
+                <ImagePlus className="h-7 w-7" />
+                <span className="text-[10px] font-semibold">Add Photo</span>
+              </button>
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="aspect-square rounded-2xl border border-border bg-secondary" />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Step 2: Details */}
+        {step === 2 && (
+          <div className="space-y-5">
+            <div>
+              <p className="text-base font-bold text-foreground">Add Details</p>
+              <p className="mt-1 text-sm text-muted-foreground">Help buyers find your listing</p>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="mb-1.5 block text-sm font-semibold text-foreground">Title</label>
+                <Input
+                  value={form.title}
+                  onChange={(e) => update("title", e.target.value)}
+                  placeholder="e.g. Complete BDS Instrument Kit"
+                  className="rounded-xl py-5"
+                />
               </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-semibold text-foreground">Condition</label>
+                <div className="flex gap-3">
+                  {conditions.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => update("condition", c)}
+                      className={`flex-1 rounded-xl border px-4 py-3 text-sm font-semibold transition-all press-scale ${
+                        form.condition === c
+                          ? "dentzap-gradient border-transparent text-primary-foreground"
+                          : "border-border bg-card text-foreground hover:bg-secondary"
+                      }`}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-semibold text-foreground">Brand / Manufacturer</label>
+                <Input
+                  value={form.brand}
+                  onChange={(e) => update("brand", e.target.value)}
+                  placeholder="e.g. GDC, NSK, Hu-Friedy"
+                  className="rounded-xl py-5"
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-semibold text-foreground">Description</label>
+                <Textarea
+                  value={form.description}
+                  onChange={(e) => update("description", e.target.value)}
+                  placeholder="Describe condition, usage history, what's included..."
+                  rows={4}
+                  className="rounded-xl"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Step 3: Price */}
+        {step === 3 && (
+          <div className="space-y-5">
+            <div>
+              <p className="text-base font-bold text-foreground">Set Your Price</p>
+              <p className="mt-1 text-sm text-muted-foreground">Choose a competitive price</p>
             </div>
             <div>
               <label className="mb-1.5 block text-sm font-semibold text-foreground">Price (₹)</label>
@@ -108,60 +187,77 @@ const SellPage = () => {
                 value={form.price}
                 onChange={(e) => update("price", e.target.value)}
                 placeholder="0"
-                className="rounded-xl"
+                className="rounded-xl py-6 text-xl font-bold"
+              />
+            </div>
+            <button
+              onClick={() => update("negotiable", !form.negotiable)}
+              className={`flex w-full items-center justify-between rounded-2xl border p-4 transition-all press-scale ${
+                form.negotiable ? "border-primary/30 bg-primary/5" : "border-border bg-card"
+              }`}
+            >
+              <div>
+                <p className="text-sm font-semibold text-foreground">Negotiable</p>
+                <p className="text-xs text-muted-foreground">Allow buyers to negotiate the price</p>
+              </div>
+              <div className={`flex h-6 w-11 items-center rounded-full px-0.5 transition-colors ${form.negotiable ? "bg-primary" : "bg-muted"}`}>
+                <div className={`h-5 w-5 rounded-full bg-primary-foreground shadow-sm transition-transform ${form.negotiable ? "translate-x-5" : "translate-x-0"}`} />
+              </div>
+            </button>
+          </div>
+        )}
+
+        {/* Step 4: Location */}
+        {step === 4 && (
+          <div className="space-y-5">
+            <div>
+              <p className="text-base font-bold text-foreground">Your Location</p>
+              <p className="mt-1 text-sm text-muted-foreground">Where is the item available?</p>
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-semibold text-foreground">City / Area</label>
+              <Input
+                value={form.location}
+                onChange={(e) => update("location", e.target.value)}
+                placeholder="e.g. Mumbai, Maharashtra"
+                className="rounded-xl py-5"
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-semibold text-foreground">Tags (optional)</label>
+              <Input
+                value={form.hashtags}
+                onChange={(e) => update("hashtags", e.target.value)}
+                placeholder="#DentalInstruments #BDSKit"
+                className="rounded-xl py-5"
               />
             </div>
           </div>
+        )}
+      </div>
 
-          <div>
-            <label className="mb-1.5 block text-sm font-semibold text-foreground">Brand / Manufacturer</label>
-            <Input
-              value={form.brand}
-              onChange={(e) => update("brand", e.target.value)}
-              placeholder="e.g. GDC, NSK, Hu-Friedy"
-              className="rounded-xl"
-            />
-          </div>
-
-          <div>
-            <label className="mb-1.5 block text-sm font-semibold text-foreground">Description</label>
-            <Textarea
-              value={form.description}
-              onChange={(e) => update("description", e.target.value)}
-              placeholder="Describe condition, usage history, what's included..."
-              rows={4}
-              className="rounded-xl"
-            />
-          </div>
-
-          <div>
-            <label className="mb-1.5 block text-sm font-semibold text-foreground">Location</label>
-            <Input
-              value={form.location}
-              onChange={(e) => update("location", e.target.value)}
-              placeholder="e.g. Mumbai, Maharashtra"
-              className="rounded-xl"
-            />
-          </div>
-
-          <div>
-            <label className="mb-1.5 block text-sm font-semibold text-foreground">Hashtags</label>
-            <Input
-              value={form.hashtags}
-              onChange={(e) => update("hashtags", e.target.value)}
-              placeholder="#DentalInstruments #BDSKit"
-              className="rounded-xl"
-            />
-          </div>
+      {/* Bottom Action */}
+      <div className="fixed bottom-[var(--tab-bar-height)] left-0 right-0 border-t border-border bg-card/95 px-4 py-3 backdrop-blur-xl">
+        <div className="mx-auto max-w-lg">
+          {step < steps.length - 1 ? (
+            <Button
+              onClick={() => setStep(step + 1)}
+              disabled={!canNext()}
+              className="w-full gap-2 dentzap-gradient rounded-xl py-5 text-sm font-semibold text-primary-foreground dentzap-shadow disabled:opacity-40"
+            >
+              Continue <ArrowRight className="h-4 w-4" />
+            </Button>
+          ) : (
+            <Button
+              onClick={handleSubmit}
+              disabled={!canNext()}
+              className="w-full gap-2 dentzap-gradient rounded-xl py-5 text-sm font-semibold text-primary-foreground dentzap-shadow disabled:opacity-40"
+            >
+              <Check className="h-4 w-4" /> Publish Listing
+            </Button>
+          )}
         </div>
-
-        <Button
-          type="submit"
-          className="dentzap-gradient dentzap-shadow w-full rounded-xl py-6 text-base font-bold text-primary-foreground"
-        >
-          Submit for Review
-        </Button>
-      </form>
+      </div>
     </div>
   );
 };

@@ -34,7 +34,6 @@ const AuthPage = () => {
         });
         if (error) throw error;
 
-        // Update profile with extra fields
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
           await supabase.from("profiles").update({
@@ -73,20 +72,24 @@ const AuthPage = () => {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="w-full max-w-sm space-y-6">
+      <div className="w-full max-w-sm space-y-6 animate-fade-in">
         {/* Logo */}
-        <div className="flex flex-col items-center gap-2">
-          <img src={logo} alt="DentZap" className="h-14 w-14" />
-          <h1 className="text-2xl font-extrabold dentzap-gradient-text">DentZap</h1>
-          <p className="text-sm text-muted-foreground">
-            {mode === "login" ? "Welcome back!" : "Join the dental marketplace"}
-          </p>
+        <div className="flex flex-col items-center gap-3">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl dentzap-gradient dentzap-shadow">
+            <img src={logo} alt="DentZap" className="h-10 w-10 brightness-0 invert" />
+          </div>
+          <div className="text-center">
+            <h1 className="text-2xl font-extrabold text-foreground">DentZap</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {mode === "login" ? "Welcome back!" : "Join the marketplace"}
+            </p>
+          </div>
         </div>
 
         {/* Google */}
         <Button
           variant="outline"
-          className="w-full gap-2 rounded-xl py-5"
+          className="w-full gap-2 rounded-xl py-5 text-sm font-semibold"
           onClick={handleGoogleLogin}
           disabled={loading}
         >
@@ -110,33 +113,33 @@ const AuthPage = () => {
           {mode === "signup" && (
             <>
               <div className="relative">
-                <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Full Name" className="rounded-xl pl-10" required />
+                <User className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
+                <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Full Name" className="rounded-xl py-5 pl-10" required />
               </div>
               <div className="relative">
-                <GraduationCap className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input value={college} onChange={(e) => setCollege(e.target.value)} placeholder="Dental College" className="rounded-xl pl-10" required />
+                <GraduationCap className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
+                <Input value={college} onChange={(e) => setCollege(e.target.value)} placeholder="College / Institution" className="rounded-xl py-5 pl-10" required />
               </div>
               <div className="grid grid-cols-2 gap-2">
-                <Input value={year} onChange={(e) => setYear(e.target.value)} placeholder="Year (e.g. 3rd)" className="rounded-xl" required />
+                <Input value={year} onChange={(e) => setYear(e.target.value)} placeholder="Year (e.g. 3rd)" className="rounded-xl py-5" required />
                 <div className="relative">
-                  <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="City" className="rounded-xl pl-10" required />
+                  <MapPin className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
+                  <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="City" className="rounded-xl py-5 pl-10" required />
                 </div>
               </div>
             </>
           )}
 
           <div className="relative">
-            <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" className="rounded-xl pl-10" required />
+            <Mail className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
+            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" className="rounded-xl py-5 pl-10" required />
           </div>
           <div className="relative">
-            <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-            <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" className="rounded-xl pl-10" required minLength={6} />
+            <Lock className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
+            <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" className="rounded-xl py-5 pl-10" required minLength={6} />
           </div>
 
-          <Button type="submit" disabled={loading} className="dentzap-gradient dentzap-shadow w-full rounded-xl py-5 text-base font-bold text-primary-foreground">
+          <Button type="submit" disabled={loading} className="dentzap-gradient dentzap-shadow w-full rounded-xl py-5 text-sm font-bold text-primary-foreground">
             {loading ? "Please wait..." : mode === "login" ? "Sign In" : "Create Account"}
           </Button>
         </form>
