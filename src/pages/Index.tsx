@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { MapPin, ChevronDown, Search, Mic, Heart, Loader2 } from "lucide-react";
-import { listings, categories as fallbackCategories } from "@/lib/mockData";
+import { categories as fallbackCategories } from "@/lib/mockData";
 import ProductCard from "@/components/ProductCard";
 import ListingDetail from "@/components/ListingDetail";
 import LocationSelector from "@/components/LocationSelector";
@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import PromoBannerCarousel from "@/components/PromoBannerCarousel";
 import NotificationBell from "@/components/NotificationBell";
+import { useListings } from "@/hooks/useListings";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -20,9 +21,13 @@ const Index = () => {
   const [locationOpen, setLocationOpen] = useState(false);
 
   const { location, detectLocation, setManualLocation, searchCities } = useUserLocation();
+  const { listings: dbListings, loading: listingsLoading } = useListings({ 
+    category: activeCategory || undefined, 
+    realtime: true 
+  });
 
   // Smart ranking algorithm: considers location match, completeness, recency, and seller quality
-  const smartRank = (items: Listing[]) => {
+  const smartRank = (items: (Listing & { seller_type?: string })[]) => {
     const now = Date.now();
     const city = (location.city || "").toLowerCase();
     
@@ -63,9 +68,7 @@ const Index = () => {
     });
   };
 
-  const filtered = smartRank(
-    activeCategory ? listings.filter((l) => l.category === activeCategory) : listings
-  );
+  const filtered = smartRank(dbListings);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -80,7 +83,6 @@ const Index = () => {
     };
     fetchCategories();
   }, []);
-
 
   const handleCategoryClick = (catName: string) => {
     setActiveCategory(activeCategory === catName ? null : catName);
@@ -190,18 +192,26 @@ const Index = () => {
               {filtered.length} items
             </span>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            {filtered.map((listing, i) => (
-              <div key={listing.id} className="animate-fade-in" style={{ animationDelay: `${i * 60}ms`, animationFillMode: "both" }}>
-                <ProductCard listing={listing} onClick={() => setSelectedListing(listing)} />
-              </div>
-            ))}
-          </div>
-          {filtered.length === 0 && (
+
+          {listingsLoading ? (
+            <div className="flex flex-col items-center py-20 animate-fade-in">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="mt-3 text-xs text-muted-foreground">Loading listings...</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              {filtered.map((listing, i) => (
+                <div key={listing.id} className="animate-fade-in" style={{ animationDelay: `${i * 60}ms`, animationFillMode: "both" }}>
+                  <ProductCard listing={listing} onClick={() => setSelectedListing(listing)} />
+                </div>
+              ))}
+            </div>
+          )}
+          {!listingsLoading && filtered.length === 0 && (
             <div className="flex flex-col items-center py-20 text-center animate-fade-in">
               <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-secondary text-3xl">🔍</div>
               <p className="mt-4 text-sm font-medium text-foreground">No listings found</p>
-              <p className="mt-1 text-xs text-muted-foreground">Try browsing a different category</p>
+              <p className="mt-1 text-xs text-muted-foreground">Try browsing a different category or post the first listing!</p>
             </div>
           )}
         </div>
