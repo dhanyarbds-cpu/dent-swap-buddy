@@ -38,6 +38,10 @@ const SellPage = () => {
     pickupAvailable: true,
     shippingAvailable: false,
     upiId: "",
+    accountHolderName: "",
+    bankName: "",
+    bankAccountNumber: "",
+    ifscCode: "",
   });
 
   // Load existing UPI ID
