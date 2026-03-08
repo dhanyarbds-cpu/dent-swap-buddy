@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowLeft, Share2, Heart, MapPin, BadgeCheck, Tag, IndianRupee, Eye, Clock, Bookmark, ChevronLeft, ChevronRight, ShoppingCart, Truck, ShieldAlert, AlertTriangle, Flag, Building2 } from "lucide-react";
 import { type Listing, formatPrice, timeAgo } from "@/lib/mockData";
 import NegotiateDialog from "@/components/NegotiateDialog";
@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import CheckoutPage from "@/pages/CheckoutPage";
 import ReportProductDialog from "@/components/ReportProductDialog";
 import { useWishlist } from "@/hooks/useWishlist";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface ListingDetailProps {
   listing: Listing;
@@ -13,6 +15,7 @@ interface ListingDetailProps {
 }
 
 const ListingDetail = ({ listing, onBack }: ListingDetailProps) => {
+  const { user } = useAuth();
   const initials = listing.seller.name.split(" ").map((n) => n[0]).join("");
   const isDbListing = listing.id.length > 10;
   const hasImages = listing.images && listing.images.length > 0 && listing.images[0];
@@ -21,6 +24,19 @@ const ListingDetail = ({ listing, onBack }: ListingDetailProps) => {
   const imageCount = hasImages ? listing.images.length : 0;
   const { wishlistedIds, toggle } = useWishlist();
   const wishlisted = wishlistedIds.has(listing.id);
+
+  // Track product view
+  useEffect(() => {
+    const sellerId = (listing.seller as any).id || (listing as any).seller_id;
+    if (isDbListing && user && sellerId && sellerId !== user.id) {
+      supabase.from("product_analytics").insert({
+        listing_id: listing.id,
+        seller_id: sellerId,
+        viewer_id: user.id,
+        event_type: "view",
+      }).then(() => {});
+    }
+  }, [listing.id]);
 
   // Delivery options from DB listing
   const pickupAvailable = (listing as any).pickup_available ?? true;
