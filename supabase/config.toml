@@ -62,3 +62,6 @@ verify_jwt = false
 
 [functions.create-razorpay-linked-account]
 verify_jwt = false
+
+[functions.create-upi-qr-order]
+verify_jwt = false
