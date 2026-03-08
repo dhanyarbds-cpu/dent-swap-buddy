@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import SearchPage from "./pages/SearchPage";
 import SellPage from "./pages/SellPage";
 import MessagesPage from "./pages/MessagesPage";
+import MyAdsPage from "./pages/MyAdsPage";
 import ProfilePage from "./pages/ProfilePage";
 import AuthPage from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
@@ -35,6 +36,7 @@ const AppRoutes = () => {
         <Route path="/search" element={<SearchPage />} />
         <Route path="/sell" element={<SellPage />} />
         <Route path="/messages" element={<MessagesPage />} />
+        <Route path="/my-ads" element={<MyAdsPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

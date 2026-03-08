@@ -1,12 +1,12 @@
-import { Home, Search, PlusCircle, MessageSquare, User } from "lucide-react";
+import { Home, MessageSquare, PlusCircle, Megaphone, User } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const tabs = [
   { path: "/", label: "Home", icon: Home },
-  { path: "/search", label: "Search", icon: Search },
+  { path: "/messages", label: "Chats", icon: MessageSquare },
   { path: "/sell", label: "Sell", icon: PlusCircle },
-  { path: "/messages", label: "Messages", icon: MessageSquare },
-  { path: "/profile", label: "Profile", icon: User },
+  { path: "/my-ads", label: "My Ads", icon: Megaphone },
+  { path: "/profile", label: "Account", icon: User },
 ];
 
 const BottomTabBar = () => {
@@ -32,8 +32,8 @@ const BottomTabBar = () => {
               }`}
             >
               {isSell ? (
-                <div className="dentzap-gradient dentzap-shadow -mt-4 flex h-12 w-12 items-center justify-center rounded-2xl text-primary-foreground transition-transform active:scale-95">
-                  <PlusCircle className="h-6 w-6" />
+                <div className="dentzap-gradient dentzap-shadow -mt-5 flex h-14 w-14 items-center justify-center rounded-full text-primary-foreground shadow-lg transition-transform active:scale-95">
+                  <PlusCircle className="h-7 w-7" />
                 </div>
               ) : (
                 <>
