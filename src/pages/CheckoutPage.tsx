@@ -33,7 +33,7 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
   const [deliveryMethod, setDeliveryMethod] = useState<"pickup" | "shipping">("pickup");
   const [shippingAddress, setShippingAddress] = useState("");
   const [listingDetails, setListingDetails] = useState<{ pickup_available: boolean; shipping_available: boolean } | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<"upi_qr" | "upi_id">("upi_qr");
+  const [paymentMethod, setPaymentMethod] = useState<"gpay" | "upi_qr" | "upi_id">("gpay");
   const [upiQrData, setUpiQrData] = useState<{ order_id: string; upi_uri: string; upi_id: string; amount: number; txn_ref: string; product_name?: string } | null>(null);
   const [showQrModal, setShowQrModal] = useState(false);
   const [utrNumber, setUtrNumber] = useState("");
@@ -139,12 +139,58 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
     setProcessing(false);
   };
 
+  const handleGooglePaySuccess = async (paymentData: any) => {
+    if (!user) return;
+    setProcessing(true);
+    try {
+      // Create order via edge function
+      const { data, error } = await supabase.functions.invoke("create-upi-qr-order", {
+        body: {
+          listing_id: listing.id,
+          amount: listing.price,
+          delivery_method: deliveryMethod,
+          shipping_address: deliveryMethod === "shipping" ? shippingAddress : null,
+        },
+      });
+
+      if (error || !data?.order_id) {
+        throw new Error(data?.error || error?.message || "Failed to create order");
+      }
+
+      // Update order with Google Pay payment info
+      const paymentMethodData = paymentData?.paymentMethodData;
+      const paymentToken = paymentMethodData?.tokenizationData?.token || "gpay_token";
+
+      await supabase
+        .from("orders")
+        .update({
+          payment_method: "google_pay",
+          razorpay_payment_id: `gpay_${Date.now()}`,
+          status: "paid",
+          escrow_status: "held",
+        })
+        .eq("id", data.order_id);
+
+      toast({ title: "Payment Successful! 🎉", description: "Your order has been placed via Google Pay." });
+      navigate(`/orders?order_id=${data.order_id}`);
+    } catch (err: any) {
+      toast({ title: "Payment Error", description: err.message, variant: "destructive" });
+    }
+    setProcessing(false);
+  };
+
+  const handleGooglePayError = (error: any) => {
+    console.error("Google Pay error:", error);
+    toast({ title: "Google Pay Error", description: "Payment failed. Please try another method.", variant: "destructive" });
+  };
+
   const handlePayment = () => {
     if (paymentMethod === "upi_qr") {
       handleUpiQrPayment();
-    } else {
+    } else if (paymentMethod === "upi_id") {
       handleUpiIdPayment();
     }
+    // Google Pay is handled by its own button
   };
 
   const img = listing.images?.[0];
