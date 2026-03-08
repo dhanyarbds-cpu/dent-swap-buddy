@@ -14,7 +14,7 @@ const Index = () => {
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
-  const [currentSlide, setCurrentSlide] = useState(0);
+  
   const [categories, setCategories] = useState<{ name: string; icon: string }[]>(fallbackCategories);
   const [locationOpen, setLocationOpen] = useState(false);
 
@@ -49,10 +49,6 @@ const Index = () => {
     fetchCategories();
   }, []);
 
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentSlide((s) => (s + 1) % bannerSlides.length), 4000);
-    return () => clearInterval(timer);
-  }, []);
 
   const handleCategoryClick = (catName: string) => {
     setActiveCategory(activeCategory === catName ? null : catName);
@@ -152,34 +148,8 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Banner */}
-        <div className="px-4 pt-4 pb-1">
-          <div className="relative overflow-hidden rounded-2xl border border-border/50">
-            <img src={heroBanner} alt="Promotional Banner" className="h-40 w-full object-cover" />
-            <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-foreground/70 via-foreground/15 to-transparent p-5">
-              <span className="mb-1.5 w-fit rounded-full dentzap-gradient px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-primary-foreground glow-primary">
-                {bannerSlides[currentSlide].tag}
-              </span>
-              <p className="text-lg font-bold text-primary-foreground leading-tight">
-                {bannerSlides[currentSlide].title}
-              </p>
-              <p className="mt-0.5 text-xs text-primary-foreground/80">
-                {bannerSlides[currentSlide].subtitle}
-              </p>
-            </div>
-            <div className="absolute bottom-2 right-4 flex gap-1.5">
-              {bannerSlides.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setCurrentSlide(i)}
-                  className={`h-1.5 rounded-full transition-all duration-300 ${
-                    i === currentSlide ? "w-5 bg-primary-foreground" : "w-1.5 bg-primary-foreground/40"
-                  }`}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
+        {/* Promotional Banners */}
+        <PromoBannerCarousel />
 
         {/* Product Feed */}
         <div className="px-4 pt-5 pb-4">
