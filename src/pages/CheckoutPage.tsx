@@ -36,6 +36,9 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
   const [upiQrData, setUpiQrData] = useState<{ order_id: string; upi_uri: string; upi_id: string; amount: number; txn_ref: string; product_name?: string } | null>(null);
   const [showQrModal, setShowQrModal] = useState(false);
   const [utrNumber, setUtrNumber] = useState("");
+  const [qrUtrNumber, setQrUtrNumber] = useState("");
+  const [qrVerifyStep, setQrVerifyStep] = useState(false);
+  const [submittingQrUtr, setSubmittingQrUtr] = useState(false);
   const qrCanvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
