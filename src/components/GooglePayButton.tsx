@@ -32,7 +32,7 @@ const TOKEN_PARAMS = {
   type: "PAYMENT_GATEWAY",
   parameters: {
     gateway: "razorpay",
-    gatewayMerchantId: "DentSwapTest", // Test mode
+    gatewayMerchantId: "3388000000023097338",
   },
 };
 
@@ -74,7 +74,7 @@ const GooglePayButton = ({ amount, onSuccess, onError, disabled }: GooglePayButt
       }
 
       const client = new window.google.payments.api.PaymentsClient({
-        environment: "TEST", // Change to "PRODUCTION" for live
+        environment: "PRODUCTION",
       });
       clientRef.current = client;
 
@@ -122,7 +122,7 @@ const GooglePayButton = ({ amount, onSuccess, onError, disabled }: GooglePayButt
       },
       merchantInfo: {
         merchantName: "DentSwap",
-        // merchantId: "YOUR_GOOGLE_MERCHANT_ID", // Add for production
+        merchantId: "3388000000023097338",
       },
     };
 
