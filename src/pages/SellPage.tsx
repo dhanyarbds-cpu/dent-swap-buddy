@@ -44,7 +44,7 @@ const SellPage = () => {
     if (step === 0) return !!form.category;
     if (step === 1) return true;
     if (step === 2) return !!form.title && !!form.condition;
-    if (step === 3) return !!form.price;
+    if (step === 3) return !!form.price && parseFloat(form.price) >= 10;
     if (step === 4) return !!form.location && (form.pickupAvailable || form.shippingAvailable);
     return false;
   };
@@ -52,6 +52,10 @@ const SellPage = () => {
   const handleSubmit = async () => {
     if (!user) return;
 
+    if (parseFloat(form.price) < 10) {
+      toast({ title: "Price Too Low", description: "Minimum product price allowed is ₹10. Please update your listing.", variant: "destructive" });
+      return;
+    }
 
     setSubmitting(true);
 
