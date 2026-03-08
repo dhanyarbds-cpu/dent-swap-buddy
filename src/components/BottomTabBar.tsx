@@ -30,13 +30,13 @@ const BottomTabBar = () => {
               }`}
             >
               {isSell ? (
-                <div className="dentzap-gradient -mt-6 flex h-14 w-14 items-center justify-center rounded-full text-primary-foreground shadow-lg ring-4 ring-background transition-transform duration-200 active:scale-90 hover:shadow-xl animate-glow-pulse">
+                <div className="dentzap-gradient -mt-6 flex h-14 w-14 items-center justify-center rounded-full text-primary-foreground shadow-lg ring-4 ring-card transition-transform duration-200 active:scale-90 animate-glow-pulse">
                   <Plus className="h-7 w-7" strokeWidth={2.5} />
                 </div>
               ) : (
                 <>
                   <tab.icon
-                    className={`h-[22px] w-[22px] transition-all duration-200 ${isActive ? "scale-105 drop-shadow-[0_0_6px_hsl(260,70%,58%)]" : ""}`}
+                    className={`h-[22px] w-[22px] transition-all duration-200 ${isActive ? "scale-105 drop-shadow-[0_0_4px_hsl(255,65%,58%)]" : ""}`}
                     strokeWidth={isActive ? 2.2 : 1.8}
                   />
                   {isActive && (

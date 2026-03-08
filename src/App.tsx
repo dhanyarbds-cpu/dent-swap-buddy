@@ -72,7 +72,7 @@ const AppRoutes = () => {
 };
 
 const App = () => (
-  <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} storageKey="dentzap-theme">
+  <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} storageKey="dentzap-theme">
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
