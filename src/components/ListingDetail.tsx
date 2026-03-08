@@ -27,10 +27,11 @@ const ListingDetail = ({ listing, onBack }: ListingDetailProps) => {
 
   // Track product view
   useEffect(() => {
-    if (isDbListing && user && listing.seller.id !== user.id) {
+    const sellerId = (listing.seller as any).id || (listing as any).seller_id;
+    if (isDbListing && user && sellerId && sellerId !== user.id) {
       supabase.from("product_analytics").insert({
         listing_id: listing.id,
-        seller_id: listing.seller.id,
+        seller_id: sellerId,
         viewer_id: user.id,
         event_type: "view",
       }).then(() => {});
