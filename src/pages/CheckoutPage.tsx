@@ -204,7 +204,10 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
   return (
     <div className="safe-bottom min-h-screen bg-background pb-24">
       <header className="sticky top-0 z-40 flex items-center gap-3 border-b border-border bg-card/95 px-4 py-3 backdrop-blur-xl">
-        <button onClick={step === "delivery" ? onBack : () => setStep(step === "review" ? "delivery" : step === "pay" ? "review" : "pay")} className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary">
+        <button onClick={step === "delivery" ? onBack : () => {
+          const backMap: Record<string, typeof step> = { review: "delivery", method: "review", pay: "method", confirm: "pay" };
+          setStep(backMap[step] || "delivery");
+        }} className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary">
           <ArrowLeft className="h-5 w-5 text-foreground" />
         </button>
         <h1 className="flex-1 text-lg font-bold text-foreground">Checkout</h1>
