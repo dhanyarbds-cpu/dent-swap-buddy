@@ -44,6 +44,7 @@ interface Order {
 
 const statusColors: Record<string, string> = {
   pending: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+  pending_verification: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
   paid: "bg-primary/10 text-primary",
   confirmed: "bg-primary/10 text-primary",
   completed: "bg-verified/10 text-verified",
