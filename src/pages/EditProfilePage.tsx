@@ -1,5 +1,5 @@
-import { useState, useRef } from "react";
-import { ArrowLeft, Camera, Loader2, User, Phone, MapPin, Mail, FileText, AtSign, GraduationCap, Calendar } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { ArrowLeft, Camera, Loader2, User, Phone, MapPin, Mail, FileText, AtSign, GraduationCap, Calendar, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -27,7 +27,21 @@ const EditProfilePage = () => {
     year_of_study: profile?.year_of_study || "",
     location: profile?.location || "",
     avatar_url: profile?.avatar_url || "",
+    upi_id: "",
   });
+
+  // Load existing UPI ID
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("seller_payout_details")
+      .select("upi_id")
+      .eq("seller_id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.upi_id) setForm((f) => ({ ...f, upi_id: data.upi_id }));
+      });
+  }, [user]);
 
   const update = (key: string, value: string) => setForm((f) => ({ ...f, [key]: value }));
 
