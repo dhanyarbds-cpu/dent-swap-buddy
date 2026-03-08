@@ -97,7 +97,8 @@ const SellPage = () => {
         status: "active",
         pickup_available: form.pickupAvailable,
         shipping_available: form.shippingAvailable,
-      }).select("id").single();
+        external_link: form.externalLink || "",
+      } as any).select("id").single();
 
       if (error) throw error;
 
