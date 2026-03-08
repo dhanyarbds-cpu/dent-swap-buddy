@@ -105,6 +105,14 @@ const SellPage = () => {
         }).catch(console.error);
       }
 
+      // Save UPI ID to seller_payout_details
+      if (form.upiId) {
+        await supabase.from("seller_payout_details").upsert(
+          { seller_id: user.id, upi_id: form.upiId, payout_method: "upi" },
+          { onConflict: "seller_id" }
+        );
+      }
+
       toast({ title: "Listing Published! 🎉", description: "Your listing is now live." });
       navigate("/");
     } catch (err: any) {

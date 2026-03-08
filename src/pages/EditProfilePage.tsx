@@ -1,5 +1,5 @@
-import { useState, useRef } from "react";
-import { ArrowLeft, Camera, Loader2, User, Phone, MapPin, Mail, FileText, AtSign, GraduationCap, Calendar } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { ArrowLeft, Camera, Loader2, User, Phone, MapPin, Mail, FileText, AtSign, GraduationCap, Calendar, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
