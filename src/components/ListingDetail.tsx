@@ -43,6 +43,33 @@ const ListingDetail = ({ listing, onBack }: ListingDetailProps) => {
     }
   }, [listing.id]);
 
+  // Fetch certificate
+  useEffect(() => {
+    if (!isDbListing) return;
+    supabase.from("product_certificates").select("*").eq("listing_id", listing.id).maybeSingle().then(({ data }) => {
+      setCertificate(data);
+    });
+  }, [listing.id, isDbListing]);
+
+  const generateCertificate = async () => {
+    if (!user) return;
+    setGeneratingCert(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-certificate", {
+        body: { listing_id: listing.id },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success("Authenticity certificate generated!");
+      // Refetch
+      const { data: cert } = await supabase.from("product_certificates").select("*").eq("listing_id", listing.id).maybeSingle();
+      setCertificate(cert);
+    } catch (e: any) {
+      toast.error(e.message || "Failed to generate certificate");
+    }
+    setGeneratingCert(false);
+  };
+
   // Delivery options from DB listing
   const pickupAvailable = (listing as any).pickup_available ?? true;
   const shippingAvailable = (listing as any).shipping_available ?? false;
