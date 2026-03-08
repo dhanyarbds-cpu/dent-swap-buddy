@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, Gift, Copy, Share2, Users, CheckCircle2, IndianRupee } from "lucide-react";
+import { ArrowLeft, Gift, Copy, Share2, Users, CheckCircle2, Package } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,28 +12,26 @@ const ReferralPage = () => {
   const { user } = useAuth();
   const [referralCode, setReferralCode] = useState("");
   const [referrals, setReferrals] = useState<any[]>([]);
-  const [totalCredits, setTotalCredits] = useState(0);
+  const [freeListingsLeft, setFreeListingsLeft] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;
     const init = async () => {
-      // Get or create referral code
       const { data: existing } = await supabase.from("referrals").select("*").eq("referrer_id", user.id);
-      
+
       if (existing && existing.length > 0) {
         setReferralCode(existing[0].referral_code);
         setReferrals(existing);
       } else {
-        // Generate unique code
         const code = `DENT${user.id.slice(0, 6).toUpperCase()}`;
         await supabase.from("referrals").insert({ referrer_id: user.id, referral_code: code });
         setReferralCode(code);
       }
 
-      // Get total credits
+      // Calculate free commission-free listings: 2 per completed referral
       const { data: credits } = await supabase.from("user_credits").select("amount").eq("user_id", user.id);
-      setTotalCredits((credits || []).reduce((sum: number, c: any) => sum + c.amount, 0));
+      setFreeListingsLeft((credits || []).reduce((sum: number, c: any) => sum + c.amount, 0));
       setLoading(false);
     };
     init();
@@ -45,7 +43,7 @@ const ReferralPage = () => {
   };
 
   const shareCode = () => {
-    const text = `Join DentSwap - the marketplace for dental students! Use my referral code ${referralCode} and we both get ₹20 credit. Download now!`;
+    const text = `Join DentSwap - the marketplace for dental students! Use my referral code ${referralCode} and we both get 2 commission-free sales. Download now!`;
     if (navigator.share) {
       navigator.share({ title: "Join DentSwap", text });
     } else {
@@ -63,7 +61,7 @@ const ReferralPage = () => {
           <button onClick={() => navigate(-1)} className="rounded-full p-2 hover:bg-secondary"><ArrowLeft className="h-5 w-5" /></button>
           <div>
             <h1 className="text-base font-bold text-foreground flex items-center gap-2"><Gift className="h-5 w-5 text-primary" />Refer & Earn</h1>
-            <p className="text-xs text-muted-foreground">Invite friends, earn ₹20 each</p>
+            <p className="text-xs text-muted-foreground">Invite friends, sell commission-free</p>
           </div>
         </div>
       </header>
@@ -78,8 +76,8 @@ const ReferralPage = () => {
             {/* Hero */}
             <div className="rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/20 p-5 text-center">
               <div className="text-4xl mb-3">🎁</div>
-              <h2 className="text-lg font-bold text-foreground">Invite Friends & Earn</h2>
-              <p className="text-sm text-muted-foreground mt-1">Both you and your friend get <span className="font-bold text-primary">₹20 credit</span> when they join!</p>
+              <h2 className="text-lg font-bold text-foreground">Invite Friends & Sell Free</h2>
+              <p className="text-sm text-muted-foreground mt-1">Both you and your friend get <span className="font-bold text-primary">2 commission-free product sales</span> when they join!</p>
             </div>
 
             {/* Referral code */}
@@ -118,9 +116,9 @@ const ReferralPage = () => {
               </Card>
               <Card className="glass-card">
                 <CardContent className="p-3 text-center">
-                  <IndianRupee className="mx-auto h-5 w-5 text-amber-500 mb-1" />
-                  <p className="text-lg font-bold">₹{totalCredits}</p>
-                  <p className="text-[10px] text-muted-foreground">Credits</p>
+                  <Package className="mx-auto h-5 w-5 text-primary mb-1" />
+                  <p className="text-lg font-bold">{freeListingsLeft}</p>
+                  <p className="text-[10px] text-muted-foreground">Free Sales Left</p>
                 </CardContent>
               </Card>
             </div>
@@ -133,7 +131,7 @@ const ReferralPage = () => {
                   {[
                     { step: "1", text: "Share your referral code with friends" },
                     { step: "2", text: "Friend signs up using your code" },
-                    { step: "3", text: "Both of you receive ₹20 platform credit" },
+                    { step: "3", text: "Both of you get 2 commission-free product sales (0% platform fee)" },
                   ].map(s => (
                     <div key={s.step} className="flex items-center gap-3">
                       <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-bold text-primary">{s.step}</div>
