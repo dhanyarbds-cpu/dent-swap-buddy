@@ -87,6 +87,7 @@ const AdminSellerPayoutsPage = () => {
 
   const handleReleasePayout = async (orderId: string) => {
     setActionId(orderId);
+    const order = orders.find((o) => o.id === orderId);
     const { error } = await supabase
       .from("orders")
       .update({ escrow_status: "released", escrow_released_at: new Date().toISOString() })
@@ -95,7 +96,19 @@ const AdminSellerPayoutsPage = () => {
     if (error) {
       toast({ title: "Error", description: "Failed to release payout: " + error.message, variant: "destructive" });
     } else {
-      toast({ title: "Payout Released ✓", description: "Escrow released. Transfer funds to seller manually." });
+      // Notify seller
+      if (order) {
+        const listingTitle = order.listing?.title || "your order";
+        const payoutAmount = order.seller_payout || order.price;
+        await supabase.from("notifications").insert({
+          user_id: order.seller_id,
+          title: "Payout Released 💰",
+          message: `Your payout of ₹${payoutAmount.toLocaleString("en-IN")} for "${listingTitle}" has been released. Please check your UPI/bank account.`,
+          type: "payment",
+          data: { order_id: orderId },
+        });
+      }
+      toast({ title: "Payout Released ✓", description: "Escrow released & seller notified." });
       fetchOrders();
     }
     setActionId(null);
