@@ -11,7 +11,7 @@ import ImageUploader from "@/components/ImageUploader";
 import { useNavigate } from "react-router-dom";
 
 const conditions = ["New", "Used"];
-const steps = ["Category", "Photos", "Details", "Price", "Delivery"];
+const steps = ["Category", "Photos", "Details", "Links & Price", "Delivery"];
 
 // Consumable keywords that should block listings
 const CONSUMABLE_KEYWORDS = [
@@ -48,6 +48,7 @@ const SellPage = () => {
     description: "",
     location: "",
     hashtags: "",
+    externalLink: "",
     negotiable: true,
     pickupAvailable: true,
     shippingAvailable: false,
@@ -203,7 +204,7 @@ const SellPage = () => {
 
         {/* Step 1: Photos */}
         {step === 1 && (
-          <ImageUploader images={images} onImagesChange={setImages} maxImages={8} />
+          <ImageUploader images={images} onImagesChange={setImages} maxImages={5} />
         )}
 
         {/* Step 2: Details */}
@@ -218,10 +219,12 @@ const SellPage = () => {
                 <label className="mb-1.5 block text-sm font-semibold text-foreground">Title</label>
                 <Input
                   value={form.title}
-                  onChange={(e) => update("title", e.target.value)}
+                  onChange={(e) => update("title", e.target.value.slice(0, 80))}
                   placeholder="e.g. Complete BDS Instrument Kit"
                   className="rounded-xl py-5"
+                  maxLength={80}
                 />
+                <p className="mt-1 text-[11px] text-muted-foreground text-right">{form.title.length}/80</p>
               </div>
               <div>
                 <label className="mb-1.5 block text-sm font-semibold text-foreground">Condition</label>
@@ -255,11 +258,13 @@ const SellPage = () => {
                 <label className="mb-1.5 block text-sm font-semibold text-foreground">Description</label>
                 <Textarea
                   value={form.description}
-                  onChange={(e) => update("description", e.target.value)}
+                  onChange={(e) => update("description", e.target.value.slice(0, 500))}
                   placeholder="Describe condition, usage history, what's included..."
                   rows={4}
                   className="rounded-xl"
+                  maxLength={500}
                 />
+                <p className="mt-1 text-[11px] text-muted-foreground text-right">{form.description.length}/500</p>
               </div>
             </div>
           </div>
