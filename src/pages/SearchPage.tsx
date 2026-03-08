@@ -34,7 +34,7 @@ const SearchPage = () => {
   });
 
   const suggestions = query.length > 0
-    ? ["Dental Instruments", "BDS Books", "Phantom Head", "Handpiece", "Ortho Kit", "Autoclave"]
+    ? ["Dental Instruments", "BDS Books", "Phantom Head", "Handpiece", "Ortho Kit", "Autoclave", "Surgical Kit", "Lab Equipment"]
         .filter((s) => s.toLowerCase().includes(query.toLowerCase()))
     : [];
 

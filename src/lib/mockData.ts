@@ -28,7 +28,6 @@ export const categories = [
   { name: "Surgical Instruments", icon: "🩺", count: 95 },
   { name: "Diagnostic Devices", icon: "📊", count: 56 },
   { name: "Clinic Furniture", icon: "🪑", count: 78 },
-  { name: "Consumables & Supplies", icon: "💊", count: 112 },
   { name: "Student Equipment", icon: "🎓", count: 45 },
   { name: "Educational Materials", icon: "📝", count: 34 },
 ];

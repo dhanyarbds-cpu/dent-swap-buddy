@@ -26,11 +26,21 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `You are an image moderation AI for a medical/dental marketplace. Analyze the image and determine if it's a valid product listing photo.
+            content: `You are an image moderation AI for a durable medical/dental equipment marketplace. Analyze the image and determine if it's a valid product listing photo.
 
-APPROVE images that show: medical equipment, dental instruments, laboratory tools, medical/dental books, clinic furniture, healthcare supplies, consumables, surgical instruments, diagnostic devices, student equipment, educational materials related to healthcare.
+APPROVE images that show: durable medical equipment, dental instruments, laboratory tools, medical/dental books, clinic furniture, surgical instruments, diagnostic devices, student training equipment, educational models.
 
-REJECT images that show: human faces or selfies, explicit/inappropriate content, memes or wallpapers, animals, random non-product photos, extremely blurry/low-quality photos, non-healthcare products.
+REJECT images that show:
+- Consumable/disposable products (syringes, gloves, masks, cotton, gauze, disposable kits, chemical reagents, medicines, pharmaceutical products, dental materials used once)
+- Human faces or selfies
+- Explicit/inappropriate content
+- Memes or wallpapers
+- Animals
+- Random non-product photos
+- Extremely blurry/low-quality photos
+- Non-healthcare products
+
+IMPORTANT: This platform only allows DURABLE equipment. Consumables and disposable items must be REJECTED.
 
 You must respond using the validate_image tool.`
           },
