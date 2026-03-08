@@ -59,6 +59,7 @@ const AppRoutes = () => {
         <Route path="/verification" element={<VerificationPage />} />
         <Route path="/orders" element={<OrdersPage />} />
         <Route path="/wishlist" element={<WishlistPage />} />
+        <Route path="/complaints" element={<ComplaintsPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <BottomTabBar />
