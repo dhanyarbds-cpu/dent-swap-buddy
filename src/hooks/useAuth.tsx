@@ -23,6 +23,7 @@ export interface Profile {
   location: string;
   avatar_url: string | null;
   verified: boolean;
+  is_elite: boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({

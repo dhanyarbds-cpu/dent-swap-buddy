@@ -16,7 +16,7 @@ const menuSections = [
   {
     title: "Preferences",
     items: [
-      { icon: Crown, label: "Premium Membership", badge: "Upgrade" },
+      { icon: Crown, label: "Elite Membership", badge: "Upgrade", route: "/elite" },
       { icon: Shield, label: "Verification", badge: "Verified" },
       { icon: Star, label: "Reviews & Ratings" },
       { icon: Moon, label: "Dark Mode" },
@@ -113,6 +113,7 @@ const ProfilePage = () => {
               {section.items.map((item, i) => (
                 <button
                   key={item.label}
+                  onClick={() => "route" in item && item.route && navigate(item.route as string)}
                   className={`flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-secondary/50 ${
                     i < section.items.length - 1 ? "border-b border-border" : ""
                   }`}

@@ -12,6 +12,7 @@ import MessagesPage from "./pages/MessagesPage";
 import MyAdsPage from "./pages/MyAdsPage";
 import ProfilePage from "./pages/ProfilePage";
 import EditProfilePage from "./pages/EditProfilePage";
+import EliteDashboardPage from "./pages/EliteDashboardPage";
 import AuthPage from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
 
@@ -40,6 +41,7 @@ const AppRoutes = () => {
         <Route path="/my-ads" element={<MyAdsPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/edit-profile" element={<EditProfilePage />} />
+        <Route path="/elite" element={<EliteDashboardPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <BottomTabBar />
