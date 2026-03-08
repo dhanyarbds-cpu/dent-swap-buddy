@@ -64,6 +64,13 @@ const ProductCard = ({ listing, onClick }: ProductCardProps) => {
               {listing.description}
             </p>
           )}
+
+          {/* Upload date */}
+          <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+            <CalendarDays className="h-3 w-3 shrink-0 opacity-60" />
+            <span>{formatUploadDate(listing.createdAt)}</span>
+          </div>
+
           <div className="flex items-center justify-between pt-1 text-[10px] text-muted-foreground">
             <span className="flex items-center gap-0.5 truncate">
               <MapPin className="h-3 w-3 shrink-0 opacity-60" />
