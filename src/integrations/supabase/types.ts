@@ -1099,6 +1099,7 @@ export type Database = {
           ifsc_code: string | null
           is_verified: boolean
           payout_method: string
+          razorpay_account_id: string | null
           seller_id: string
           updated_at: string
           upi_id: string | null
@@ -1112,6 +1113,7 @@ export type Database = {
           ifsc_code?: string | null
           is_verified?: boolean
           payout_method?: string
+          razorpay_account_id?: string | null
           seller_id: string
           updated_at?: string
           upi_id?: string | null
@@ -1125,6 +1127,7 @@ export type Database = {
           ifsc_code?: string | null
           is_verified?: boolean
           payout_method?: string
+          razorpay_account_id?: string | null
           seller_id?: string
           updated_at?: string
           upi_id?: string | null

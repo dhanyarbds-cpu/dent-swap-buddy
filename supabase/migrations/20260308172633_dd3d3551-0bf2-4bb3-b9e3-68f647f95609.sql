@@ -1,0 +1,1 @@
+ALTER TABLE public.seller_payout_details ADD COLUMN IF NOT EXISTS razorpay_account_id text DEFAULT NULL;
