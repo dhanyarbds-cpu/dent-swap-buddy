@@ -24,6 +24,7 @@ import SettingsPage from "./pages/SettingsPage";
 import VerificationPage from "./pages/VerificationPage";
 import OrdersPage from "./pages/OrdersPage";
 import WishlistPage from "./pages/WishlistPage";
+import ComplaintsPage from "./pages/ComplaintsPage";
 
 const queryClient = new QueryClient();
 
