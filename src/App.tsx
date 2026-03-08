@@ -29,6 +29,8 @@ import ComplaintsPage from "./pages/ComplaintsPage";
 import CompanyRegistrationPage from "./pages/CompanyRegistrationPage";
 import CompanySellPage from "./pages/CompanySellPage";
 import AdminCompaniesPage from "./pages/AdminCompaniesPage";
+import SellerPayoutPage from "./pages/SellerPayoutPage";
+import AdminTransactionsPage from "./pages/AdminTransactionsPage";
 
 const queryClient = new QueryClient();
 
@@ -69,6 +71,8 @@ const AppRoutes = () => {
           <Route path="/register-company" element={<CompanyRegistrationPage />} />
           <Route path="/company-sell" element={<CompanySellPage />} />
           <Route path="/admin/companies" element={<AdminCompaniesPage />} />
+          <Route path="/payout-details" element={<SellerPayoutPage />} />
+          <Route path="/admin/transactions" element={<AdminTransactionsPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <BottomTabBar />
