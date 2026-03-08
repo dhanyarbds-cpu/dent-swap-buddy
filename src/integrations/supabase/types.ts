@@ -41,6 +41,39 @@ export type Database = {
         }
         Relationships: []
       }
+      blocked_listings: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          listing_data: Json
+          price: number
+          reason: string
+          seller_id: string
+          title: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          id?: string
+          listing_data?: Json
+          price?: number
+          reason?: string
+          seller_id: string
+          title?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          listing_data?: Json
+          price?: number
+          reason?: string
+          seller_id?: string
+          title?: string
+        }
+        Relationships: []
+      }
       buyer_trust_scores: {
         Row: {
           buyer_id: string
