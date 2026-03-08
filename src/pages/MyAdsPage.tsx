@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Package, Plus, Eye, MessageSquare, Heart, CheckCircle, TrendingUp, XCircle, Loader2, MoreVertical, Trash2, Tag, IndianRupee, BarChart3 } from "lucide-react";
+import PricingAlert from "@/components/PricingAlert";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -285,6 +286,15 @@ const MyAdsPage = () => {
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
+                        {listing.status === "active" && (
+                          <div className="mt-2">
+                            <PricingAlert
+                              listingId={listing.id}
+                              currentPrice={listing.price}
+                              onPriceUpdate={(newPrice) => setListings(prev => prev.map(l => l.id === listing.id ? { ...l, price: newPrice } : l))}
+                            />
+                          </div>
+                        )}
                       </div>
                     </div>
                   );

@@ -508,32 +508,44 @@ export type Database = {
       }
       notification_preferences: {
         Row: {
+          alert_frequency: string
           chat_notifications: boolean
           created_at: string
           elite_alerts: boolean
           id: string
+          price_alerts: boolean
           product_alerts: boolean
           promotional: boolean
+          proximity_radius_km: number
+          tracking_alerts: boolean
           updated_at: string
           user_id: string
         }
         Insert: {
+          alert_frequency?: string
           chat_notifications?: boolean
           created_at?: string
           elite_alerts?: boolean
           id?: string
+          price_alerts?: boolean
           product_alerts?: boolean
           promotional?: boolean
+          proximity_radius_km?: number
+          tracking_alerts?: boolean
           updated_at?: string
           user_id: string
         }
         Update: {
+          alert_frequency?: string
           chat_notifications?: boolean
           created_at?: string
           elite_alerts?: boolean
           id?: string
+          price_alerts?: boolean
           product_alerts?: boolean
           promotional?: boolean
+          proximity_radius_km?: number
+          tracking_alerts?: boolean
           updated_at?: string
           user_id?: string
         }
@@ -583,6 +595,7 @@ export type Database = {
           delivery_method: string
           escrow_released_at: string | null
           escrow_status: string
+          estimated_delivery: string | null
           id: string
           listing_id: string | null
           payment_method: string | null
@@ -596,7 +609,9 @@ export type Database = {
           shipping_address: string | null
           shipping_cost: number | null
           status: string
+          tracking_history: Json
           tracking_number: string | null
+          tracking_status: string
           updated_at: string
         }
         Insert: {
@@ -609,6 +624,7 @@ export type Database = {
           delivery_method?: string
           escrow_released_at?: string | null
           escrow_status?: string
+          estimated_delivery?: string | null
           id?: string
           listing_id?: string | null
           payment_method?: string | null
@@ -622,7 +638,9 @@ export type Database = {
           shipping_address?: string | null
           shipping_cost?: number | null
           status?: string
+          tracking_history?: Json
           tracking_number?: string | null
+          tracking_status?: string
           updated_at?: string
         }
         Update: {
@@ -635,6 +653,7 @@ export type Database = {
           delivery_method?: string
           escrow_released_at?: string | null
           escrow_status?: string
+          estimated_delivery?: string | null
           id?: string
           listing_id?: string | null
           payment_method?: string | null
@@ -648,7 +667,9 @@ export type Database = {
           shipping_address?: string | null
           shipping_cost?: number | null
           status?: string
+          tracking_history?: Json
           tracking_number?: string | null
+          tracking_status?: string
           updated_at?: string
         }
         Relationships: [

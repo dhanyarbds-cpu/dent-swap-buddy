@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import RaiseComplaintDialog from "@/components/RaiseComplaintDialog";
 import ReturnRequestDialog from "@/components/ReturnRequestDialog";
+import OrderTrackingTimeline from "@/components/OrderTrackingTimeline";
 
 interface Order {
   id: string;
@@ -75,13 +76,13 @@ const OrdersPage = () => {
       // Fetch orders where user is buyer OR seller
       const { data: buyerOrders } = await supabase
         .from("orders")
-        .select("id, status, price, created_at, seller_id, buyer_id, escrow_status, razorpay_payment_id, payment_method, delivery_method, courier_name, tracking_number, listing:listings(id, title, images, category)")
+        .select("id, status, price, created_at, seller_id, buyer_id, escrow_status, razorpay_payment_id, payment_method, delivery_method, courier_name, tracking_number, tracking_status, estimated_delivery, tracking_history, listing:listings(id, title, images, category)")
         .eq("buyer_id", user.id)
         .order("created_at", { ascending: false });
 
       const { data: sellerOrders } = await supabase
         .from("orders")
-        .select("id, status, price, created_at, seller_id, buyer_id, escrow_status, razorpay_payment_id, payment_method, delivery_method, courier_name, tracking_number, listing:listings(id, title, images, category)")
+        .select("id, status, price, created_at, seller_id, buyer_id, escrow_status, razorpay_payment_id, payment_method, delivery_method, courier_name, tracking_number, tracking_status, estimated_delivery, tracking_history, listing:listings(id, title, images, category)")
         .eq("seller_id", user.id)
         .order("created_at", { ascending: false });
 
@@ -249,8 +250,17 @@ const OrdersPage = () => {
                     )}
                   </div>
 
-                  {/* Tracking Info */}
-                  {order.courier_name && order.tracking_number && (
+                  {/* Smart Tracking Timeline */}
+                  {order.delivery_method === "shipping" || order.tracking_number ? (
+                    <OrderTrackingTimeline
+                      trackingStatus={(order as any).tracking_status || (order.status === "completed" ? "delivered" : "pending")}
+                      deliveryMethod={order.delivery_method}
+                      estimatedDelivery={(order as any).estimated_delivery}
+                      trackingHistory={(order as any).tracking_history || []}
+                      courierName={order.courier_name}
+                      trackingNumber={order.tracking_number}
+                    />
+                  ) : order.courier_name && order.tracking_number ? (
                     <div className="rounded-xl bg-secondary/50 px-3 py-2 space-y-1">
                       <div className="flex items-center gap-2">
                         <Package className="h-3.5 w-3.5 text-primary" />
@@ -261,7 +271,7 @@ const OrdersPage = () => {
                         <span className="text-[10px] font-mono text-primary">{order.tracking_number}</span>
                       </div>
                     </div>
-                  )}
+                  ) : null}
 
                   {/* Escrow Status */}
                   <div className="flex items-center gap-2 rounded-xl bg-secondary/50 px-3 py-2">
