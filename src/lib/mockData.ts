@@ -21,18 +21,16 @@ export interface Listing {
 }
 
 export const categories = [
-  { name: "Medical Equipment", icon: "🏥", count: 234 },
   { name: "Dental Instruments", icon: "🦷", count: 189 },
-  { name: "Books", icon: "📚", count: 312 },
-  { name: "Electronics", icon: "💻", count: 156 },
-  { name: "Lab Equipment", icon: "🔬", count: 67 },
-  { name: "Phantom Heads", icon: "💀", count: 45 },
-  { name: "Handpieces & Rotary", icon: "⚙️", count: 89 },
-  { name: "Orthodontic Equipment", icon: "🔧", count: 34 },
-  { name: "Furniture", icon: "🪑", count: 78 },
-  { name: "Vehicles", icon: "🚗", count: 42 },
-  { name: "Jobs", icon: "💼", count: 95 },
-  { name: "Other Supplies", icon: "📦", count: 112 },
+  { name: "Medical Equipment", icon: "🏥", count: 234 },
+  { name: "Laboratory Equipment", icon: "🔬", count: 67 },
+  { name: "Medical & Dental Books", icon: "📚", count: 312 },
+  { name: "Surgical Instruments", icon: "🩺", count: 95 },
+  { name: "Diagnostic Devices", icon: "📊", count: 56 },
+  { name: "Clinic Furniture", icon: "🪑", count: 78 },
+  { name: "Consumables & Supplies", icon: "💊", count: 112 },
+  { name: "Student Equipment", icon: "🎓", count: 45 },
+  { name: "Educational Materials", icon: "📝", count: 34 },
 ];
 
 export const listings: Listing[] = [
