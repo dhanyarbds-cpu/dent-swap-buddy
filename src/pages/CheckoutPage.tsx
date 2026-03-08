@@ -503,15 +503,15 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
 
               <div className="flex items-center justify-center gap-4 pt-2">
                 <div className="flex flex-col items-center gap-1">
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Google_Pay_Logo.svg/512px-Google_Pay_Logo.svg.png" alt="Google Pay" className="h-7 w-auto object-contain" />
+                  <img src={gpayLogo} alt="Google Pay" className="h-7 w-auto object-contain" />
                   <span className="text-[9px] text-muted-foreground">GPay</span>
                 </div>
                 <div className="flex flex-col items-center gap-1">
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/PhonePe_Logo.svg/512px-PhonePe_Logo.svg.png" alt="PhonePe" className="h-7 w-auto object-contain" />
+                  <img src={phonepeLogo} alt="PhonePe" className="h-7 w-auto object-contain" />
                   <span className="text-[9px] text-muted-foreground">PhonePe</span>
                 </div>
                 <div className="flex flex-col items-center gap-1">
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Paytm_Logo_%28standalone%29.svg/512px-Paytm_Logo_%28standalone%29.svg.png" alt="Paytm" className="h-7 w-auto object-contain" />
+                  <img src={paytmLogo} alt="Paytm" className="h-7 w-auto object-contain" />
                   <span className="text-[9px] text-muted-foreground">Paytm</span>
                 </div>
               </div>
