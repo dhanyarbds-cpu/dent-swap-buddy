@@ -8,13 +8,7 @@ import type { Listing } from "@/lib/mockData";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useUserLocation } from "@/hooks/useUserLocation";
-import heroBanner from "@/assets/hero-banner.jpg";
-
-const bannerSlides = [
-  { title: "Up to 40% Off Dental Kits", subtitle: "Trusted by 10,000+ students across India", tag: "Sale" },
-  { title: "Sell Your Old Instruments", subtitle: "List for free and reach thousands of buyers", tag: "New" },
-  { title: "Verified Sellers Only", subtitle: "Shop with confidence from verified professionals", tag: "Featured" },
-];
+import PromoBannerCarousel from "@/components/PromoBannerCarousel";
 
 const Index = () => {
   const navigate = useNavigate();
