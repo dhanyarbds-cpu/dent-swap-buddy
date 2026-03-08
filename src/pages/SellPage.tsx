@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import ImageUploader from "@/components/ImageUploader";
+import VideoUploader from "@/components/VideoUploader";
 import { useNavigate } from "react-router-dom";
 
 const conditions = ["New", "Used"];
@@ -39,6 +40,8 @@ const SellPage = () => {
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [images, setImages] = useState<string[]>([]);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [aiCondition, setAiCondition] = useState<string | null>(null);
   const [form, setForm] = useState({
     title: "",
     category: "",
@@ -208,7 +211,29 @@ const SellPage = () => {
 
         {/* Step 1: Photos */}
         {step === 1 && (
-          <ImageUploader images={images} onImagesChange={setImages} maxImages={5} />
+          <div className="space-y-6">
+            <ImageUploader
+              images={images}
+              onImagesChange={setImages}
+              maxImages={5}
+              onConditionDetected={(rating) => setAiCondition(rating)}
+            />
+            <VideoUploader
+              videoUrl={videoUrl}
+              onVideoChange={setVideoUrl}
+              listingTitle={form.title}
+            />
+            {aiCondition && (
+              <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 animate-fade-in">
+                <p className="text-xs text-muted-foreground">
+                  AI detected condition: <span className="font-bold text-foreground">{aiCondition}</span>
+                  {form.condition && aiCondition !== form.condition && (
+                    <span className="ml-1 text-amber-600 dark:text-amber-400">(differs from your selection)</span>
+                  )}
+                </p>
+              </div>
+            )}
+          </div>
         )}
 
         {/* Step 2: Details */}
