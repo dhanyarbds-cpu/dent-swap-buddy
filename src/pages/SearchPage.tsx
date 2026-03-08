@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Search, SlidersHorizontal, X, ArrowLeft, Crown, Bell, Mic, MicOff } from "lucide-react";
+import { Search, SlidersHorizontal, X, ArrowLeft, Crown, Bell, Mic, MicOff, Languages } from "lucide-react";
 import { listings, categories } from "@/lib/mockData";
 import ProductCard from "@/components/ProductCard";
 import ListingDetail from "@/components/ListingDetail";
@@ -7,6 +7,7 @@ import type { Listing } from "@/lib/mockData";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/hooks/useLanguage";
 
 const sortOptions = ["Newest", "Price: Low", "Price: High", "Relevant"];
 const sellerTypeOptions = ["All Sellers", "Individuals", "Companies", "New Only"];
@@ -33,12 +34,14 @@ interface SpeechRecognitionEvent {
 const SearchPage = () => {
   const { user, profile } = useAuth();
   const { toast } = useToast();
+  const { language } = useLanguage();
   const [query, setQuery] = useState("");
   const [sortBy, setSortBy] = useState("Newest");
   const [sellerFilter, setSellerFilter] = useState("All Sellers");
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
   const [trackedQuery, setTrackedQuery] = useState<string | null>(null);
   const [isListening, setIsListening] = useState(false);
+  const [interimText, setInterimText] = useState("");
   const recognitionRef = useRef<any>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -73,19 +76,35 @@ const SearchPage = () => {
     }
 
     const recognition = new SpeechRecognition();
-    recognition.lang = "en-IN";
+    // Map language code to BCP-47 for Indian accents
+    const langMap: Record<string, string> = {
+      en: "en-IN", hi: "hi-IN", ta: "ta-IN", te: "te-IN",
+      kn: "kn-IN", ml: "ml-IN", mr: "mr-IN", bn: "bn-IN",
+    };
+    recognition.lang = langMap[language] || "en-IN";
     recognition.interimResults = true;
-    recognition.continuous = false;
-    recognition.maxAlternatives = 1;
+    recognition.continuous = true;
+    recognition.maxAlternatives = 3;
 
     recognition.onstart = () => setIsListening(true);
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
-      let transcript = "";
+      let finalTranscript = "";
+      let interimTranscript = "";
       for (let i = event.resultIndex; i < event.results.length; i++) {
-        transcript += event.results[i][0].transcript;
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript;
+        } else {
+          interimTranscript += transcript;
+        }
       }
-      setQuery(transcript);
+      if (finalTranscript) {
+        setQuery(finalTranscript);
+        setInterimText("");
+      } else {
+        setInterimText(interimTranscript);
+      }
     };
 
     recognition.onerror = (event: any) => {
@@ -177,7 +196,9 @@ const SearchPage = () => {
               <span className="h-3 w-3 rounded-full bg-primary animate-pulse" style={{ animationDelay: "0.15s" }} />
               <span className="h-2 w-2 rounded-full bg-primary animate-pulse" style={{ animationDelay: "0.3s" }} />
             </div>
-            <p className="text-xs font-medium text-primary">Speak now...</p>
+            <p className="text-xs font-medium text-primary">
+              {interimText || "Speak now..."}
+            </p>
           </div>
         )}
 
