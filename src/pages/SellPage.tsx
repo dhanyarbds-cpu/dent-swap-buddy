@@ -38,6 +38,10 @@ const SellPage = () => {
     pickupAvailable: true,
     shippingAvailable: false,
     upiId: "",
+    accountHolderName: "",
+    bankName: "",
+    bankAccountNumber: "",
+    ifscCode: "",
   });
 
   // Load existing UPI ID
@@ -45,11 +49,15 @@ const SellPage = () => {
     if (!user) return;
     supabase
       .from("seller_payout_details")
-      .select("upi_id")
+      .select("upi_id, account_holder_name, bank_name, bank_account_number, ifsc_code")
       .eq("seller_id", user.id)
       .maybeSingle()
       .then(({ data }) => {
         if (data?.upi_id) update("upiId", data.upi_id);
+        if (data?.account_holder_name) update("accountHolderName", data.account_holder_name);
+        if (data?.bank_name) update("bankName", data.bank_name);
+        if (data?.bank_account_number) update("bankAccountNumber", data.bank_account_number);
+        if (data?.ifsc_code) update("ifscCode", data.ifsc_code);
       });
   }, [user]);
 
@@ -105,10 +113,18 @@ const SellPage = () => {
         }).catch(console.error);
       }
 
-      // Save UPI ID to seller_payout_details
-      if (form.upiId) {
+      // Save payout details
+      if (form.upiId || form.bankAccountNumber) {
         await supabase.from("seller_payout_details").upsert(
-          { seller_id: user.id, upi_id: form.upiId, payout_method: "upi" },
+          {
+            seller_id: user.id,
+            upi_id: form.upiId || null,
+            payout_method: form.upiId ? "upi" : "bank",
+            account_holder_name: form.accountHolderName || null,
+            bank_name: form.bankName || null,
+            bank_account_number: form.bankAccountNumber || null,
+            ifsc_code: form.ifscCode || null,
+          },
           { onConflict: "seller_id" }
         );
       }
@@ -343,19 +359,65 @@ const SellPage = () => {
               desc="Allow buyers to negotiate the price"
             />
 
-            {/* UPI ID */}
-            <div>
-              <label className="mb-1.5 block text-sm font-semibold text-foreground">Your UPI ID (for receiving payments)</label>
-              <div className="relative">
-                <Wallet className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            {/* Payout Details */}
+            <div className="space-y-3">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Payout Details (Admin only)</p>
+              
+              {/* UPI ID */}
+              <div>
+                <label className="mb-1.5 block text-sm font-semibold text-foreground">UPI ID</label>
+                <div className="relative">
+                  <Wallet className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    value={form.upiId}
+                    onChange={(e) => update("upiId", e.target.value.trim())}
+                    placeholder="e.g. yourname@upi"
+                    className="rounded-xl py-5 pl-10"
+                  />
+                </div>
+              </div>
+
+              {/* Bank Account Details */}
+              <div>
+                <label className="mb-1.5 block text-sm font-semibold text-foreground">Account Holder Name</label>
                 <Input
-                  value={form.upiId}
-                  onChange={(e) => update("upiId", e.target.value.trim())}
-                  placeholder="e.g. yourname@upi"
-                  className="rounded-xl py-5 pl-10"
+                  value={form.accountHolderName}
+                  onChange={(e) => update("accountHolderName", e.target.value)}
+                  placeholder="e.g. John Doe"
+                  className="rounded-xl py-5"
                 />
               </div>
-              <p className="mt-1 text-[11px] text-muted-foreground">Only visible to you and platform admin for payouts.</p>
+              <div>
+                <label className="mb-1.5 block text-sm font-semibold text-foreground">Bank Name</label>
+                <Input
+                  value={form.bankName}
+                  onChange={(e) => update("bankName", e.target.value)}
+                  placeholder="e.g. State Bank of India"
+                  className="rounded-xl py-5"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1.5 block text-sm font-semibold text-foreground">Account Number</label>
+                  <Input
+                    value={form.bankAccountNumber}
+                    onChange={(e) => update("bankAccountNumber", e.target.value)}
+                    placeholder="Account number"
+                    className="rounded-xl py-5"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-sm font-semibold text-foreground">IFSC Code</label>
+                  <Input
+                    value={form.ifscCode}
+                    onChange={(e) => update("ifscCode", e.target.value.toUpperCase())}
+                    placeholder="e.g. SBIN0001234"
+                    className="rounded-xl py-5"
+                  />
+                </div>
+              </div>
+
+              <p className="text-[11px] text-muted-foreground">Only visible to you and platform admin for payouts. Provide UPI or bank details (or both).</p>
             </div>
 
             {/* Commission Info */}
