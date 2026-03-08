@@ -1,16 +1,18 @@
 import { useState, useEffect } from "react";
-import { Settings, ChevronRight, Package, Heart, Star, Shield, Crown, LogOut, BadgeCheck, ShoppingBag, BarChart3, Bell, HelpCircle, Moon, Pencil, MessageSquare, Wallet, Receipt, RotateCcw, ScrollText, Award, Gift, TrendingUp } from "lucide-react";
+import { Settings, ChevronRight, Package, Heart, Star, Shield, Crown, LogOut, BadgeCheck, ShoppingBag, BarChart3, Bell, HelpCircle, Moon, Pencil, MessageSquare, Wallet, Receipt, RotateCcw, ScrollText, Award, Gift, TrendingUp, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "next-themes";
 import { supabase } from "@/integrations/supabase/client";
+import { useAdminRole } from "@/hooks/useAdminRole";
 
 const ProfilePage = () => {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
+  const { isAdmin } = useAdminRole();
 
   const [stats, setStats] = useState({ listed: 0, sold: 0, rating: "—" });
 
@@ -94,8 +96,16 @@ const ProfilePage = () => {
 
   return (
     <div className="safe-bottom min-h-screen bg-background">
-      <header className="sticky top-0 z-40 bg-card/95 px-4 py-3 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 flex items-center justify-between bg-card/95 px-4 py-3 backdrop-blur-xl">
         <h1 className="mx-auto max-w-lg text-lg font-bold text-foreground">Account</h1>
+        {isAdmin && (
+          <button
+            onClick={() => navigate("/admin")}
+            className="flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/20"
+          >
+            <ShieldCheck className="h-3.5 w-3.5" /> Admin
+          </button>
+        )}
       </header>
 
       <main className="mx-auto max-w-lg">
