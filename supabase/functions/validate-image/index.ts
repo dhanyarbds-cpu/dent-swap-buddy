@@ -22,32 +22,41 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash-lite",
+        model: "google/gemini-2.5-flash",
         messages: [
           {
             role: "system",
-            content: `You are an image moderation AI for a durable medical/dental equipment marketplace. Analyze the image and determine if it's a valid product listing photo.
+            content: `You are an advanced image verification AI for a medical/dental/paramedical equipment marketplace. Analyze product listing photos with two goals:
 
-APPROVE images that show: durable medical equipment, dental instruments, laboratory tools, medical/dental books, clinic furniture, surgical instruments, diagnostic devices, student training equipment, educational models.
+1. **MODERATION**: Determine if the image is a valid product listing photo.
+2. **CONDITION ASSESSMENT**: If approved, assess the visible condition of the product.
 
-REJECT images that show:
-- Consumable/disposable products (syringes, gloves, masks, cotton, gauze, disposable kits, chemical reagents, medicines, pharmaceutical products, dental materials used once)
-- Human faces or selfies
-- Explicit/inappropriate content
-- Memes or wallpapers
-- Animals
+APPROVE images showing: durable medical equipment, dental instruments, laboratory tools, medical/dental books, clinic furniture, surgical instruments, diagnostic devices, student training equipment, educational models.
+
+REJECT images showing:
+- Consumable/disposable products (syringes, gloves, masks, cotton, gauze, disposable kits, chemical reagents, medicines, pharmaceutical products)
+- Human faces, selfies, or people
+- Explicit/inappropriate/obscene content
+- Stock images, watermarked photos, screenshots from other listings
+- Memes, wallpapers, animals
 - Random non-product photos
-- Extremely blurry/low-quality photos
+- Extremely blurry/low-quality photos (can't identify the product)
 - Non-healthcare products
 
-IMPORTANT: This platform only allows DURABLE equipment. Consumables and disposable items must be REJECTED.
+For CONDITION ASSESSMENT (only if approved):
+- "Excellent": Product looks brand new or barely used, no visible wear
+- "Good": Minor signs of use, fully functional appearance
+- "Fair": Noticeable wear, scratches, or aging but appears usable
+- "Poor": Heavy wear, visible damage, rust, or missing parts
+
+Also flag if the product appears potentially counterfeit (mismatched branding, suspicious packaging).
 
 You must respond using the validate_image tool.`
           },
           {
             role: "user",
             content: [
-              { type: "text", text: "Analyze this product listing image. Is it a valid healthcare/medical/dental product photo?" },
+              { type: "text", text: "Analyze this product listing image for moderation and condition assessment." },
               { type: "image_url", image_url: { url: image_url } }
             ]
           }
@@ -57,16 +66,21 @@ You must respond using the validate_image tool.`
             type: "function",
             function: {
               name: "validate_image",
-              description: "Return validation result for the uploaded image",
+              description: "Return validation and condition assessment result",
               parameters: {
                 type: "object",
                 properties: {
-                  approved: { type: "boolean", description: "Whether the image is approved" },
+                  approved: { type: "boolean", description: "Whether the image is approved for listing" },
                   confidence: { type: "number", description: "Confidence score 0-100 that this is a valid product image" },
-                  reason: { type: "string", description: "Brief reason for the decision, user-friendly" },
-                  category: { type: "string", enum: ["product", "human", "inappropriate", "irrelevant", "low_quality"], description: "Category of the image" }
+                  reason: { type: "string", description: "Brief user-friendly reason for the decision" },
+                  category: { type: "string", enum: ["product", "human", "inappropriate", "irrelevant", "low_quality", "stock_image", "consumable"], description: "Classification of the image" },
+                  condition_rating: { type: "string", enum: ["Excellent", "Good", "Fair", "Poor", "Unknown"], description: "AI-assessed condition of the product (only meaningful if approved)" },
+                  condition_details: { type: "string", description: "Brief description of visible condition aspects (wear, damage, etc.)" },
+                  counterfeit_flag: { type: "boolean", description: "True if the product appears potentially counterfeit" },
+                  counterfeit_reason: { type: "string", description: "Reason for counterfeit suspicion, if any" },
+                  improvement_suggestions: { type: "array", items: { type: "string" }, description: "Suggestions to improve the listing photo (better angle, lighting, etc.)" }
                 },
-                required: ["approved", "confidence", "reason", "category"],
+                required: ["approved", "confidence", "reason", "category", "condition_rating", "condition_details", "counterfeit_flag"],
                 additionalProperties: false
               }
             }
@@ -89,8 +103,7 @@ You must respond using the validate_image tool.`
       }
       const t = await response.text();
       console.error("AI gateway error:", response.status, t);
-      // On AI error, allow the image (fail open) so uploads aren't blocked
-      return new Response(JSON.stringify({ approved: true, confidence: 100, reason: "Validation skipped", category: "product" }), {
+      return new Response(JSON.stringify({ approved: true, confidence: 100, reason: "Validation skipped", category: "product", condition_rating: "Unknown", condition_details: "", counterfeit_flag: false }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -99,23 +112,23 @@ You must respond using the validate_image tool.`
     const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
 
     if (!toolCall) {
-      // Fail open
-      return new Response(JSON.stringify({ approved: true, confidence: 100, reason: "Validation skipped", category: "product" }), {
+      return new Response(JSON.stringify({ approved: true, confidence: 100, reason: "Validation skipped", category: "product", condition_rating: "Unknown", condition_details: "", counterfeit_flag: false }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const result = JSON.parse(toolCall.function.arguments);
-    // Apply threshold: only approve if confidence >= 80
     const approved = result.approved && result.confidence >= 80;
 
-    return new Response(JSON.stringify({ ...result, approved }), {
+    // Flag borderline cases (approved but low confidence or counterfeit suspicion)
+    const needs_admin_review = (approved && result.confidence < 90) || result.counterfeit_flag;
+
+    return new Response(JSON.stringify({ ...result, approved, needs_admin_review }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
     console.error("validate-image error:", e);
-    // Fail open on errors
-    return new Response(JSON.stringify({ approved: true, confidence: 100, reason: "Validation skipped", category: "product" }), {
+    return new Response(JSON.stringify({ approved: true, confidence: 100, reason: "Validation skipped", category: "product", condition_rating: "Unknown", condition_details: "", counterfeit_flag: false }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
