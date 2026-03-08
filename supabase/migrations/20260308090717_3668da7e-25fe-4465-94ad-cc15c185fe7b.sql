@@ -1,0 +1,1 @@
+ALTER TABLE public.listings ADD COLUMN external_link text DEFAULT '';
