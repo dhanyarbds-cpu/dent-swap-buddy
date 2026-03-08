@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, ShoppingBag, Loader2, MessageSquare, Star } from "lucide-react";
+import { ArrowLeft, ShoppingBag, Loader2, MessageSquare, Star, ShieldCheck, CheckCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 import { formatPrice, timeAgo } from "@/lib/mockData";
 import { Button } from "@/components/ui/button";
 
@@ -12,6 +13,9 @@ interface Order {
   price: number;
   created_at: string;
   seller_id: string;
+  escrow_status: string;
+  razorpay_payment_id: string | null;
+  payment_method: string;
   listing: {
     id: string;
     title: string;
@@ -26,28 +30,37 @@ interface Order {
 
 const statusColors: Record<string, string> = {
   pending: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+  paid: "bg-primary/10 text-primary",
   confirmed: "bg-primary/10 text-primary",
   completed: "bg-verified/10 text-verified",
   cancelled: "bg-destructive/10 text-destructive",
 };
 
+const escrowLabels: Record<string, string> = {
+  pending: "Awaiting Payment",
+  held: "Funds Held in Escrow",
+  released: "Payment Released",
+  refunded: "Refunded",
+};
+
 const OrdersPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { toast } = useToast();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
     const fetch = async () => {
       const { data } = await supabase
         .from("orders")
-        .select("id, status, price, created_at, seller_id, listing:listings(id, title, images, category)")
+        .select("id, status, price, created_at, seller_id, escrow_status, razorpay_payment_id, payment_method, listing:listings(id, title, images, category)")
         .eq("buyer_id", user.id)
         .order("created_at", { ascending: false });
 
       if (data) {
-        // Fetch seller profiles
         const sellerIds = [...new Set(data.map((o: any) => o.seller_id))];
         const { data: profiles } = await supabase
           .from("profiles")
@@ -67,6 +80,26 @@ const OrdersPage = () => {
     };
     fetch();
   }, [user]);
+
+  const handleConfirmDelivery = async (orderId: string) => {
+    setConfirmingId(orderId);
+    try {
+      const { data, error } = await supabase.functions.invoke("confirm-delivery", {
+        body: { order_id: orderId },
+      });
+      if (error || !data?.success) throw new Error(data?.error || error?.message || "Failed");
+
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === orderId ? { ...o, status: "completed", escrow_status: "released" } : o
+        )
+      );
+      toast({ title: "Delivery Confirmed ✓", description: "Payment has been released to the seller." });
+    } catch (err: any) {
+      toast({ title: "Failed", description: err.message, variant: "destructive" });
+    }
+    setConfirmingId(null);
+  };
 
   return (
     <div className="safe-bottom min-h-screen bg-background">
@@ -128,8 +161,22 @@ const OrdersPage = () => {
                     </div>
                   </div>
 
-                  {order.seller_profile && (
-                    <div className="flex items-center justify-between border-t border-border pt-2">
+                  {/* Escrow Status */}
+                  <div className="flex items-center gap-2 rounded-xl bg-secondary/50 px-3 py-2">
+                    <ShieldCheck className="h-4 w-4 text-verified shrink-0" />
+                    <span className="text-[11px] font-medium text-foreground">
+                      {escrowLabels[order.escrow_status] || order.escrow_status}
+                    </span>
+                    {order.razorpay_payment_id && (
+                      <span className="ml-auto text-[9px] text-muted-foreground font-mono">
+                        {order.razorpay_payment_id.slice(0, 14)}…
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center justify-between border-t border-border pt-2">
+                    {order.seller_profile && (
                       <div className="flex items-center gap-2">
                         {order.seller_profile.avatar_url ? (
                           <img src={order.seller_profile.avatar_url} className="h-6 w-6 rounded-full object-cover" alt="" />
@@ -140,24 +187,38 @@ const OrdersPage = () => {
                         )}
                         <span className="text-xs text-muted-foreground">{order.seller_profile.full_name}</span>
                       </div>
-                      <div className="flex gap-2">
+                    )}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => navigate("/messages")}
+                        className="flex items-center gap-1 text-[10px] font-medium text-primary hover:underline"
+                      >
+                        <MessageSquare className="h-3 w-3" /> Chat
+                      </button>
+                      {order.escrow_status === "held" && (
                         <button
-                          onClick={() => navigate("/messages")}
-                          className="flex items-center gap-1 text-[10px] font-medium text-primary hover:underline"
+                          onClick={() => handleConfirmDelivery(order.id)}
+                          disabled={confirmingId === order.id}
+                          className="flex items-center gap-1 rounded-full bg-verified/10 px-2.5 py-1 text-[10px] font-semibold text-verified hover:bg-verified/20 disabled:opacity-50"
                         >
-                          <MessageSquare className="h-3 w-3" /> Chat
+                          {confirmingId === order.id ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <CheckCircle className="h-3 w-3" />
+                          )}
+                          Confirm Delivery
                         </button>
-                        {order.status === "completed" && (
-                          <button
-                            onClick={() => navigate("/reviews")}
-                            className="flex items-center gap-1 text-[10px] font-medium text-amber-600 hover:underline"
-                          >
-                            <Star className="h-3 w-3" /> Rate
-                          </button>
-                        )}
-                      </div>
+                      )}
+                      {order.status === "completed" && (
+                        <button
+                          onClick={() => navigate("/reviews")}
+                          className="flex items-center gap-1 text-[10px] font-medium text-amber-600 hover:underline"
+                        >
+                          <Star className="h-3 w-3" /> Rate
+                        </button>
+                      )}
                     </div>
-                  )}
+                  </div>
                 </div>
               );
             })}

@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { ArrowLeft, Share2, Heart, MapPin, BadgeCheck, Tag, IndianRupee, Eye, Clock, Bookmark, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, Share2, Heart, MapPin, BadgeCheck, Tag, IndianRupee, Eye, Clock, Bookmark, ChevronLeft, ChevronRight, ShoppingCart } from "lucide-react";
 import { type Listing, formatPrice, timeAgo } from "@/lib/mockData";
 import NegotiateDialog from "@/components/NegotiateDialog";
 import { Button } from "@/components/ui/button";
+import CheckoutPage from "@/pages/CheckoutPage";
+import { useWishlist } from "@/hooks/useWishlist";
 
 interface ListingDetailProps {
   listing: Listing;
@@ -14,7 +16,19 @@ const ListingDetail = ({ listing, onBack }: ListingDetailProps) => {
   const isDbListing = listing.id.length > 10;
   const hasImages = listing.images && listing.images.length > 0 && listing.images[0];
   const [currentImage, setCurrentImage] = useState(0);
+  const [showCheckout, setShowCheckout] = useState(false);
   const imageCount = hasImages ? listing.images.length : 0;
+  const { wishlistedIds, toggle } = useWishlist();
+  const wishlisted = wishlistedIds.has(listing.id);
+
+  if (showCheckout) {
+    return (
+      <CheckoutPage
+        listing={listing}
+        onBack={() => setShowCheckout(false)}
+      />
+    );
+  }
 
   return (
     <div className="safe-bottom min-h-screen bg-background">
@@ -30,8 +44,11 @@ const ListingDetail = ({ listing, onBack }: ListingDetailProps) => {
           <button className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary transition hover:bg-muted">
             <Share2 className="h-4 w-4 text-foreground" />
           </button>
-          <button className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary transition hover:bg-muted hover:text-destructive">
-            <Heart className="h-4 w-4" />
+          <button
+            onClick={() => toggle(listing.id)}
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary transition hover:bg-muted"
+          >
+            <Heart className={`h-4 w-4 ${wishlisted ? "fill-destructive text-destructive" : ""}`} />
           </button>
         </div>
       </header>
@@ -63,7 +80,6 @@ const ListingDetail = ({ listing, onBack }: ListingDetailProps) => {
                     <ChevronRight className="h-4 w-4" />
                   </button>
                 )}
-                {/* Dots */}
                 <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
                   {listing.images.map((_, i) => (
                     <button
@@ -103,7 +119,7 @@ const ListingDetail = ({ listing, onBack }: ListingDetailProps) => {
         </div>
       )}
 
-      <div className="mx-auto max-w-lg space-y-4 p-4 animate-slide-up">
+      <div className="mx-auto max-w-lg space-y-4 p-4 pb-28 animate-slide-up">
         {/* Price & Title */}
         <div>
           <div className="flex items-center gap-3">
@@ -171,9 +187,11 @@ const ListingDetail = ({ listing, onBack }: ListingDetailProps) => {
             View Profile
           </Button>
         </div>
+      </div>
 
-        {/* Actions */}
-        <div className="flex gap-3">
+      {/* Bottom Actions */}
+      <div className="fixed bottom-[var(--tab-bar-height)] left-0 right-0 border-t border-border bg-card/95 px-4 py-3 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-lg gap-3">
           <div className="flex-1">
             <NegotiateDialog
               listingId={listing.id}
@@ -182,6 +200,14 @@ const ListingDetail = ({ listing, onBack }: ListingDetailProps) => {
               listingTitle={listing.title}
             />
           </div>
+          {isDbListing && (
+            <Button
+              onClick={() => setShowCheckout(true)}
+              className="flex-1 gap-2 dentzap-gradient rounded-xl py-5 text-sm font-semibold text-primary-foreground dentzap-shadow"
+            >
+              <ShoppingCart className="h-4 w-4" /> Buy Now
+            </Button>
+          )}
         </div>
       </div>
     </div>
