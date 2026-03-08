@@ -67,7 +67,7 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
   const sellerGets = Math.round((listing.price - platformCommission) * 100) / 100;
   const totalPayment = Math.round((listing.price + buyerServiceFee) * 100) / 100;
 
-  const upiId = platformUpi?.upi_id || "9080970874@upi";
+  const upiId = platformUpi?.upi_id || "kharmuhilanr2005@okaxis";
 
   const copyUpi = () => {
     navigator.clipboard.writeText(upiId);
