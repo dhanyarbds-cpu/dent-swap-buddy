@@ -219,8 +219,10 @@ export type Database = {
           images: string[] | null
           is_negotiable: boolean
           location: string
+          pickup_available: boolean
           price: number
           seller_id: string
+          shipping_available: boolean
           status: string
           title: string
           updated_at: string
@@ -236,8 +238,10 @@ export type Database = {
           images?: string[] | null
           is_negotiable?: boolean
           location?: string
+          pickup_available?: boolean
           price: number
           seller_id: string
+          shipping_available?: boolean
           status?: string
           title: string
           updated_at?: string
@@ -253,8 +257,10 @@ export type Database = {
           images?: string[] | null
           is_negotiable?: boolean
           location?: string
+          pickup_available?: boolean
           price?: number
           seller_id?: string
+          shipping_available?: boolean
           status?: string
           title?: string
           updated_at?: string
@@ -299,7 +305,9 @@ export type Database = {
           buyer_id: string
           commission_amount: number | null
           commission_rate: number | null
+          courier_name: string | null
           created_at: string
+          delivery_method: string
           escrow_released_at: string | null
           escrow_status: string
           id: string
@@ -312,14 +320,19 @@ export type Database = {
           refund_status: string | null
           seller_id: string
           seller_payout: number | null
+          shipping_address: string | null
+          shipping_cost: number | null
           status: string
+          tracking_number: string | null
           updated_at: string
         }
         Insert: {
           buyer_id: string
           commission_amount?: number | null
           commission_rate?: number | null
+          courier_name?: string | null
           created_at?: string
+          delivery_method?: string
           escrow_released_at?: string | null
           escrow_status?: string
           id?: string
@@ -332,14 +345,19 @@ export type Database = {
           refund_status?: string | null
           seller_id: string
           seller_payout?: number | null
+          shipping_address?: string | null
+          shipping_cost?: number | null
           status?: string
+          tracking_number?: string | null
           updated_at?: string
         }
         Update: {
           buyer_id?: string
           commission_amount?: number | null
           commission_rate?: number | null
+          courier_name?: string | null
           created_at?: string
+          delivery_method?: string
           escrow_released_at?: string | null
           escrow_status?: string
           id?: string
@@ -352,7 +370,10 @@ export type Database = {
           refund_status?: string | null
           seller_id?: string
           seller_payout?: number | null
+          shipping_address?: string | null
+          shipping_cost?: number | null
           status?: string
+          tracking_number?: string | null
           updated_at?: string
         }
         Relationships: [
