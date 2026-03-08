@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, SlidersHorizontal, X } from "lucide-react";
+import { Search, SlidersHorizontal, X, ArrowLeft } from "lucide-react";
 import { listings, categories } from "@/lib/mockData";
 import ProductCard from "@/components/ProductCard";
 import ListingDetail from "@/components/ListingDetail";
@@ -27,7 +27,7 @@ const SearchPage = () => {
   });
 
   const suggestions = query.length > 0
-    ? ["Dental Instruments", "BDS Books", "Phantom Head", "Handpiece", "Ortho Kit"]
+    ? ["Dental Instruments", "BDS Books", "Phantom Head", "Handpiece", "Ortho Kit", "Autoclave"]
         .filter((s) => s.toLowerCase().includes(query.toLowerCase()))
     : [];
 
@@ -37,24 +37,24 @@ const SearchPage = () => {
 
   return (
     <div className="safe-bottom min-h-screen bg-background">
-      {/* Search Header */}
-      <header className="sticky top-0 z-40 border-b border-border bg-card/95 px-4 py-3 backdrop-blur-lg">
-        <div className="mx-auto flex max-w-lg items-center gap-2">
-          <div className="flex flex-1 items-center gap-2 rounded-xl border border-border bg-muted/50 px-3 py-2.5">
+      <header className="sticky top-0 z-40 border-b border-border bg-card/95 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-lg items-center gap-2 px-4 py-3">
+          <div className="flex flex-1 items-center gap-2.5 rounded-xl border border-border bg-secondary/50 px-3.5 py-2.5">
             <Search className="h-4 w-4 text-muted-foreground" />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search dental materials..."
+              placeholder="Search equipment, books..."
               className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+              autoFocus
             />
             {query && (
-              <button onClick={() => setQuery("")} className="text-muted-foreground">
+              <button onClick={() => setQuery("")} className="text-muted-foreground hover:text-foreground">
                 <X className="h-4 w-4" />
               </button>
             )}
           </div>
-          <button className="rounded-xl border border-border bg-card p-2.5 text-muted-foreground hover:text-foreground">
+          <button className="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground transition hover:text-foreground">
             <SlidersHorizontal className="h-4 w-4" />
           </button>
         </div>
@@ -68,7 +68,7 @@ const SearchPage = () => {
               <button
                 key={s}
                 onClick={() => setQuery(s)}
-                className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm text-foreground hover:bg-muted"
+                className="flex w-full items-center gap-2.5 rounded-xl px-2 py-2.5 text-left text-sm text-foreground hover:bg-secondary transition"
               >
                 <Search className="h-3.5 w-3.5 text-muted-foreground" />
                 {s}
@@ -83,10 +83,10 @@ const SearchPage = () => {
             <button
               key={opt}
               onClick={() => setSortBy(opt)}
-              className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
+              className={`shrink-0 rounded-full px-4 py-2 text-xs font-semibold transition-all duration-200 ${
                 sortBy === opt
-                  ? "dentzap-gradient text-primary-foreground"
-                  : "border border-border bg-card text-muted-foreground"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-secondary text-muted-foreground hover:text-foreground"
               }`}
             >
               {opt}
@@ -96,12 +96,21 @@ const SearchPage = () => {
 
         {/* Results */}
         <div className="p-4">
-          <p className="mb-3 text-xs text-muted-foreground">{sorted.length} results</p>
+          <p className="mb-3 text-xs font-medium text-muted-foreground">{sorted.length} results</p>
           <div className="grid grid-cols-2 gap-3">
-            {sorted.map((listing) => (
-              <ProductCard key={listing.id} listing={listing} onClick={() => setSelectedListing(listing)} />
+            {sorted.map((listing, i) => (
+              <div key={listing.id} className="animate-fade-in" style={{ animationDelay: `${i * 50}ms`, animationFillMode: "both" }}>
+                <ProductCard listing={listing} onClick={() => setSelectedListing(listing)} />
+              </div>
             ))}
           </div>
+          {sorted.length === 0 && (
+            <div className="flex flex-col items-center py-20 text-center animate-fade-in">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-secondary text-3xl">🔍</div>
+              <p className="mt-4 text-sm font-medium text-foreground">No results found</p>
+              <p className="mt-1 text-xs text-muted-foreground">Try different keywords</p>
+            </div>
+          )}
         </div>
       </main>
     </div>
