@@ -80,6 +80,9 @@ const AppRoutes = () => {
           <Route path="/admin/transactions" element={<AdminTransactionsPage />} />
           <Route path="/returns" element={<AdminReturnsPage />} />
           <Route path="/policies" element={<PoliciesPage />} />
+          <Route path="/seller-analytics" element={<SellerAnalyticsPage />} />
+          <Route path="/badges" element={<BadgesPage />} />
+          <Route path="/referrals" element={<ReferralPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <BottomTabBar />
