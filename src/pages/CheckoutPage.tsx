@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, ShieldCheck, Smartphone, Loader2, CheckCircle, Package, Copy, ExternalLink, MapPin, Truck } from "lucide-react";
+import { ArrowLeft, ShieldCheck, Smartphone, Loader2, CheckCircle, Package, Copy, ExternalLink, MapPin, Truck, CreditCard, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -32,12 +32,13 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
   const [processing, setProcessing] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [utrNumber, setUtrNumber] = useState("");
-  const [step, setStep] = useState<"delivery" | "review" | "pay" | "confirm">("delivery");
+  const [step, setStep] = useState<"delivery" | "review" | "method" | "pay" | "confirm">("delivery");
   const [commissionInfo, setCommissionInfo] = useState<{ rate: number; buyer_fee_rate: number } | null>(null);
   const [platformUpi, setPlatformUpi] = useState<{ upi_id: string; display_name: string } | null>(null);
   const [deliveryMethod, setDeliveryMethod] = useState<"pickup" | "shipping">("pickup");
   const [shippingAddress, setShippingAddress] = useState("");
   const [listingDetails, setListingDetails] = useState<{ pickup_available: boolean; shipping_available: boolean } | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<"upi" | "razorpay">("upi");
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -78,7 +79,67 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
     window.location.href = upiUrl;
   };
 
-  const handleSubmitPayment = async () => {
+  const handleRazorpayPayment = async () => {
+    if (!user) return;
+    setProcessing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-order", {
+        body: { listing_id: listing.id, amount: listing.price },
+      });
+
+      if (error || !data?.razorpay_order_id) {
+        throw new Error(data?.error || error?.message || "Failed to create Razorpay order");
+      }
+
+      const options = {
+        key: data.razorpay_key_id,
+        amount: data.amount,
+        currency: data.currency,
+        name: "DentSwap",
+        description: `Payment for ${listing.title}`,
+        order_id: data.razorpay_order_id,
+        handler: async (response: any) => {
+          try {
+            const verifyRes = await supabase.functions.invoke("verify-payment", {
+              body: {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                order_id: data.order_id,
+              },
+            });
+            if (verifyRes.error || !verifyRes.data?.success) {
+              throw new Error(verifyRes.data?.error || "Verification failed");
+            }
+            setPaymentSuccess(true);
+            toast({ title: "Payment Successful! 🎉", description: "Your order has been placed and payment verified." });
+          } catch (err: any) {
+            toast({ title: "Verification Failed", description: err.message, variant: "destructive" });
+          }
+        },
+        prefill: {
+          name: profile?.full_name || "",
+          email: user.email || "",
+          contact: profile?.phone || "",
+        },
+        theme: { color: "#6366f1" },
+        modal: {
+          ondismiss: () => {
+            setProcessing(false);
+            toast({ title: "Payment Cancelled", description: "You can try again.", variant: "destructive" });
+          },
+        },
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+    setProcessing(false);
+  };
+
+  const handleSubmitUpiPayment = async () => {
     if (!user || !utrNumber.trim()) return;
     setProcessing(true);
 
@@ -143,7 +204,10 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
   return (
     <div className="safe-bottom min-h-screen bg-background pb-24">
       <header className="sticky top-0 z-40 flex items-center gap-3 border-b border-border bg-card/95 px-4 py-3 backdrop-blur-xl">
-        <button onClick={step === "delivery" ? onBack : () => setStep(step === "review" ? "delivery" : step === "pay" ? "review" : "pay")} className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary">
+        <button onClick={step === "delivery" ? onBack : () => {
+          const backMap: Record<string, "delivery" | "review" | "method" | "pay" | "confirm"> = { review: "delivery", method: "review", pay: "method", confirm: "pay" };
+          setStep(backMap[step] || "delivery" as const);
+        }} className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary">
           <ArrowLeft className="h-5 w-5 text-foreground" />
         </button>
         <h1 className="flex-1 text-lg font-bold text-foreground">Checkout</h1>
@@ -155,8 +219,8 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
       <main className="mx-auto max-w-lg p-4 space-y-5 animate-fade-in">
         {/* Step indicator */}
         <div className="flex gap-1">
-          {["Delivery", "Review", "Pay", "Confirm"].map((s, i) => {
-            const stepMap = ["delivery", "review", "pay", "confirm"];
+          {["Delivery", "Review", "Method", "Pay"].map((s, i) => {
+            const stepMap = ["delivery", "review", "method", "pay", "confirm"];
             const currentIdx = stepMap.indexOf(step);
             return (
               <div key={s} className={`h-1 flex-1 rounded-full transition-all ${i <= currentIdx ? "bg-primary" : "bg-secondary"}`} />
@@ -327,13 +391,92 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
               </div>
             </div>
 
-            <Button onClick={() => setStep("pay")} className="w-full dentzap-gradient rounded-xl py-5 text-sm font-semibold text-primary-foreground dentzap-shadow">
+            <Button onClick={() => setStep("method")} className="w-full dentzap-gradient rounded-xl py-5 text-sm font-semibold text-primary-foreground dentzap-shadow">
               Proceed to Pay {formatPrice(totalPayment)}
             </Button>
           </div>
         )}
 
-        {/* Step 3: Pay */}
+        {/* Step 3: Payment Method Selection */}
+        {step === "method" && (
+          <div className="space-y-4">
+            <div>
+              <p className="text-base font-bold text-foreground">Choose Payment Method</p>
+              <p className="mt-1 text-sm text-muted-foreground">How would you like to pay {formatPrice(totalPayment)}?</p>
+            </div>
+
+            <div className="space-y-3">
+              <button
+                onClick={() => setPaymentMethod("upi")}
+                className={`w-full flex items-start gap-4 rounded-2xl border p-4 text-left transition-all ${
+                  paymentMethod === "upi" ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "border-border bg-card"
+                }`}
+              >
+                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${paymentMethod === "upi" ? "bg-primary/10" : "bg-secondary"}`}>
+                  <Smartphone className={`h-5 w-5 ${paymentMethod === "upi" ? "text-primary" : "text-muted-foreground"}`} />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-foreground">UPI Payment</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">Pay using Google Pay, PhonePe, Paytm, or any UPI app</p>
+                  <div className="mt-2 flex items-center gap-2">
+                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">Recommended</span>
+                    <span className="text-[10px] text-muted-foreground">Instant & free</span>
+                  </div>
+                </div>
+                {paymentMethod === "upi" && <CheckCircle className="h-5 w-5 text-primary shrink-0" />}
+              </button>
+
+              <button
+                onClick={() => setPaymentMethod("razorpay")}
+                className={`w-full flex items-start gap-4 rounded-2xl border p-4 text-left transition-all ${
+                  paymentMethod === "razorpay" ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "border-border bg-card"
+                }`}
+              >
+                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${paymentMethod === "razorpay" ? "bg-primary/10" : "bg-secondary"}`}>
+                  <CreditCard className={`h-5 w-5 ${paymentMethod === "razorpay" ? "text-primary" : "text-muted-foreground"}`} />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-foreground">Card / Netbanking</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">Pay with Debit Card, Credit Card, or Netbanking via Razorpay</p>
+                  <div className="mt-2 flex items-center gap-2">
+                    <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">Secure</span>
+                    <span className="text-[10px] text-muted-foreground">All major banks supported</span>
+                  </div>
+                </div>
+                {paymentMethod === "razorpay" && <CheckCircle className="h-5 w-5 text-primary shrink-0" />}
+              </button>
+            </div>
+
+            <div className="flex items-start gap-3 rounded-2xl border border-verified/20 bg-verified/5 p-3">
+              <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-verified" />
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                All payments are secured with escrow protection. Funds are released only after you confirm {deliveryMethod === "shipping" ? "delivery" : "pickup"}.
+              </p>
+            </div>
+
+            <Button
+              onClick={() => {
+                if (paymentMethod === "razorpay") {
+                  handleRazorpayPayment();
+                } else {
+                  setStep("pay");
+                }
+              }}
+              disabled={processing}
+              className="w-full gap-2 dentzap-gradient rounded-xl py-5 text-sm font-semibold text-primary-foreground dentzap-shadow"
+            >
+              {processing ? (
+                <><Loader2 className="h-4 w-4 animate-spin" /> Processing...</>
+              ) : paymentMethod === "razorpay" ? (
+                <><CreditCard className="h-4 w-4" /> Pay {formatPrice(totalPayment)} via Razorpay</>
+              ) : (
+                <><Smartphone className="h-4 w-4" /> Continue with UPI</>
+              )}
+            </Button>
+          </div>
+        )}
+
+        {/* Step 4: UPI Pay */}
         {step === "pay" && (
           <div className="space-y-4">
             <div className="rounded-2xl border border-primary/30 bg-card p-5 text-center space-y-3">
@@ -399,7 +542,7 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
         <div className="fixed bottom-[var(--tab-bar-height)] left-0 right-0 border-t border-border bg-card/95 px-4 py-3 backdrop-blur-xl">
           <div className="mx-auto max-w-lg">
             <Button
-              onClick={handleSubmitPayment}
+              onClick={handleSubmitUpiPayment}
               disabled={processing || !utrNumber.trim()}
               className="w-full gap-2 dentzap-gradient rounded-xl py-5 text-sm font-semibold text-primary-foreground dentzap-shadow disabled:opacity-50"
             >
