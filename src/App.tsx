@@ -40,6 +40,7 @@ import BadgesPage from "./pages/BadgesPage";
 import ReferralPage from "./pages/ReferralPage";
 import CertificateVerifyPage from "./pages/CertificateVerifyPage";
 import AdminBlockedListingsPage from "./pages/AdminBlockedListingsPage";
+import AdminDeliveriesPage from "./pages/AdminDeliveriesPage";
 
 const queryClient = new QueryClient();
 
@@ -89,6 +90,7 @@ const AppRoutes = () => {
           <Route path="/referrals" element={<ReferralPage />} />
           <Route path="/verify-certificate" element={<CertificateVerifyPage />} />
           <Route path="/admin/blocked-listings" element={<AdminBlockedListingsPage />} />
+          <Route path="/admin/deliveries" element={<AdminDeliveriesPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <BottomTabBar />

@@ -28,7 +28,7 @@ serve(async (req) => {
     }
     const userId = claimsData.claims.sub;
 
-    const { listing_id, amount, utr_number } = await req.json();
+    const { listing_id, amount, utr_number, delivery_method, shipping_address } = await req.json();
     if (!listing_id || !amount || !utr_number) {
       return new Response(JSON.stringify({ error: "listing_id, amount, and utr_number required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
@@ -86,7 +86,9 @@ serve(async (req) => {
         commission_amount: commissionAmount,
         seller_payout: sellerPayout,
         buyer_service_fee: buyerServiceFee,
-        razorpay_payment_id: utr_number, // Store UTR in this field
+        razorpay_payment_id: utr_number,
+        delivery_method: delivery_method || "pickup",
+        shipping_address: shipping_address || null,
       })
       .select("id")
       .single();
