@@ -265,16 +265,6 @@ const MyAdsPage = () => {
                         </div>
                         <div className="flex items-center justify-between mt-1">
                           <span className="text-[10px] text-muted-foreground">{timeAgo(listing.created_at)}</span>
-                        </div>
-                        {listing.status === "active" && (
-                          <div className="mt-2">
-                            <PricingAlert
-                              listingId={listing.id}
-                              currentPrice={listing.price}
-                              onPriceUpdate={(newPrice) => setListings(prev => prev.map(l => l.id === listing.id ? { ...l, price: newPrice } : l))}
-                            />
-                          </div>
-                        )}
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <button className="flex h-7 w-7 items-center justify-center rounded-full hover:bg-secondary">
@@ -296,6 +286,15 @@ const MyAdsPage = () => {
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
+                        {listing.status === "active" && (
+                          <div className="mt-2">
+                            <PricingAlert
+                              listingId={listing.id}
+                              currentPrice={listing.price}
+                              onPriceUpdate={(newPrice) => setListings(prev => prev.map(l => l.id === listing.id ? { ...l, price: newPrice } : l))}
+                            />
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
