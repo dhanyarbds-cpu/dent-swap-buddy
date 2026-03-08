@@ -52,7 +52,7 @@ const SellPage = () => {
         .filter((t) => t.startsWith("#"))
         .map((t) => t.trim());
 
-      const { error } = await supabase.from("listings").insert({
+      const { data: listing, error } = await supabase.from("listings").insert({
         title: form.title,
         category: form.category,
         condition: form.condition,
@@ -65,9 +65,16 @@ const SellPage = () => {
         is_negotiable: form.negotiable,
         seller_id: user.id,
         status: "active",
-      });
+      }).select("id").single();
 
       if (error) throw error;
+
+      // Trigger elite demand matching in background
+      if (listing?.id) {
+        supabase.functions.invoke("match-demands", {
+          body: { listing_id: listing.id },
+        }).catch(console.error);
+      }
 
       toast({ title: "Listing Published! 🎉", description: "Your listing is now live." });
       navigate("/");
