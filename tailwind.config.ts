@@ -112,8 +112,8 @@ export default {
           "100%": { transform: "translateX(0)" },
         },
         "glow-pulse": {
-          "0%, 100%": { boxShadow: "0 0 15px hsl(270 60% 55% / 0.4), 0 0 35px hsl(270 60% 55% / 0.2)" },
-          "50%": { boxShadow: "0 0 25px hsl(270 60% 55% / 0.6), 0 0 60px hsl(270 60% 55% / 0.3)" },
+          "0%, 100%": { boxShadow: "0 0 10px hsl(255 65% 58% / 0.25), 0 0 25px hsl(255 65% 58% / 0.1)" },
+          "50%": { boxShadow: "0 0 16px hsl(255 65% 58% / 0.35), 0 0 40px hsl(255 65% 58% / 0.15)" },
         },
         "float": {
           "0%, 100%": { transform: "translateY(0px)" },
