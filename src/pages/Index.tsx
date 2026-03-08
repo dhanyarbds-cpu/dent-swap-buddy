@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { MapPin, ChevronDown, Search, Mic, Heart, Bell } from "lucide-react";
-import { listings, categories } from "@/lib/mockData";
+import { listings, categories as fallbackCategories } from "@/lib/mockData";
 import ProductCard from "@/components/ProductCard";
 import ListingDetail from "@/components/ListingDetail";
 import type { Listing } from "@/lib/mockData";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 import heroBanner from "@/assets/hero-banner.jpg";
 
 const bannerSlides = [
@@ -12,20 +14,52 @@ const bannerSlides = [
   { title: "Verified Sellers Only", subtitle: "Shop with confidence from verified professionals", tag: "Featured" },
 ];
 
+interface Category {
+  id: string;
+  name: string;
+  icon: string;
+  sort_order: number;
+}
+
 const Index = () => {
+  const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [categories, setCategories] = useState<{ name: string; icon: string }[]>(fallbackCategories);
   const categoryRef = useRef<HTMLDivElement>(null);
 
   const filtered = activeCategory
     ? listings.filter((l) => l.category === activeCategory)
     : listings;
 
+  // Fetch categories from DB
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const { data } = await supabase
+        .from("categories")
+        .select("id, name, icon, sort_order")
+        .eq("is_active", true)
+        .order("sort_order");
+      if (data && data.length > 0) {
+        setCategories(data.map((c: any) => ({ name: c.name, icon: c.icon })));
+      }
+    };
+    fetchCategories();
+  }, []);
+
   useEffect(() => {
     const timer = setInterval(() => setCurrentSlide((s) => (s + 1) % bannerSlides.length), 4000);
     return () => clearInterval(timer);
   }, []);
+
+  const handleCategoryClick = (catName: string) => {
+    if (activeCategory === catName) {
+      setActiveCategory(null);
+    } else {
+      setActiveCategory(catName);
+    }
+  };
 
   if (selectedListing) {
     return <ListingDetail listing={selectedListing} onBack={() => setSelectedListing(null)} />;
@@ -48,7 +82,7 @@ const Index = () => {
               </div>
             </button>
             <div className="flex items-center gap-0.5">
-              <button className="rounded-full p-2.5 text-primary-foreground/80 transition hover:bg-primary-foreground/10">
+              <button onClick={() => navigate("/wishlist")} className="rounded-full p-2.5 text-primary-foreground/80 transition hover:bg-primary-foreground/10">
                 <Heart className="h-5 w-5" />
               </button>
               <button className="relative rounded-full p-2.5 text-primary-foreground/80 transition hover:bg-primary-foreground/10">
@@ -59,7 +93,10 @@ const Index = () => {
           </div>
 
           <div className="px-4 pb-3">
-            <button className="flex w-full items-center gap-3 rounded-xl bg-primary-foreground px-4 py-3 transition-shadow hover:shadow-md">
+            <button
+              onClick={() => navigate("/search")}
+              className="flex w-full items-center gap-3 rounded-xl bg-primary-foreground px-4 py-3 transition-shadow hover:shadow-md"
+            >
               <Search className="h-4 w-4 text-muted-foreground" />
               <span className="flex-1 text-left text-sm text-muted-foreground">Search equipment, books, devices...</span>
               <div className="h-5 w-px bg-border" />
@@ -70,37 +107,43 @@ const Index = () => {
       </header>
 
       <main className="mx-auto max-w-lg">
-        {/* Categories - Scrollable */}
+        {/* Categories - Grid */}
         <div className="px-4 pt-5 pb-1">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-sm font-bold text-foreground">Browse Categories</h2>
-            <button className="text-xs font-semibold text-primary">See All</button>
+            <button
+              onClick={() => navigate("/search")}
+              className="text-xs font-semibold text-primary"
+            >
+              See All
+            </button>
           </div>
-          <div ref={categoryRef} className="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 pb-2">
-            {categories.map((cat) => (
+          <div className="grid grid-cols-5 gap-2">
+            {categories.slice(0, 10).map((cat) => (
               <button
                 key={cat.name}
-                onClick={() => setActiveCategory(activeCategory === cat.name ? null : cat.name)}
-                className={`flex shrink-0 flex-col items-center gap-2 rounded-2xl border px-4 py-3 transition-all duration-200 press-scale ${
+                onClick={() => handleCategoryClick(cat.name)}
+                className={`flex flex-col items-center gap-1.5 rounded-2xl border p-3 transition-all duration-200 press-scale ${
                   activeCategory === cat.name
                     ? "border-primary/30 bg-primary/5 shadow-sm"
                     : "border-transparent bg-card dentzap-card-shadow hover:dentzap-card-shadow-hover"
                 }`}
-                style={{ minWidth: 80 }}
               >
-                <div className={`flex h-11 w-11 items-center justify-center rounded-xl text-xl transition-colors ${
+                <div className={`flex h-10 w-10 items-center justify-center rounded-xl text-lg transition-colors ${
                   activeCategory === cat.name ? "bg-primary/10" : "bg-secondary"
                 }`}>
                   {cat.icon}
                 </div>
-                <span className="text-[11px] font-medium text-foreground whitespace-nowrap">{cat.name.split(" ")[0]}</span>
+                <span className="text-[10px] font-medium text-foreground text-center leading-tight line-clamp-2">
+                  {cat.name.length > 12 ? cat.name.split(" ").slice(0, 2).join(" ") : cat.name}
+                </span>
               </button>
             ))}
           </div>
         </div>
 
         {/* Banner Carousel */}
-        <div className="px-4 pt-2 pb-1">
+        <div className="px-4 pt-4 pb-1">
           <div className="relative overflow-hidden rounded-2xl">
             <img src={heroBanner} alt="Promotional Banner" className="h-40 w-full object-cover" />
             <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-foreground/80 via-foreground/20 to-transparent p-5">
