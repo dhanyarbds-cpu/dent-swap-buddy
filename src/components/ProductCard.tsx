@@ -1,10 +1,10 @@
-import { MapPin, Clock, Heart, BadgeCheck, ExternalLink, MessageCircle, CalendarDays } from "lucide-react";
+import { MapPin, Clock, Heart, BadgeCheck, ExternalLink, MessageCircle, CalendarDays, Building2 } from "lucide-react";
 import { type Listing, formatPrice, timeAgo } from "@/lib/mockData";
 import { useWishlist } from "@/hooks/useWishlist";
 import { Button } from "@/components/ui/button";
 
 interface ProductCardProps {
-  listing: Listing;
+  listing: Listing & { seller_type?: string; company_name?: string; company_logo?: string };
   onClick?: () => void;
 }
 
@@ -41,7 +41,12 @@ const ProductCard = ({ listing, onClick }: ProductCardProps) => {
           Featured
         </div>
       )}
-      {listing.seller.verified && !listing.featured && (
+      {(listing as any).seller_type === "company" && !listing.featured && (
+        <div className="absolute left-0 top-3 z-10 flex items-center gap-1 rounded-r-lg bg-primary px-2 py-1 text-[10px] font-bold text-primary-foreground shadow-sm">
+          <Building2 className="h-3 w-3" /> Brand Store
+        </div>
+      )}
+      {listing.seller.verified && !listing.featured && (listing as any).seller_type !== "company" && (
         <div className="absolute left-0 top-3 z-10 flex items-center gap-1 rounded-r-lg bg-verified px-2 py-1 text-[10px] font-bold text-verified-foreground shadow-sm">
           <BadgeCheck className="h-3 w-3" /> Verified
         </div>
@@ -74,6 +79,14 @@ const ProductCard = ({ listing, onClick }: ProductCardProps) => {
             <p className="line-clamp-2 text-[11px] leading-relaxed text-muted-foreground">
               {listing.description}
             </p>
+          )}
+
+          {/* Company name */}
+          {(listing as any).seller_type === "company" && (listing as any).company_name && (
+            <div className="flex items-center gap-1 text-[10px] font-semibold text-primary">
+              <Building2 className="h-3 w-3 shrink-0" />
+              <span className="truncate">{(listing as any).company_name}</span>
+            </div>
           )}
 
           {/* Upload date */}
