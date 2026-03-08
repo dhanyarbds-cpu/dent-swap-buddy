@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Crown, Search, Bell, Trash2, Plus, Sparkles, X, Eye, TrendingUp, Clock, Check, AlertTriangle, Loader2, CalendarDays, Shield } from "lucide-react";
+import { ArrowLeft, Crown, Search, Bell, Trash2, Plus, Sparkles, X, Eye, TrendingUp, Clock, Check, AlertTriangle, Loader2, CalendarDays, Shield, Smartphone, CreditCard, Building2, Wallet, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
@@ -8,6 +8,18 @@ import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { formatPrice } from "@/lib/mockData";
 
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
+
+const paymentMethods = [
+  { id: "upi", label: "UPI", desc: "Google Pay, PhonePe, Paytm, Navi", icon: Smartphone },
+  { id: "card", label: "Card", desc: "Debit / Credit Card", icon: CreditCard },
+  { id: "netbanking", label: "Net Banking", desc: "All major banks", icon: Building2 },
+  { id: "wallet", label: "Wallets", desc: "PayPal, Freecharge, Mobikwik", icon: Wallet },
+];
 interface DemandAlert {
   id: string;
   keywords: string;
@@ -52,6 +64,8 @@ const EliteDashboardPage = () => {
   const [purchasing, setPurchasing] = useState(false);
   const [membershipStatus, setMembershipStatus] = useState<MembershipStatus | null>(null);
   const [checkingStatus, setCheckingStatus] = useState(true);
+  const [selectedMethod, setSelectedMethod] = useState("upi");
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
 
   const isElite = profile?.is_elite;
 
@@ -117,23 +131,91 @@ const EliteDashboardPage = () => {
     return () => { supabase.removeChannel(channel); };
   }, [user]);
 
+  const loadRazorpayScript = (): Promise<boolean> => {
+    return new Promise((resolve) => {
+      if (window.Razorpay) { resolve(true); return; }
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
   const handlePurchase = async () => {
     if (!user) return;
     setPurchasing(true);
     try {
-      const { data, error } = await supabase.functions.invoke("elite-membership", {
-        body: { action: "activate" },
+      const loaded = await loadRazorpayScript();
+      if (!loaded) throw new Error("Failed to load payment gateway");
+
+      // Create Razorpay order for elite membership
+      const { data, error } = await supabase.functions.invoke("create-elite-order", {
+        body: { action: "create_razorpay_order" },
       });
-      if (error) throw error;
-      if (data?.success) {
-        toast({ title: "🎉 Your Elite Membership is now active.", description: "Enjoy AI-powered alerts and priority features for 30 days!" });
-        setMembershipStatus({ active: true, membership: data.membership, daysLeft: 30, expiringSoon: false });
-        await refreshProfile();
+
+      if (error || !data?.razorpay_order_id) {
+        throw new Error(data?.error || error?.message || "Failed to create payment order");
       }
+
+      const options = {
+        key: data.razorpay_key_id,
+        amount: data.amount,
+        currency: data.currency,
+        name: "DentSwap",
+        description: "Elite Membership – 30 Days",
+        order_id: data.razorpay_order_id,
+        prefill: {
+          email: user.email,
+          name: profile?.full_name || "",
+          contact: profile?.phone || "",
+        },
+        theme: { color: "#7C3AED" },
+        method: {
+          upi: selectedMethod === "upi",
+          card: selectedMethod === "card",
+          netbanking: selectedMethod === "netbanking",
+          wallet: selectedMethod === "wallet",
+          paylater: false,
+        },
+        handler: async (response: any) => {
+          try {
+            const { data: verifyData, error: verifyError } = await supabase.functions.invoke("verify-elite-payment", {
+              body: {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              },
+            });
+
+            if (verifyError || !verifyData?.success) {
+              throw new Error(verifyData?.error || "Verification failed");
+            }
+
+            setPaymentSuccess(true);
+            setMembershipStatus({ active: true, membership: verifyData.membership, daysLeft: 30, expiringSoon: false });
+            await refreshProfile();
+            toast({ title: "🎉 Payment Successful – Elite Membership Activated.", description: "Enjoy AI-powered alerts and priority features for 30 days!" });
+          } catch (err: any) {
+            toast({ title: "Verification Failed", description: err.message, variant: "destructive" });
+          }
+          setPurchasing(false);
+        },
+        modal: {
+          ondismiss: () => setPurchasing(false),
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.on("payment.failed", (response: any) => {
+        toast({ title: "Payment Unsuccessful", description: "Please try again or choose another payment method.", variant: "destructive" });
+        setPurchasing(false);
+      });
+      rzp.open();
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
+      setPurchasing(false);
     }
-    setPurchasing(false);
   };
 
   const addDemand = async () => {
@@ -157,6 +239,27 @@ const EliteDashboardPage = () => {
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 
+  // Payment success screen
+  if (paymentSuccess && !isElite) {
+    return (
+      <div className="safe-bottom flex min-h-screen flex-col items-center justify-center p-6 text-center animate-fade-in">
+        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 animate-glow-pulse">
+          <CheckCircle className="h-10 w-10 text-primary" />
+        </div>
+        <h1 className="mt-6 text-xl font-bold text-foreground">Payment Successful!</h1>
+        <p className="mt-2 text-sm text-muted-foreground max-w-[280px]">
+          Elite Membership Activated. Enjoy AI-powered alerts and priority features for 30 days!
+        </p>
+        <Button
+          onClick={() => window.location.reload()}
+          className="mt-6 w-full max-w-xs dentzap-gradient rounded-xl py-5 text-sm font-semibold text-primary-foreground"
+        >
+          <Crown className="mr-2 h-4 w-4" /> Go to Elite Dashboard
+        </Button>
+      </div>
+    );
+  }
+
   // Non-elite upgrade page
   if (!isElite) {
     return (
@@ -168,7 +271,7 @@ const EliteDashboardPage = () => {
           <h1 className="text-lg font-bold text-foreground">Elite Membership</h1>
         </header>
 
-        <div className="flex flex-col items-center px-6 py-16 text-center animate-fade-in">
+        <div className="flex flex-col items-center px-6 py-10 text-center animate-fade-in">
           <div className="flex h-20 w-20 items-center justify-center rounded-3xl dentzap-gradient dentzap-shadow-lg animate-glow-pulse">
             <Crown className="h-10 w-10 text-primary-foreground" />
           </div>
@@ -180,17 +283,19 @@ const EliteDashboardPage = () => {
           {/* Price Card */}
           <div className="mt-6 w-full max-w-sm rounded-2xl glass-card p-5 glow-border">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-lg font-bold text-foreground">₹100</p>
-                <p className="text-xs text-muted-foreground">per month · 30 days</p>
+              <div className="text-left">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Plan</p>
+                <p className="text-lg font-bold text-foreground mt-0.5">Elite Membership</p>
               </div>
-              <div className="rounded-full bg-primary/10 border border-primary/20 px-3 py-1">
-                <p className="text-xs font-bold text-primary">Best Value</p>
+              <div className="text-right">
+                <p className="text-2xl font-bold text-foreground">₹100</p>
+                <p className="text-[10px] text-muted-foreground">30 days</p>
               </div>
             </div>
           </div>
 
-          <div className="mt-6 w-full max-w-sm space-y-3">
+          {/* Features */}
+          <div className="mt-5 w-full max-w-sm space-y-2.5">
             {[
               { icon: Sparkles, text: "AI-powered product matching" },
               { icon: Bell, text: "Instant notifications for new listings" },
@@ -198,8 +303,8 @@ const EliteDashboardPage = () => {
               { icon: TrendingUp, text: "Priority search placement" },
               { icon: Shield, text: "Elite badge on your profile" },
             ].map((item) => (
-              <div key={item.text} className="flex items-center gap-3 rounded-2xl glass-card p-3.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
+              <div key={item.text} className="flex items-center gap-3 rounded-2xl glass-card p-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10">
                   <item.icon className="h-4 w-4 text-primary" />
                 </div>
                 <span className="text-sm font-medium text-foreground">{item.text}</span>
@@ -207,18 +312,55 @@ const EliteDashboardPage = () => {
             ))}
           </div>
 
+          {/* Payment Method Selection */}
+          <div className="mt-6 w-full max-w-sm">
+            <p className="mb-3 text-left text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Select Payment Method</p>
+            <div className="space-y-2">
+              {paymentMethods.map((method) => (
+                <button
+                  key={method.id}
+                  onClick={() => setSelectedMethod(method.id)}
+                  className={`flex w-full items-center gap-3 rounded-2xl border p-3.5 transition-all ${
+                    selectedMethod === method.id
+                      ? "border-primary bg-primary/5 ring-1 ring-primary/20"
+                      : "border-border glass-card"
+                  }`}
+                >
+                  <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${
+                    selectedMethod === method.id ? "bg-primary/10 text-primary" : "bg-secondary text-muted-foreground"
+                  }`}>
+                    <method.icon className="h-4 w-4" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <p className="text-sm font-semibold text-foreground">{method.label}</p>
+                    <p className="text-[10px] text-muted-foreground">{method.desc}</p>
+                  </div>
+                  <div className={`h-5 w-5 rounded-full border-2 ${
+                    selectedMethod === method.id ? "border-primary bg-primary" : "border-muted-foreground/30"
+                  }`}>
+                    {selectedMethod === method.id && (
+                      <div className="flex h-full items-center justify-center">
+                        <div className="h-2 w-2 rounded-full bg-primary-foreground" />
+                      </div>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
           <Button
             onClick={handlePurchase}
             disabled={purchasing}
-            className="mt-8 w-full max-w-sm gap-2 dentzap-gradient rounded-xl py-5 text-sm font-bold text-primary-foreground dentzap-shadow glow-primary"
+            className="mt-6 w-full max-w-sm gap-2 dentzap-gradient rounded-xl py-5 text-sm font-bold text-primary-foreground dentzap-shadow glow-primary"
           >
             {purchasing ? (
-              <><Loader2 className="h-4 w-4 animate-spin" /> Processing...</>
+              <><Loader2 className="h-4 w-4 animate-spin" /> Processing Payment...</>
             ) : (
-              <><Crown className="h-4 w-4" /> Upgrade to Elite · ₹100/month</>
+              <><Crown className="h-4 w-4" /> Pay ₹100 & Activate Elite</>
             )}
           </Button>
-          <p className="mt-3 text-[11px] text-muted-foreground">Auto-expires after 30 days. Cancel anytime.</p>
+          <p className="mt-3 text-[11px] text-muted-foreground">Secure payment via Razorpay. Auto-expires after 30 days.</p>
         </div>
       </div>
     );

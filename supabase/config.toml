@@ -20,3 +20,9 @@ verify_jwt = false
 
 [functions.elite-membership]
 verify_jwt = false
+
+[functions.create-elite-order]
+verify_jwt = false
+
+[functions.verify-elite-payment]
+verify_jwt = false
