@@ -8,6 +8,17 @@ interface ProductCardProps {
   onClick?: () => void;
 }
 
+function formatUploadDate(dateStr: string): string {
+  const d = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  const diffDays = Math.floor(diffMs / 86400000);
+  if (diffDays === 0) return "New – Uploaded today";
+  if (diffDays === 1) return "Uploaded yesterday";
+  if (diffDays <= 3) return `Uploaded ${diffDays} days ago`;
+  return `Uploaded on: ${d.getDate().toString().padStart(2, "0")} ${d.toLocaleString("en-US", { month: "long" })} ${d.getFullYear()}`;
+}
+
 const ProductCard = ({ listing, onClick }: ProductCardProps) => {
   const { wishlistedIds, toggle } = useWishlist();
   const wishlisted = wishlistedIds.has(listing.id);
