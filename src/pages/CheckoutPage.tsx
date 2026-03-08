@@ -513,6 +513,75 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
           </div>
         )}
       </main>
+
+      {/* UPI QR Code Modal */}
+      {showQrModal && upiQrData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="w-full max-w-sm rounded-3xl border border-border bg-card p-6 space-y-5 shadow-2xl">
+            <div className="text-center">
+              <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
+                <QrCode className="h-7 w-7 text-primary" />
+              </div>
+              <p className="text-lg font-bold text-foreground">Scan to Pay</p>
+              <p className="mt-1 text-sm text-muted-foreground">Scan with any UPI app</p>
+            </div>
+
+            <div className="flex justify-center">
+              <div className="rounded-2xl border-2 border-dashed border-primary/30 bg-white p-3">
+                <canvas ref={qrCanvasRef} className="h-[250px] w-[250px]" />
+              </div>
+            </div>
+
+            <div className="text-center">
+              <p className="text-2xl font-bold text-foreground">{formatPrice(upiQrData.amount)}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{upiQrData.product_name || "DentSwap Order"}</p>
+            </div>
+
+            <div className="rounded-xl bg-secondary/50 px-4 py-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-muted-foreground">UPI ID</span>
+                <button onClick={copyUpiId} className="flex items-center gap-1.5 text-xs font-semibold text-primary">
+                  <Copy className="h-3 w-3" /> Copy
+                </button>
+              </div>
+              <p className="text-sm font-bold text-foreground">{upiQrData.upi_id}</p>
+              <div className="flex items-center justify-between pt-1 border-t border-border">
+                <span className="text-xs text-muted-foreground">Ref: {upiQrData.txn_ref}</span>
+              </div>
+            </div>
+
+            <a
+              href={upiQrData.upi_uri}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-sm font-semibold text-primary-foreground"
+            >
+              <ExternalLink className="h-4 w-4" /> Open UPI App
+            </a>
+
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => { setShowQrModal(false); setUpiQrData(null); }}
+                className="flex-1 rounded-xl"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  toast({ title: "Order Created", description: "Once you complete payment, it will be verified and your order confirmed." });
+                  navigate(`/orders?payment=pending_verification&order_id=${upiQrData.order_id}`);
+                }}
+                className="flex-1 rounded-xl dentzap-gradient text-primary-foreground"
+              >
+                I've Paid
+              </Button>
+            </div>
+
+            <p className="text-center text-[10px] text-muted-foreground leading-relaxed">
+              After paying, tap "I've Paid". Your payment will be verified and the order confirmed.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
