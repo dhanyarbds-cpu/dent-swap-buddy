@@ -1,62 +1,188 @@
-import { MessageSquare, Search } from "lucide-react";
+import { useState, useEffect } from "react";
+import { MessageSquare, Search, Check, X } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import ChatWindow from "@/components/ChatWindow";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
-const chats = [
-  { id: "1", name: "Priya Sharma", lastMessage: "Is the instrument kit still available?", time: "2h ago", unread: 2, verified: true },
-  { id: "2", name: "Arjun Mehta", lastMessage: "Can you do ₹300 for the book?", time: "5h ago", unread: 0, verified: true },
-  { id: "3", name: "Kavya Reddy", lastMessage: "I'll pick it up tomorrow", time: "1d ago", unread: 0, verified: false },
-];
+interface ChatRequest {
+  id: string;
+  listing_id: string;
+  buyer_id: string;
+  seller_id: string;
+  status: string;
+  message: string | null;
+  offered_price: number | null;
+  created_at: string;
+  listing_title?: string;
+  other_name?: string;
+}
 
-const MessagesPage = () => (
-  <div className="safe-bottom min-h-screen bg-background">
-    <header className="sticky top-0 z-40 border-b border-border bg-card/95 px-4 py-3 backdrop-blur-lg">
-      <div className="mx-auto flex max-w-lg items-center justify-between">
-        <h1 className="text-lg font-bold text-foreground">Messages</h1>
-        <button className="rounded-full p-2 text-muted-foreground hover:bg-muted">
-          <Search className="h-5 w-5" />
-        </button>
-      </div>
-    </header>
+const MessagesPage = () => {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [chatRequests, setChatRequests] = useState<ChatRequest[]>([]);
+  const [activeChat, setActiveChat] = useState<ChatRequest | null>(null);
+  const [loading, setLoading] = useState(true);
 
-    <main className="mx-auto max-w-lg">
-      {chats.length === 0 ? (
-        <div className="flex flex-col items-center py-24 text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-            <MessageSquare className="h-8 w-8 text-primary" />
-          </div>
-          <p className="mt-4 font-semibold text-foreground">No messages yet</p>
-          <p className="mt-1 text-sm text-muted-foreground">Start browsing and send a buy request!</p>
+  const fetchRequests = async () => {
+    if (!user) return;
+    setLoading(true);
+
+    const { data } = await supabase
+      .from("chat_requests")
+      .select("*")
+      .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
+      .order("updated_at", { ascending: false });
+
+    if (data) {
+      // Fetch listing titles and other user profiles
+      const enriched = await Promise.all(
+        data.map(async (req) => {
+          const { data: listing } = await supabase
+            .from("listings")
+            .select("title")
+            .eq("id", req.listing_id)
+            .single();
+
+          const otherUserId = req.buyer_id === user.id ? req.seller_id : req.buyer_id;
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("full_name")
+            .eq("user_id", otherUserId)
+            .single();
+
+          return {
+            ...req,
+            listing_title: listing?.title || "Unknown listing",
+            other_name: profile?.full_name || "User",
+          };
+        })
+      );
+      setChatRequests(enriched);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchRequests();
+  }, [user]);
+
+  const handleAcceptDecline = async (requestId: string, status: "accepted" | "declined") => {
+    await supabase.from("chat_requests").update({ status }).eq("id", requestId);
+    toast({
+      title: status === "accepted" ? "Chat opened! 💬" : "Request declined",
+      description: status === "accepted" ? "You can now negotiate with the buyer." : undefined,
+    });
+    fetchRequests();
+  };
+
+  if (activeChat) {
+    return (
+      <ChatWindow
+        chatRequestId={activeChat.id}
+        otherUserName={activeChat.other_name || "User"}
+        listingTitle={activeChat.listing_title || ""}
+        onBack={() => { setActiveChat(null); fetchRequests(); }}
+      />
+    );
+  }
+
+  return (
+    <div className="safe-bottom min-h-screen bg-background">
+      <header className="sticky top-0 z-40 border-b border-border bg-card/95 px-4 py-3 backdrop-blur-lg">
+        <div className="mx-auto flex max-w-lg items-center justify-between">
+          <h1 className="text-lg font-bold text-foreground">Messages</h1>
+          <button className="rounded-full p-2 text-muted-foreground hover:bg-muted">
+            <Search className="h-5 w-5" />
+          </button>
         </div>
-      ) : (
-        <div className="divide-y divide-border">
-          {chats.map((chat) => {
-            const initials = chat.name.split(" ").map((n) => n[0]).join("");
-            return (
-              <button key={chat.id} className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-muted/50">
-                <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
-                  {initials}
-                  {chat.verified && (
-                    <div className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full border-2 border-card bg-verified text-[8px] font-bold text-verified-foreground flex items-center justify-center">✓</div>
+      </header>
+
+      <main className="mx-auto max-w-lg">
+        {!user ? (
+          <div className="flex flex-col items-center py-24 text-center px-4">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+              <MessageSquare className="h-8 w-8 text-primary" />
+            </div>
+            <p className="mt-4 font-semibold text-foreground">Sign in to view messages</p>
+            <p className="mt-1 text-sm text-muted-foreground">Login to send and receive negotiation requests.</p>
+          </div>
+        ) : loading ? (
+          <div className="flex items-center justify-center py-24">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          </div>
+        ) : chatRequests.length === 0 ? (
+          <div className="flex flex-col items-center py-24 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+              <MessageSquare className="h-8 w-8 text-primary" />
+            </div>
+            <p className="mt-4 font-semibold text-foreground">No messages yet</p>
+            <p className="mt-1 text-sm text-muted-foreground">Start browsing and negotiate on listings!</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-border">
+            {chatRequests.map((req) => {
+              const isSeller = req.seller_id === user.id;
+              const isPending = req.status === "pending";
+              const initials = (req.other_name || "U").split(" ").map((n) => n[0]).join("");
+
+              return (
+                <div key={req.id} className="px-4 py-3.5">
+                  <button
+                    onClick={() => req.status === "accepted" && setActiveChat(req)}
+                    className={`flex w-full items-center gap-3 text-left ${req.status !== "accepted" ? "cursor-default" : ""}`}
+                  >
+                    <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+                      {initials}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-foreground">{req.other_name}</span>
+                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                          req.status === "accepted" ? "bg-verified/10 text-verified" :
+                          req.status === "declined" ? "bg-destructive/10 text-destructive" :
+                          "bg-primary/10 text-primary"
+                        }`}>
+                          {req.status}
+                        </span>
+                      </div>
+                      <p className="mt-0.5 truncate text-sm text-muted-foreground">{req.listing_title}</p>
+                      {req.offered_price && (
+                        <p className="text-xs font-semibold text-primary">Offer: ₹{req.offered_price.toLocaleString("en-IN")}</p>
+                      )}
+                    </div>
+                  </button>
+
+                  {/* Accept/Decline for sellers on pending requests */}
+                  {isSeller && isPending && (
+                    <div className="mt-2 flex gap-2 pl-15">
+                      <Button
+                        size="sm"
+                        onClick={() => handleAcceptDecline(req.id, "accepted")}
+                        className="flex-1 gap-1 rounded-lg bg-verified text-verified-foreground text-xs"
+                      >
+                        <Check className="h-3 w-3" /> Accept
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleAcceptDecline(req.id, "declined")}
+                        className="flex-1 gap-1 rounded-lg border-destructive/30 text-destructive text-xs"
+                      >
+                        <X className="h-3 w-3" /> Decline
+                      </Button>
+                    </div>
                   )}
                 </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold text-foreground">{chat.name}</span>
-                    <span className="text-[11px] text-muted-foreground">{chat.time}</span>
-                  </div>
-                  <p className="mt-0.5 truncate text-sm text-muted-foreground">{chat.lastMessage}</p>
-                </div>
-                {chat.unread > 0 && (
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
-                    {chat.unread}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </main>
-  </div>
-);
+              );
+            })}
+          </div>
+        )}
+      </main>
+    </div>
+  );
+};
 
 export default MessagesPage;
