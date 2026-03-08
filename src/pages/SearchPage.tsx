@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Search, SlidersHorizontal, X, Crown, Bell, Mic, MicOff, MapPin, Filter, ChevronDown } from "lucide-react";
-import { listings, categories } from "@/lib/mockData";
+import { Search, SlidersHorizontal, X, Crown, Bell, Mic, MicOff, MapPin, Loader2 } from "lucide-react";
+import { categories } from "@/lib/mockData";
 import ProductCard from "@/components/ProductCard";
 import ListingDetail from "@/components/ListingDetail";
 import type { Listing } from "@/lib/mockData";
@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/hooks/useLanguage";
+import { useListings } from "@/hooks/useListings";
 
 const sortOptions = ["Newest", "Price: Low", "Price: High", "Relevant"];
 const sellerTypeOptions = ["All Sellers", "Individuals", "Companies", "New Only"];
@@ -19,7 +20,6 @@ const priceRanges = [
   { label: "₹2000–₹5000", min: 2000, max: 5000 },
   { label: "Above ₹5000", min: 5000, max: Infinity },
 ];
-
 
 interface SpeechRecognitionEvent {
   results: SpeechRecognitionResultList;
@@ -47,10 +47,12 @@ const SearchPage = () => {
   const recognitionRef = useRef<any>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const { listings: dbListings, loading: listingsLoading } = useListings({ realtime: true });
+
   const categoryNames = ["All", ...categories.map(c => c.name)];
 
-  // Filter results
-  const filtered = listings.filter((l) => {
+  // Filter results from real DB listings
+  const filtered = dbListings.filter((l) => {
     const matchesQuery = !query ||
       l.title.toLowerCase().includes(query.toLowerCase()) ||
       l.hashtags.some((h) => h.toLowerCase().includes(query.toLowerCase())) ||
@@ -61,7 +63,9 @@ const SearchPage = () => {
     const matchesPrice = l.price >= range.min && l.price <= range.max;
     const matchesCondition = conditionFilter === "All" || l.condition.toLowerCase() === conditionFilter.toLowerCase();
     const matchesLocation = !locationFilter || l.location.toLowerCase().includes(locationFilter.toLowerCase());
-    const matchesAvailability = availabilityFilter === "all" || true;
+    const matchesAvailability = availabilityFilter === "all" || 
+      (availabilityFilter === "pickup" && (l as any).pickupAvailable) ||
+      (availabilityFilter === "shipping" && (l as any).shippingAvailable);
     return matchesQuery && matchesCategory && matchesPrice && matchesCondition && matchesLocation && matchesAvailability;
   });
 
@@ -78,7 +82,7 @@ const SearchPage = () => {
         ...categories.map(c => c.name),
         "Dental Instruments", "BDS Books", "Phantom Head", "Handpiece",
         "Ortho Kit", "Autoclave", "Surgical Kit", "Lab Equipment",
-        ...listings.map(l => l.title),
+        ...dbListings.map(l => l.title),
       ])].filter((s) => s.toLowerCase().includes(activeQuery.toLowerCase())).slice(0, 6)
     : [];
 
@@ -114,7 +118,6 @@ const SearchPage = () => {
         const result = event.results[i];
         if (result.isFinal) {
           finalTranscript += result[0].transcript;
-          // Collect alternatives for accent variations
           for (let j = 1; j < result.length; j++) {
             if (result[j].transcript && result[j].transcript !== result[0].transcript) {
               alts.push(result[j].transcript.trim());
@@ -164,7 +167,6 @@ const SearchPage = () => {
     return <ListingDetail listing={selectedListing} onBack={() => setSelectedListing(null)} />;
   }
 
-  const showConsumableWarning = false;
   const activeFiltersCount = [
     categoryFilter !== "All",
     priceRange !== 0,
@@ -236,7 +238,7 @@ const SearchPage = () => {
           </div>
         )}
 
-        {/* Voice alternatives - "Did you mean?" */}
+        {/* Voice alternatives */}
         {voiceAlternatives.length > 0 && !isListening && (
           <div className="border-b border-border bg-secondary/30 px-4 py-2.5 animate-fade-in">
             <p className="text-[10px] font-bold text-muted-foreground uppercase mb-1.5">Did you mean?</p>
@@ -263,7 +265,6 @@ const SearchPage = () => {
         {/* Advanced filters panel */}
         {showFilters && (
           <div className="border-b border-border bg-card px-4 py-3 space-y-3 animate-fade-in">
-            {/* Category */}
             <div>
               <p className="text-[10px] font-bold text-muted-foreground uppercase mb-1.5">Category</p>
               <div className="flex flex-wrap gap-1.5">
@@ -281,7 +282,6 @@ const SearchPage = () => {
               </div>
             </div>
 
-            {/* Price Range */}
             <div>
               <p className="text-[10px] font-bold text-muted-foreground uppercase mb-1.5">Price Range</p>
               <div className="flex flex-wrap gap-1.5">
@@ -299,7 +299,6 @@ const SearchPage = () => {
               </div>
             </div>
 
-            {/* Condition */}
             <div>
               <p className="text-[10px] font-bold text-muted-foreground uppercase mb-1.5">Condition</p>
               <div className="flex flex-wrap gap-1.5">
@@ -317,7 +316,6 @@ const SearchPage = () => {
               </div>
             </div>
 
-            {/* Location */}
             <div>
               <p className="text-[10px] font-bold text-muted-foreground uppercase mb-1.5">Location</p>
               <div className="flex items-center gap-2 rounded-xl border border-border bg-secondary/50 px-3 py-2">
@@ -331,7 +329,6 @@ const SearchPage = () => {
               </div>
             </div>
 
-            {/* Availability */}
             <div>
               <p className="text-[10px] font-bold text-muted-foreground uppercase mb-1.5">Availability</p>
               <div className="flex gap-1.5">
@@ -349,7 +346,6 @@ const SearchPage = () => {
               </div>
             </div>
 
-            {/* Clear filters */}
             {activeFiltersCount > 0 && (
               <button
                 onClick={() => { setCategoryFilter("All"); setPriceRange(0); setConditionFilter("All"); setLocationFilter(""); setAvailabilityFilter("all"); }}
@@ -361,17 +357,8 @@ const SearchPage = () => {
           </div>
         )}
 
-        {/* Consumable warning */}
-        {showConsumableWarning && (
-          <div className="mx-4 mt-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 px-3.5 py-2.5">
-            <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
-              Consumable products are not available on this platform. Only durable medical, dental, and laboratory equipment is listed.
-            </p>
-          </div>
-        )}
-
-        {/* Suggestions (show during voice & typing) */}
-        {suggestions.length > 0 && !showConsumableWarning && (
+        {/* Suggestions */}
+        {suggestions.length > 0 && (
           <div className="border-b border-border bg-card px-4 py-2">
             {suggestions.map((s) => (
               <button
@@ -420,7 +407,12 @@ const SearchPage = () => {
 
         {/* Results */}
         <div className="p-4">
-          {!showConsumableWarning && (
+          {listingsLoading ? (
+            <div className="flex flex-col items-center py-16 animate-fade-in">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="mt-3 text-xs text-muted-foreground">Loading listings...</p>
+            </div>
+          ) : (
             <>
               <p className="mb-3 text-xs font-medium text-muted-foreground">{sorted.length} results</p>
               <div className="grid grid-cols-2 gap-3">
@@ -432,7 +424,7 @@ const SearchPage = () => {
               </div>
             </>
           )}
-          {(sorted.length === 0 && query.length > 2 && !showConsumableWarning) && (
+          {!listingsLoading && sorted.length === 0 && query.length > 2 && (
             <div className="flex flex-col items-center py-16 text-center animate-fade-in">
               <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-secondary text-3xl">🔍</div>
               <p className="mt-4 text-sm font-medium text-foreground">No results found</p>
@@ -465,10 +457,10 @@ const SearchPage = () => {
               )}
             </div>
           )}
-          {sorted.length === 0 && query.length <= 2 && !showConsumableWarning && (
+          {!listingsLoading && sorted.length === 0 && query.length <= 2 && (
             <div className="flex flex-col items-center py-16 text-center animate-fade-in">
               <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-secondary text-3xl">🔍</div>
-              <p className="mt-4 text-sm font-medium text-foreground">{t("search.placeholder") ? "Search for products" : "Search for products"}</p>
+              <p className="mt-4 text-sm font-medium text-foreground">Search for products</p>
               <p className="mt-1 text-xs text-muted-foreground">Type or use voice search to find equipment</p>
             </div>
           )}
