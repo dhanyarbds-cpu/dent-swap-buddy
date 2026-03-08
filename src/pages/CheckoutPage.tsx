@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, ShieldCheck, Smartphone, Loader2, CheckCircle, Package, Copy, ExternalLink, MapPin, Truck } from "lucide-react";
+import { ArrowLeft, ShieldCheck, Smartphone, Loader2, CheckCircle, Package, Copy, ExternalLink, MapPin, Truck, CreditCard, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -32,12 +32,13 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
   const [processing, setProcessing] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [utrNumber, setUtrNumber] = useState("");
-  const [step, setStep] = useState<"delivery" | "review" | "pay" | "confirm">("delivery");
+  const [step, setStep] = useState<"delivery" | "review" | "method" | "pay" | "confirm">("delivery");
   const [commissionInfo, setCommissionInfo] = useState<{ rate: number; buyer_fee_rate: number } | null>(null);
   const [platformUpi, setPlatformUpi] = useState<{ upi_id: string; display_name: string } | null>(null);
   const [deliveryMethod, setDeliveryMethod] = useState<"pickup" | "shipping">("pickup");
   const [shippingAddress, setShippingAddress] = useState("");
   const [listingDetails, setListingDetails] = useState<{ pickup_available: boolean; shipping_available: boolean } | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<"upi" | "razorpay">("upi");
 
   useEffect(() => {
     const fetchAll = async () => {
