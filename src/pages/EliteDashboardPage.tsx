@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Crown, Search, Bell, Trash2, Plus, Sparkles, X, Eye, TrendingUp, Clock } from "lucide-react";
+import { ArrowLeft, Crown, Search, Bell, Trash2, Plus, Sparkles, X, Eye, TrendingUp, Clock, Check, AlertTriangle, Loader2, CalendarDays, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
@@ -28,10 +28,18 @@ interface EliteNotification {
   listing?: { title: string; price: number; images: string[] | null; category: string } | null;
 }
 
+interface MembershipStatus {
+  active: boolean;
+  membership: any;
+  daysLeft: number;
+  expiringSoon: boolean;
+  expired?: boolean;
+}
+
 type Tab = "alerts" | "tracked" | "history";
 
 const EliteDashboardPage = () => {
-  const { user, profile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>("alerts");
@@ -41,79 +49,99 @@ const EliteDashboardPage = () => {
   const [newKeywords, setNewKeywords] = useState("");
   const [newCategory, setNewCategory] = useState("");
   const [adding, setAdding] = useState(false);
+  const [purchasing, setPurchasing] = useState(false);
+  const [membershipStatus, setMembershipStatus] = useState<MembershipStatus | null>(null);
+  const [checkingStatus, setCheckingStatus] = useState(true);
 
   const isElite = profile?.is_elite;
+
+  // Check membership status
+  useEffect(() => {
+    if (!user) return;
+    const checkStatus = async () => {
+      setCheckingStatus(true);
+      try {
+        const { data, error } = await supabase.functions.invoke("elite-membership", {
+          body: { action: "check_status" },
+        });
+        if (!error && data) {
+          setMembershipStatus(data);
+          if (data.expired) {
+            await refreshProfile();
+          }
+          if (data.expiringSoon) {
+            toast({
+              title: "Membership Expiring Soon ⚠️",
+              description: `Your Elite Membership expires in ${data.daysLeft} day${data.daysLeft !== 1 ? "s" : ""}. Renew now to keep your benefits.`,
+            });
+          }
+        }
+      } catch {}
+      setCheckingStatus(false);
+    };
+    checkStatus();
+  }, [user]);
 
   const fetchData = async () => {
     if (!user) return;
     setLoading(true);
-
     const [demandsRes, notifsRes] = await Promise.all([
       supabase.from("demand_alerts").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
       supabase.from("elite_notifications").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(50),
     ]);
-
     setDemands((demandsRes.data as DemandAlert[]) || []);
 
-    // Enrich notifications with listing data
     const notifs = (notifsRes.data || []) as EliteNotification[];
     if (notifs.length > 0) {
       const listingIds = [...new Set(notifs.map((n) => n.listing_id))];
-      const { data: listings } = await supabase
-        .from("listings")
-        .select("id, title, price, images, category")
-        .in("id", listingIds);
-
+      const { data: listings } = await supabase.from("listings").select("id, title, price, images, category").in("id", listingIds);
       const listingMap = new Map((listings || []).map((l) => [l.id, l]));
-      for (const n of notifs) {
-        n.listing = listingMap.get(n.listing_id) || null;
-      }
+      for (const n of notifs) { n.listing = listingMap.get(n.listing_id) || null; }
     }
-
     setNotifications(notifs);
     setLoading(false);
   };
 
-  useEffect(() => {
-    fetchData();
-  }, [user]);
+  useEffect(() => { fetchData(); }, [user]);
 
-  // Realtime notifications
   useEffect(() => {
     if (!user) return;
     const channel = supabase
       .channel("elite-notifs")
-      .on("postgres_changes", {
-        event: "INSERT",
-        schema: "public",
-        table: "elite_notifications",
-        filter: `user_id=eq.${user.id}`,
-      }, (payload) => {
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "elite_notifications", filter: `user_id=eq.${user.id}` }, (payload) => {
         const newNotif = payload.new as EliteNotification;
         setNotifications((prev) => [newNotif, ...prev]);
         toast({ title: newNotif.title, description: newNotif.message });
       })
       .subscribe();
-
     return () => { supabase.removeChannel(channel); };
   }, [user]);
+
+  const handlePurchase = async () => {
+    if (!user) return;
+    setPurchasing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("elite-membership", {
+        body: { action: "activate" },
+      });
+      if (error) throw error;
+      if (data?.success) {
+        toast({ title: "🎉 Your Elite Membership is now active.", description: "Enjoy AI-powered alerts and priority features for 30 days!" });
+        setMembershipStatus({ active: true, membership: data.membership, daysLeft: 30, expiringSoon: false });
+        await refreshProfile();
+      }
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+    setPurchasing(false);
+  };
 
   const addDemand = async () => {
     if (!user || !newKeywords.trim()) return;
     setAdding(true);
-    const { error } = await supabase.from("demand_alerts").insert({
-      user_id: user.id,
-      keywords: newKeywords.trim(),
-      category: newCategory.trim(),
-    });
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Search tracked ✓", description: "You'll be notified when matching products appear." });
-      setNewKeywords("");
-      setNewCategory("");
-      fetchData();
-    }
+    const { error } = await supabase.from("demand_alerts").insert({ user_id: user.id, keywords: newKeywords.trim(), category: newCategory.trim() });
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); }
+    else { toast({ title: "Search tracked ✓" }); setNewKeywords(""); setNewCategory(""); fetchData(); }
     setAdding(false);
   };
 
@@ -129,18 +157,19 @@ const EliteDashboardPage = () => {
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 
+  // Non-elite upgrade page
   if (!isElite) {
     return (
-      <div className="safe-bottom min-h-screen bg-background">
-        <header className="sticky top-0 z-40 flex items-center gap-3 border-b border-border bg-card/95 px-4 py-3 backdrop-blur-xl">
+      <div className="safe-bottom min-h-screen">
+        <header className="sticky top-0 z-40 flex items-center gap-3 border-b border-border glass-panel px-4 py-3">
           <button onClick={() => navigate("/profile")} className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary">
             <ArrowLeft className="h-5 w-5" />
           </button>
           <h1 className="text-lg font-bold text-foreground">Elite Membership</h1>
         </header>
 
-        <div className="flex flex-col items-center px-6 py-20 text-center animate-fade-in">
-          <div className="flex h-20 w-20 items-center justify-center rounded-3xl dentzap-gradient dentzap-shadow-lg">
+        <div className="flex flex-col items-center px-6 py-16 text-center animate-fade-in">
+          <div className="flex h-20 w-20 items-center justify-center rounded-3xl dentzap-gradient dentzap-shadow-lg animate-glow-pulse">
             <Crown className="h-10 w-10 text-primary-foreground" />
           </div>
           <h2 className="mt-6 text-xl font-bold text-foreground">Unlock Elite Membership</h2>
@@ -148,14 +177,28 @@ const EliteDashboardPage = () => {
             Get early alerts when products you want become available. Elite members discover products before anyone else.
           </p>
 
-          <div className="mt-8 w-full max-w-sm space-y-3">
+          {/* Price Card */}
+          <div className="mt-6 w-full max-w-sm rounded-2xl glass-card p-5 glow-border">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-lg font-bold text-foreground">₹100</p>
+                <p className="text-xs text-muted-foreground">per month · 30 days</p>
+              </div>
+              <div className="rounded-full bg-primary/10 border border-primary/20 px-3 py-1">
+                <p className="text-xs font-bold text-primary">Best Value</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-6 w-full max-w-sm space-y-3">
             {[
               { icon: Sparkles, text: "AI-powered product matching" },
               { icon: Bell, text: "Instant notifications for new listings" },
               { icon: Eye, text: "Early access before other buyers" },
               { icon: TrendingUp, text: "Priority search placement" },
+              { icon: Shield, text: "Elite badge on your profile" },
             ].map((item) => (
-              <div key={item.text} className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3.5 dentzap-card-shadow">
+              <div key={item.text} className="flex items-center gap-3 rounded-2xl glass-card p-3.5">
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
                   <item.icon className="h-4 w-4 text-primary" />
                 </div>
@@ -164,18 +207,32 @@ const EliteDashboardPage = () => {
             ))}
           </div>
 
-          <Button className="mt-8 w-full max-w-sm gap-2 dentzap-gradient rounded-xl py-5 text-sm font-bold text-primary-foreground dentzap-shadow">
-            <Crown className="h-4 w-4" />
-            Upgrade to Elite · ₹99/month
+          <Button
+            onClick={handlePurchase}
+            disabled={purchasing}
+            className="mt-8 w-full max-w-sm gap-2 dentzap-gradient rounded-xl py-5 text-sm font-bold text-primary-foreground dentzap-shadow glow-primary"
+          >
+            {purchasing ? (
+              <><Loader2 className="h-4 w-4 animate-spin" /> Processing...</>
+            ) : (
+              <><Crown className="h-4 w-4" /> Upgrade to Elite · ₹100/month</>
+            )}
           </Button>
+          <p className="mt-3 text-[11px] text-muted-foreground">Auto-expires after 30 days. Cancel anytime.</p>
         </div>
       </div>
     );
   }
 
+  // Elite member dashboard
+  const expiresAt = membershipStatus?.membership?.expires_at
+    ? new Date(membershipStatus.membership.expires_at)
+    : null;
+  const daysLeft = membershipStatus?.daysLeft || 0;
+
   return (
-    <div className="safe-bottom min-h-screen bg-background">
-      <header className="sticky top-0 z-40 border-b border-border bg-card/95 backdrop-blur-xl">
+    <div className="safe-bottom min-h-screen">
+      <header className="sticky top-0 z-40 border-b border-border glass-panel">
         <div className="mx-auto flex max-w-lg items-center gap-3 px-4 py-3">
           <button onClick={() => navigate("/profile")} className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary">
             <ArrowLeft className="h-5 w-5" />
@@ -193,6 +250,47 @@ const EliteDashboardPage = () => {
           )}
         </div>
 
+        {/* Membership Status Bar */}
+        {!checkingStatus && membershipStatus && (
+          <div className={`mx-auto max-w-lg px-4 pb-2`}>
+            <div className={`flex items-center gap-2.5 rounded-xl p-3 ${
+              membershipStatus.expiringSoon
+                ? "border border-destructive/20 bg-destructive/5"
+                : "border border-primary/15 bg-primary/5"
+            }`}>
+              {membershipStatus.expiringSoon ? (
+                <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
+              ) : (
+                <Check className="h-4 w-4 text-primary shrink-0" />
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-foreground">
+                  {membershipStatus.expiringSoon
+                    ? `Expires in ${daysLeft} day${daysLeft !== 1 ? "s" : ""}`
+                    : "Elite Member"
+                  }
+                </p>
+                {expiresAt && (
+                  <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                    <CalendarDays className="h-3 w-3" />
+                    Valid until: {expiresAt.toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" })}
+                  </p>
+                )}
+              </div>
+              {membershipStatus.expiringSoon && (
+                <Button
+                  onClick={handlePurchase}
+                  disabled={purchasing}
+                  size="sm"
+                  className="dentzap-gradient text-[11px] font-bold text-primary-foreground rounded-lg h-8 px-3"
+                >
+                  {purchasing ? <Loader2 className="h-3 w-3 animate-spin" /> : "Renew"}
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Tabs */}
         <div className="mx-auto flex max-w-lg gap-1 px-4 pb-2">
           {([
@@ -205,7 +303,7 @@ const EliteDashboardPage = () => {
               onClick={() => setTab(t.key)}
               className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold transition-all ${
                 tab === t.key
-                  ? "bg-primary text-primary-foreground"
+                  ? "bg-primary text-primary-foreground glow-primary"
                   : "bg-secondary text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -226,7 +324,7 @@ const EliteDashboardPage = () => {
           <div className="space-y-3 animate-fade-in">
             {loading ? (
               [1, 2, 3].map((i) => (
-                <div key={i} className="rounded-2xl bg-card p-4 dentzap-card-shadow">
+                <div key={i} className="rounded-2xl glass-card p-4">
                   <div className="flex gap-3">
                     <div className="h-14 w-14 skeleton rounded-xl" />
                     <div className="flex-1 space-y-2">
@@ -248,11 +346,9 @@ const EliteDashboardPage = () => {
               notifications.map((notif, i) => (
                 <button
                   key={notif.id}
-                  onClick={() => { markRead(notif.id); }}
-                  className={`w-full rounded-2xl border p-4 text-left transition-all animate-fade-in dentzap-card-shadow ${
-                    notif.is_read
-                      ? "border-border bg-card"
-                      : "border-primary/20 bg-primary/5"
+                  onClick={() => markRead(notif.id)}
+                  className={`w-full rounded-2xl border p-4 text-left transition-all animate-fade-in ${
+                    notif.is_read ? "border-border glass-card" : "border-primary/20 bg-primary/5"
                   }`}
                   style={{ animationDelay: `${i * 40}ms`, animationFillMode: "both" }}
                 >
@@ -265,19 +361,15 @@ const EliteDashboardPage = () => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-semibold text-foreground truncate">{notif.title}</p>
-                        {!notif.is_read && <div className="h-2 w-2 shrink-0 rounded-full bg-primary" />}
+                        {!notif.is_read && <div className="h-2 w-2 shrink-0 rounded-full bg-primary animate-glow-pulse" />}
                       </div>
                       <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">{notif.message}</p>
                       <div className="mt-1.5 flex items-center gap-2">
-                        {notif.listing && (
-                          <span className="text-xs font-bold text-primary">{formatPrice(notif.listing.price)}</span>
-                        )}
+                        {notif.listing && <span className="text-xs font-bold text-primary">{formatPrice(notif.listing.price)}</span>}
                         <span className="rounded-full bg-verified/10 px-2 py-0.5 text-[9px] font-semibold text-verified">
                           {Math.round((notif.match_score || 0) * 100)}% match
                         </span>
-                        <span className="text-[10px] text-muted-foreground">
-                          {new Date(notif.created_at).toLocaleDateString()}
-                        </span>
+                        <span className="text-[10px] text-muted-foreground">{new Date(notif.created_at).toLocaleDateString()}</span>
                       </div>
                     </div>
                   </div>
@@ -290,32 +382,15 @@ const EliteDashboardPage = () => {
         {/* Tracked Tab */}
         {tab === "tracked" && (
           <div className="space-y-4 animate-fade-in">
-            {/* Add new tracking */}
-            <div className="rounded-2xl border border-border bg-card p-4 dentzap-card-shadow space-y-3">
+            <div className="rounded-2xl glass-card p-4 space-y-3">
               <p className="text-sm font-bold text-foreground">Track a Product</p>
-              <Input
-                value={newKeywords}
-                onChange={(e) => setNewKeywords(e.target.value)}
-                placeholder="e.g. Dental handpiece NSK"
-                className="rounded-xl py-5"
-              />
-              <Input
-                value={newCategory}
-                onChange={(e) => setNewCategory(e.target.value)}
-                placeholder="Category (optional)"
-                className="rounded-xl py-5"
-              />
-              <Button
-                onClick={addDemand}
-                disabled={!newKeywords.trim() || adding}
-                className="w-full gap-2 dentzap-gradient rounded-xl py-5 text-sm font-semibold text-primary-foreground"
-              >
-                <Plus className="h-4 w-4" />
-                {adding ? "Adding..." : "Track This Search"}
+              <Input value={newKeywords} onChange={(e) => setNewKeywords(e.target.value)} placeholder="e.g. Dental handpiece NSK" className="rounded-xl py-5" />
+              <Input value={newCategory} onChange={(e) => setNewCategory(e.target.value)} placeholder="Category (optional)" className="rounded-xl py-5" />
+              <Button onClick={addDemand} disabled={!newKeywords.trim() || adding} className="w-full gap-2 dentzap-gradient rounded-xl py-5 text-sm font-semibold text-primary-foreground">
+                <Plus className="h-4 w-4" /> {adding ? "Adding..." : "Track This Search"}
               </Button>
             </div>
 
-            {/* Existing tracked searches */}
             {demands.filter((d) => d.is_active).length === 0 ? (
               <div className="flex flex-col items-center py-12 text-center">
                 <Search className="h-8 w-8 text-muted-foreground" />
@@ -324,30 +399,20 @@ const EliteDashboardPage = () => {
               </div>
             ) : (
               demands.filter((d) => d.is_active).map((demand, i) => (
-                <div
-                  key={demand.id}
-                  className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 dentzap-card-shadow animate-fade-in"
-                  style={{ animationDelay: `${i * 40}ms`, animationFillMode: "both" }}
-                >
+                <div key={demand.id} className="flex items-center gap-3 rounded-2xl glass-card p-4 animate-fade-in" style={{ animationDelay: `${i * 40}ms`, animationFillMode: "both" }}>
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
                     <Search className="h-4 w-4 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-foreground">{demand.keywords}</p>
                     <div className="flex items-center gap-2 mt-0.5">
-                      {demand.category && (
-                        <span className="text-[10px] text-muted-foreground">{demand.category}</span>
-                      )}
+                      {demand.category && <span className="text-[10px] text-muted-foreground">{demand.category}</span>}
                       <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
-                        <Clock className="h-3 w-3" />
-                        {new Date(demand.created_at).toLocaleDateString()}
+                        <Clock className="h-3 w-3" /> {new Date(demand.created_at).toLocaleDateString()}
                       </span>
                     </div>
                   </div>
-                  <button
-                    onClick={() => removeDemand(demand.id)}
-                    className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive"
-                  >
+                  <button onClick={() => removeDemand(demand.id)} className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive">
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
@@ -366,12 +431,10 @@ const EliteDashboardPage = () => {
               </div>
             ) : (
               notifications.filter((n) => n.is_read).map((notif) => (
-                <div key={notif.id} className="rounded-2xl border border-border bg-card p-4 dentzap-card-shadow opacity-70">
+                <div key={notif.id} className="rounded-2xl glass-card p-4 opacity-70">
                   <p className="text-sm font-medium text-foreground">{notif.title}</p>
                   <p className="mt-0.5 text-xs text-muted-foreground">{notif.message}</p>
-                  <span className="mt-1 inline-block text-[10px] text-muted-foreground">
-                    {new Date(notif.created_at).toLocaleDateString()}
-                  </span>
+                  <span className="mt-1 inline-block text-[10px] text-muted-foreground">{new Date(notif.created_at).toLocaleDateString()}</span>
                 </div>
               ))
             )}
