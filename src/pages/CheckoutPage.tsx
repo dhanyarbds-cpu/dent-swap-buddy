@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
 import { ArrowLeft, ShieldCheck, Smartphone, Loader2, CheckCircle, Package, Copy, ExternalLink, MapPin, Truck, CreditCard, Wallet } from "lucide-react";
+import gpayLogo from "@/assets/gpay-logo.png";
+import phonepeLogo from "@/assets/phonepe-logo.png";
+import paytmLogo from "@/assets/paytm-logo.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
