@@ -9,6 +9,7 @@ interface ProductCardProps {
 
 const ProductCard = ({ listing, onClick }: ProductCardProps) => {
   const [wishlisted, setWishlisted] = useState(false);
+  const hasImage = listing.images && listing.images.length > 0 && listing.images[0];
 
   return (
     <div className="group relative w-full overflow-hidden rounded-2xl border border-border bg-card transition-all duration-300 dentzap-card-shadow hover:dentzap-card-shadow-hover">
@@ -35,9 +36,18 @@ const ProductCard = ({ listing, onClick }: ProductCardProps) => {
       <button onClick={onClick} className="w-full text-left press-scale">
         {/* Image */}
         <div className="relative aspect-[4/3] overflow-hidden bg-secondary">
-          <div className="flex h-full items-center justify-center text-4xl text-muted-foreground/15 transition-transform duration-500 group-hover:scale-105">
-            🦷
-          </div>
+          {hasImage ? (
+            <img
+              src={listing.images[0]}
+              alt={listing.title}
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              loading="lazy"
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center text-4xl text-muted-foreground/15 transition-transform duration-500 group-hover:scale-105">
+              🦷
+            </div>
+          )}
         </div>
 
         {/* Content */}

@@ -1,17 +1,25 @@
 import { useState } from "react";
-import { Camera, X, ChevronDown, ArrowLeft, ArrowRight, Check, ImagePlus } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, ImagePlus } from "lucide-react";
 import { categories } from "@/lib/mockData";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import ImageUploader from "@/components/ImageUploader";
+import { useNavigate } from "react-router-dom";
 
 const conditions = ["New", "Used"];
 const steps = ["Category", "Photos", "Details", "Price", "Location"];
 
 const SellPage = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [step, setStep] = useState(0);
+  const [submitting, setSubmitting] = useState(false);
+  const [images, setImages] = useState<string[]>([]);
   const [form, setForm] = useState({
     title: "",
     category: "",
@@ -27,17 +35,47 @@ const SellPage = () => {
   const update = (key: string, value: any) => setForm((f) => ({ ...f, [key]: value }));
   const canNext = () => {
     if (step === 0) return !!form.category;
-    if (step === 1) return true;
+    if (step === 1) return true; // photos optional
     if (step === 2) return !!form.title && !!form.condition;
     if (step === 3) return !!form.price;
     if (step === 4) return !!form.location;
     return false;
   };
 
-  const handleSubmit = () => {
-    toast({ title: "Listing Published! 🎉", description: "Your listing is now live." });
-    setStep(0);
-    setForm({ title: "", category: "", condition: "", brand: "", price: "", description: "", location: "", hashtags: "", negotiable: true });
+  const handleSubmit = async () => {
+    if (!user) return;
+    setSubmitting(true);
+
+    try {
+      const hashtags = form.hashtags
+        .split(/[\s,]+/)
+        .filter((t) => t.startsWith("#"))
+        .map((t) => t.trim());
+
+      const { error } = await supabase.from("listings").insert({
+        title: form.title,
+        category: form.category,
+        condition: form.condition,
+        brand: form.brand,
+        price: parseFloat(form.price),
+        description: form.description,
+        location: form.location,
+        hashtags,
+        images,
+        is_negotiable: form.negotiable,
+        seller_id: user.id,
+        status: "active",
+      });
+
+      if (error) throw error;
+
+      toast({ title: "Listing Published! 🎉", description: "Your listing is now live." });
+      navigate("/");
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -94,24 +132,7 @@ const SellPage = () => {
 
         {/* Step 1: Photos */}
         {step === 1 && (
-          <div className="space-y-4">
-            <div>
-              <p className="text-base font-bold text-foreground">Add Photos</p>
-              <p className="mt-1 text-sm text-muted-foreground">Add up to 6 photos to attract buyers</p>
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              <button
-                type="button"
-                className="flex aspect-square flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-primary/30 bg-primary/5 text-primary transition-colors hover:border-primary/50 press-scale"
-              >
-                <ImagePlus className="h-7 w-7" />
-                <span className="text-[10px] font-semibold">Add Photo</span>
-              </button>
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="aspect-square rounded-2xl border border-border bg-secondary" />
-              ))}
-            </div>
-          </div>
+          <ImageUploader images={images} onImagesChange={setImages} maxImages={8} />
         )}
 
         {/* Step 2: Details */}
@@ -250,10 +271,14 @@ const SellPage = () => {
           ) : (
             <Button
               onClick={handleSubmit}
-              disabled={!canNext()}
+              disabled={!canNext() || submitting}
               className="w-full gap-2 dentzap-gradient rounded-xl py-5 text-sm font-semibold text-primary-foreground dentzap-shadow disabled:opacity-40"
             >
-              <Check className="h-4 w-4" /> Publish Listing
+              {submitting ? (
+                <>Publishing...</>
+              ) : (
+                <><Check className="h-4 w-4" /> Publish Listing</>
+              )}
             </Button>
           )}
         </div>
