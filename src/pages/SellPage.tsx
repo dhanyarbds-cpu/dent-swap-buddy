@@ -355,7 +355,7 @@ const SellPage = () => {
                   className="rounded-xl py-5 pl-10"
                 />
               </div>
-              <p className="mt-1 text-[11px] text-muted-foreground">Buyers will pay to this UPI ID. You can update it later in your profile.</p>
+              <p className="mt-1 text-[11px] text-muted-foreground">Only visible to you and platform admin for payouts.</p>
             </div>
 
             {/* Commission Info */}

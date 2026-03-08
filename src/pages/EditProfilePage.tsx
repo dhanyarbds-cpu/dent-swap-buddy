@@ -107,6 +107,14 @@ const EditProfilePage = () => {
 
       if (error) throw error;
 
+      // Save UPI ID to seller_payout_details
+      if (form.upi_id.trim()) {
+        await supabase.from("seller_payout_details").upsert(
+          { seller_id: user.id, upi_id: form.upi_id.trim(), payout_method: "upi" },
+          { onConflict: "seller_id" }
+        );
+      }
+
       await refreshProfile();
       toast({ title: "Profile updated successfully ✓" });
       navigate("/profile");
@@ -254,6 +262,17 @@ const EditProfilePage = () => {
               maxLength={200}
             />
             <p className="mt-1 text-right text-[10px] text-muted-foreground">{form.bio.length}/200</p>
+          </FieldRow>
+
+          <FieldRow icon={Wallet} label="UPI ID (for receiving payments)">
+            <Input
+              value={form.upi_id}
+              onChange={(e) => update("upi_id", e.target.value.trim())}
+              placeholder="e.g. yourname@upi"
+              className="rounded-xl py-5"
+              maxLength={50}
+            />
+            <p className="mt-1 text-[10px] text-muted-foreground">Only visible to you and platform admin for payouts</p>
           </FieldRow>
         </div>
 
