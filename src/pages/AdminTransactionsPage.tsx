@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Loader2, IndianRupee, TrendingUp, Users, Receipt, RefreshCw, CheckCircle, XCircle } from "lucide-react";
+import { ArrowLeft, Loader2, IndianRupee, TrendingUp, Users, Receipt, RefreshCw, CheckCircle, XCircle, Wallet } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPrice, timeAgo } from "@/lib/mockData";
@@ -137,6 +137,9 @@ const AdminTransactionsPage = () => {
             {pendingVerification} pending
           </span>
         )}
+        <button onClick={() => navigate("/admin/seller-payouts")} className="flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-[11px] font-semibold text-primary hover:bg-primary/20 transition">
+          <Wallet className="h-3.5 w-3.5" /> Payouts
+        </button>
         <button onClick={fetchOrders} className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary">
           <RefreshCw className="h-4 w-4 text-muted-foreground" />
         </button>
