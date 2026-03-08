@@ -62,6 +62,7 @@ const ProfilePage = () => {
       items: [
         { icon: ShoppingBag, label: "My Orders", route: "/orders" },
         { icon: Heart, label: "Wishlist", route: "/wishlist" },
+        { icon: MessageSquare, label: "Messages", route: "/messages" },
         { icon: BarChart3, label: "Seller Dashboard", route: "/my-ads" },
         { icon: Package, label: "My Listings", route: "/my-ads" },
       ],
@@ -72,6 +73,18 @@ const ProfilePage = () => {
         { icon: Crown, label: "Elite Membership", badge: profile?.is_elite ? "Active" : "Upgrade", route: "/elite" },
         { icon: Shield, label: "Verification", badge: profile?.verified ? "Verified" : "Pending", route: "/verification" },
         { icon: Star, label: "Reviews & Ratings", route: "/reviews" },
+        { icon: Bell, label: "Notifications", route: "/notification-settings" },
+        { icon: Moon, label: "Dark Mode", toggle: true },
+      ],
+    },
+    {
+      title: "Support",
+      items: [
+        { icon: HelpCircle, label: "Help & Support", route: "/help" },
+        { icon: Settings, label: "Settings", route: "/settings" },
+      ],
+    },
+  ];
         { icon: Bell, label: "Notifications", route: "/notification-settings" },
         { icon: Moon, label: "Dark Mode", toggle: true },
       ],

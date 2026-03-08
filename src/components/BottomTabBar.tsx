@@ -1,11 +1,9 @@
-import { Home, MessageSquare, Plus, Megaphone, User } from "lucide-react";
+import { Home, Plus, User } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const tabs = [
   { path: "/", label: "Home", icon: Home },
-  { path: "/messages", label: "Chats", icon: MessageSquare },
   { path: "/sell", label: "Sell", icon: Plus },
-  { path: "/my-ads", label: "My Ads", icon: Megaphone },
   { path: "/profile", label: "Account", icon: User },
 ];
 
@@ -23,7 +21,7 @@ const BottomTabBar = () => {
             <button
               key={tab.path}
               onClick={() => navigate(tab.path)}
-              className={`relative flex flex-col items-center gap-0.5 px-4 py-1.5 transition-all duration-200 ${
+              className={`relative flex flex-col items-center gap-0.5 px-6 py-1.5 transition-all duration-200 ${
                 isSell
                   ? ""
                   : isActive
