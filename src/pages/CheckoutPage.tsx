@@ -157,9 +157,66 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
     }
   };
 
+  const handleUpiQrPayment = async () => {
+    if (!user) return;
+    setProcessing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-upi-qr-order", {
+        body: {
+          listing_id: listing.id,
+          amount: listing.price,
+          delivery_method: deliveryMethod,
+          shipping_address: deliveryMethod === "shipping" ? shippingAddress : null,
+        },
+      });
+
+      if (error || !data?.upi_uri) {
+        throw new Error(data?.error || error?.message || "Failed to create UPI order");
+      }
+
+      setUpiQrData(data);
+      setShowQrModal(true);
+
+      // Generate QR code on canvas
+      setTimeout(() => {
+        if (qrCanvasRef.current) {
+          generateQrCode(qrCanvasRef.current, data.upi_uri);
+        }
+      }, 100);
+    } catch (err: any) {
+      toast({ title: "Payment Error", description: err.message, variant: "destructive" });
+    }
+    setProcessing(false);
+  };
+
+  // Simple QR code generator using canvas
+  const generateQrCode = (canvas: HTMLCanvasElement, text: string) => {
+    // Use a QR code generation via Google Charts API as fallback image
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(text)}`;
+    img.onload = () => {
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        canvas.width = 250;
+        canvas.height = 250;
+        ctx.drawImage(img, 0, 0, 250, 250);
+      }
+    };
+  };
+
+  const copyUpiId = () => {
+    if (upiQrData?.upi_id) {
+      navigator.clipboard.writeText(upiQrData.upi_id);
+      toast({ title: "Copied!", description: "UPI ID copied to clipboard" });
+    }
+  };
+
   const handlePayment = () => {
     if (paymentMethod === "razorpay") {
       handleRazorpayPayment();
+    } else if (paymentMethod === "upi_qr") {
+      handleUpiQrPayment();
     } else {
       handleStripePayment();
     }
