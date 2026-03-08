@@ -1,0 +1,1 @@
+ALTER TABLE public.complaints ALTER COLUMN order_id DROP NOT NULL;
