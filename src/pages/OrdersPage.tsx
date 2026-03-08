@@ -76,13 +76,13 @@ const OrdersPage = () => {
       // Fetch orders where user is buyer OR seller
       const { data: buyerOrders } = await supabase
         .from("orders")
-        .select("id, status, price, created_at, seller_id, buyer_id, escrow_status, razorpay_payment_id, payment_method, delivery_method, courier_name, tracking_number, listing:listings(id, title, images, category)")
+        .select("id, status, price, created_at, seller_id, buyer_id, escrow_status, razorpay_payment_id, payment_method, delivery_method, courier_name, tracking_number, tracking_status, estimated_delivery, tracking_history, listing:listings(id, title, images, category)")
         .eq("buyer_id", user.id)
         .order("created_at", { ascending: false });
 
       const { data: sellerOrders } = await supabase
         .from("orders")
-        .select("id, status, price, created_at, seller_id, buyer_id, escrow_status, razorpay_payment_id, payment_method, delivery_method, courier_name, tracking_number, listing:listings(id, title, images, category)")
+        .select("id, status, price, created_at, seller_id, buyer_id, escrow_status, razorpay_payment_id, payment_method, delivery_method, courier_name, tracking_number, tracking_status, estimated_delivery, tracking_history, listing:listings(id, title, images, category)")
         .eq("seller_id", user.id)
         .order("created_at", { ascending: false });
 
