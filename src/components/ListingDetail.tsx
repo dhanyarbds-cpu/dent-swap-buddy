@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { ArrowLeft, Share2, Heart, MapPin, BadgeCheck, Tag, IndianRupee, Eye, Clock, Bookmark, ChevronLeft, ChevronRight, ShoppingCart, Truck, ShieldAlert, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Share2, Heart, MapPin, BadgeCheck, Tag, IndianRupee, Eye, Clock, Bookmark, ChevronLeft, ChevronRight, ShoppingCart, Truck, ShieldAlert, AlertTriangle, Flag } from "lucide-react";
 import { type Listing, formatPrice, timeAgo } from "@/lib/mockData";
 import NegotiateDialog from "@/components/NegotiateDialog";
 import { Button } from "@/components/ui/button";
 import CheckoutPage from "@/pages/CheckoutPage";
+import ReportProductDialog from "@/components/ReportProductDialog";
 import { useWishlist } from "@/hooks/useWishlist";
 
 interface ListingDetailProps {
@@ -230,6 +231,21 @@ const ListingDetail = ({ listing, onBack }: ListingDetailProps) => {
             View Profile
           </Button>
         </div>
+
+        {/* Report Product */}
+        {isDbListing && (
+          <ReportProductDialog
+            listingId={listing.id}
+            sellerId={(listing as any).seller_id || listing.id}
+            productName={listing.title}
+            sellerName={listing.seller.name}
+          >
+            <button className="flex w-full items-center justify-center gap-2 rounded-2xl border border-destructive/20 bg-destructive/5 py-3 text-sm font-medium text-destructive transition hover:bg-destructive/10">
+              <Flag className="h-4 w-4" />
+              Report Product
+            </button>
+          </ReportProductDialog>
+        )}
 
         {/* Safety Tips */}
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/30 dark:bg-amber-950/20">
