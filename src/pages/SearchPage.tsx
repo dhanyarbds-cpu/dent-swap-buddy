@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 const sortOptions = ["Newest", "Price: Low", "Price: High", "Relevant"];
+const sellerTypeOptions = ["All Sellers", "Individuals", "Companies", "New Only"];
 
 // Consumable keywords to filter out from search
 const CONSUMABLE_KEYWORDS = [
@@ -34,6 +35,7 @@ const SearchPage = () => {
   const { toast } = useToast();
   const [query, setQuery] = useState("");
   const [sortBy, setSortBy] = useState("Newest");
+  const [sellerFilter, setSellerFilter] = useState("All Sellers");
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
   const [trackedQuery, setTrackedQuery] = useState<string | null>(null);
   const [isListening, setIsListening] = useState(false);
@@ -204,21 +206,38 @@ const SearchPage = () => {
           </div>
         )}
 
-        {/* Sort */}
-        <div className="no-scrollbar flex gap-2 overflow-x-auto px-4 pt-4">
-          {sortOptions.map((opt) => (
-            <button
-              key={opt}
-              onClick={() => setSortBy(opt)}
-              className={`shrink-0 rounded-full px-4 py-2 text-xs font-semibold transition-all duration-200 ${
-                sortBy === opt
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-secondary text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {opt}
-            </button>
-          ))}
+        {/* Sort & Filter */}
+        <div className="space-y-2 px-4 pt-4">
+          <div className="no-scrollbar flex gap-2 overflow-x-auto">
+            {sortOptions.map((opt) => (
+              <button
+                key={opt}
+                onClick={() => setSortBy(opt)}
+                className={`shrink-0 rounded-full px-4 py-2 text-xs font-semibold transition-all duration-200 ${
+                  sortBy === opt
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {opt}
+              </button>
+            ))}
+          </div>
+          <div className="no-scrollbar flex gap-2 overflow-x-auto">
+            {sellerTypeOptions.map((opt) => (
+              <button
+                key={opt}
+                onClick={() => setSellerFilter(opt)}
+                className={`shrink-0 rounded-full px-3 py-1.5 text-[11px] font-semibold transition-all ${
+                  sellerFilter === opt
+                    ? "bg-accent text-accent-foreground ring-1 ring-primary/20"
+                    : "bg-secondary/60 text-muted-foreground"
+                }`}
+              >
+                {opt}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Results */}
