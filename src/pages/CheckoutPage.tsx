@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { ArrowLeft, ShieldCheck, Loader2, CheckCircle, MapPin, Truck, CreditCard, Smartphone } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { ArrowLeft, ShieldCheck, Loader2, CheckCircle, MapPin, Truck, CreditCard, Smartphone, QrCode, Copy, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { formatPrice } from "@/lib/mockData";
@@ -32,7 +32,10 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
   const [deliveryMethod, setDeliveryMethod] = useState<"pickup" | "shipping">("pickup");
   const [shippingAddress, setShippingAddress] = useState("");
   const [listingDetails, setListingDetails] = useState<{ pickup_available: boolean; shipping_available: boolean } | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<"razorpay" | "stripe">("razorpay");
+  const [paymentMethod, setPaymentMethod] = useState<"razorpay" | "stripe" | "upi_qr">("razorpay");
+  const [upiQrData, setUpiQrData] = useState<{ order_id: string; upi_uri: string; upi_id: string; amount: number; txn_ref: string; product_name?: string } | null>(null);
+  const [showQrModal, setShowQrModal] = useState(false);
+  const qrCanvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -154,9 +157,66 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
     }
   };
 
+  const handleUpiQrPayment = async () => {
+    if (!user) return;
+    setProcessing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-upi-qr-order", {
+        body: {
+          listing_id: listing.id,
+          amount: listing.price,
+          delivery_method: deliveryMethod,
+          shipping_address: deliveryMethod === "shipping" ? shippingAddress : null,
+        },
+      });
+
+      if (error || !data?.upi_uri) {
+        throw new Error(data?.error || error?.message || "Failed to create UPI order");
+      }
+
+      setUpiQrData(data);
+      setShowQrModal(true);
+
+      // Generate QR code on canvas
+      setTimeout(() => {
+        if (qrCanvasRef.current) {
+          generateQrCode(qrCanvasRef.current, data.upi_uri);
+        }
+      }, 100);
+    } catch (err: any) {
+      toast({ title: "Payment Error", description: err.message, variant: "destructive" });
+    }
+    setProcessing(false);
+  };
+
+  // Simple QR code generator using canvas
+  const generateQrCode = (canvas: HTMLCanvasElement, text: string) => {
+    // Use a QR code generation via Google Charts API as fallback image
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(text)}`;
+    img.onload = () => {
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        canvas.width = 250;
+        canvas.height = 250;
+        ctx.drawImage(img, 0, 0, 250, 250);
+      }
+    };
+  };
+
+  const copyUpiId = () => {
+    if (upiQrData?.upi_id) {
+      navigator.clipboard.writeText(upiQrData.upi_id);
+      toast({ title: "Copied!", description: "UPI ID copied to clipboard" });
+    }
+  };
+
   const handlePayment = () => {
     if (paymentMethod === "razorpay") {
       handleRazorpayPayment();
+    } else if (paymentMethod === "upi_qr") {
+      handleUpiQrPayment();
     } else {
       handleStripePayment();
     }
@@ -400,6 +460,26 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
                   </div>
                   {paymentMethod === "stripe" && <CheckCircle className="h-5 w-5 text-primary shrink-0" />}
                 </button>
+
+                <button
+                  onClick={() => setPaymentMethod("upi_qr")}
+                  className={`w-full flex items-start gap-4 rounded-2xl border p-4 text-left transition-all ${
+                    paymentMethod === "upi_qr" ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "border-border bg-card"
+                  }`}
+                >
+                  <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${paymentMethod === "upi_qr" ? "bg-primary/10" : "bg-secondary"}`}>
+                    <QrCode className={`h-5 w-5 ${paymentMethod === "upi_qr" ? "text-primary" : "text-muted-foreground"}`} />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-foreground">UPI QR Code</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">Scan QR with any UPI app — GPay, PhonePe, Paytm</p>
+                    <div className="mt-2 flex items-center gap-1.5">
+                      <span className="rounded-full bg-verified/10 px-2 py-0.5 text-[10px] font-semibold text-verified">Direct UPI</span>
+                      <span className="text-[10px] text-muted-foreground">No gateway fees</span>
+                    </div>
+                  </div>
+                  {paymentMethod === "upi_qr" && <CheckCircle className="h-5 w-5 text-primary shrink-0" />}
+                </button>
               </div>
             </div>
 
@@ -424,6 +504,8 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
                 <><Loader2 className="h-4 w-4 animate-spin" /> Processing...</>
               ) : paymentMethod === "razorpay" ? (
                 <><Smartphone className="h-4 w-4" /> Pay {formatPrice(totalPayment)} via Razorpay</>
+              ) : paymentMethod === "upi_qr" ? (
+                <><QrCode className="h-4 w-4" /> Generate UPI QR — {formatPrice(totalPayment)}</>
               ) : (
                 <><CreditCard className="h-4 w-4" /> Pay {formatPrice(totalPayment)} via Stripe</>
               )}
@@ -431,6 +513,75 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
           </div>
         )}
       </main>
+
+      {/* UPI QR Code Modal */}
+      {showQrModal && upiQrData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="w-full max-w-sm rounded-3xl border border-border bg-card p-6 space-y-5 shadow-2xl">
+            <div className="text-center">
+              <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
+                <QrCode className="h-7 w-7 text-primary" />
+              </div>
+              <p className="text-lg font-bold text-foreground">Scan to Pay</p>
+              <p className="mt-1 text-sm text-muted-foreground">Scan with any UPI app</p>
+            </div>
+
+            <div className="flex justify-center">
+              <div className="rounded-2xl border-2 border-dashed border-primary/30 bg-white p-3">
+                <canvas ref={qrCanvasRef} className="h-[250px] w-[250px]" />
+              </div>
+            </div>
+
+            <div className="text-center">
+              <p className="text-2xl font-bold text-foreground">{formatPrice(upiQrData.amount)}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{upiQrData.product_name || "DentSwap Order"}</p>
+            </div>
+
+            <div className="rounded-xl bg-secondary/50 px-4 py-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-muted-foreground">UPI ID</span>
+                <button onClick={copyUpiId} className="flex items-center gap-1.5 text-xs font-semibold text-primary">
+                  <Copy className="h-3 w-3" /> Copy
+                </button>
+              </div>
+              <p className="text-sm font-bold text-foreground">{upiQrData.upi_id}</p>
+              <div className="flex items-center justify-between pt-1 border-t border-border">
+                <span className="text-xs text-muted-foreground">Ref: {upiQrData.txn_ref}</span>
+              </div>
+            </div>
+
+            <a
+              href={upiQrData.upi_uri}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-sm font-semibold text-primary-foreground"
+            >
+              <ExternalLink className="h-4 w-4" /> Open UPI App
+            </a>
+
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => { setShowQrModal(false); setUpiQrData(null); }}
+                className="flex-1 rounded-xl"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  toast({ title: "Order Created", description: "Once you complete payment, it will be verified and your order confirmed." });
+                  navigate(`/orders?payment=pending_verification&order_id=${upiQrData.order_id}`);
+                }}
+                className="flex-1 rounded-xl dentzap-gradient text-primary-foreground"
+              >
+                I've Paid
+              </Button>
+            </div>
+
+            <p className="text-center text-[10px] text-muted-foreground leading-relaxed">
+              After paying, tap "I've Paid". Your payment will be verified and the order confirmed.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
