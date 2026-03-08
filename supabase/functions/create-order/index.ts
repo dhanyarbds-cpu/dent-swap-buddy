@@ -52,6 +52,32 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Listing is no longer available" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    // Fetch commission settings
+    const serviceSupabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
+    const { data: settings } = await serviceSupabase
+      .from("platform_settings")
+      .select("value")
+      .eq("key", "commission")
+      .single();
+
+    const commissionRate = settings?.value?.rate ?? 2;
+    const minPrice = settings?.value?.min_price ?? 100;
+
+    // Calculate commission
+    let commissionAmount = 0;
+    let sellerPayout = amount;
+    let appliedRate = 0;
+
+    if (amount > minPrice) {
+      appliedRate = commissionRate;
+      commissionAmount = Math.round((amount * commissionRate) / 100 * 100) / 100;
+      sellerPayout = Math.round((amount - commissionAmount) * 100) / 100;
+    }
+
     // Create Razorpay order
     const RAZORPAY_KEY_ID = Deno.env.get("RAZORPAY_KEY_ID");
     const RAZORPAY_KEY_SECRET = Deno.env.get("RAZORPAY_KEY_SECRET");
@@ -87,12 +113,7 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Failed to create payment order" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Create order record in DB using service role for insert
-    const serviceSupabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
-
+    // Create order record in DB
     const { data: order, error: orderError } = await serviceSupabase
       .from("orders")
       .insert({
@@ -103,6 +124,9 @@ serve(async (req) => {
         status: "pending",
         razorpay_order_id: razorpayOrder.id,
         escrow_status: "pending",
+        commission_rate: appliedRate,
+        commission_amount: commissionAmount,
+        seller_payout: sellerPayout,
       })
       .select("id")
       .single();
@@ -118,6 +142,9 @@ serve(async (req) => {
       order_id: order.id,
       amount: amountInPaise,
       currency: "INR",
+      commission_rate: appliedRate,
+      commission_amount: commissionAmount,
+      seller_payout: sellerPayout,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

@@ -51,7 +51,7 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Order not found or not eligible for release" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Release escrow
+    // Release escrow — seller receives payout minus commission
     const { error: updateError } = await serviceSupabase
       .from("orders")
       .update({
@@ -65,7 +65,12 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Failed to release escrow" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    return new Response(JSON.stringify({ success: true, message: "Escrow released. Payment sent to seller." }), {
+    return new Response(JSON.stringify({
+      success: true,
+      message: "Escrow released. Payment sent to seller.",
+      seller_payout: order.seller_payout,
+      commission_amount: order.commission_amount,
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
