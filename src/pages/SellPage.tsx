@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { ArrowLeft, ArrowRight, Check, MapPin, Truck, ShieldAlert, ExternalLink, Building2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ArrowLeft, ArrowRight, Check, MapPin, Truck, ShieldAlert, ExternalLink, Building2, Wallet } from "lucide-react";
 import { categories } from "@/lib/mockData";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,7 +37,21 @@ const SellPage = () => {
     negotiable: true,
     pickupAvailable: true,
     shippingAvailable: false,
+    upiId: "",
   });
+
+  // Load existing UPI ID
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("seller_payout_details")
+      .select("upi_id")
+      .eq("seller_id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.upi_id) update("upiId", data.upi_id);
+      });
+  }, [user]);
 
   const update = (key: string, value: any) => setForm((f) => ({ ...f, [key]: value }));
   const canNext = () => {
