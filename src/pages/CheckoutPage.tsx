@@ -32,9 +32,10 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
   const [deliveryMethod, setDeliveryMethod] = useState<"pickup" | "shipping">("pickup");
   const [shippingAddress, setShippingAddress] = useState("");
   const [listingDetails, setListingDetails] = useState<{ pickup_available: boolean; shipping_available: boolean } | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<"razorpay" | "stripe" | "upi_qr">("razorpay");
+  const [paymentMethod, setPaymentMethod] = useState<"razorpay" | "stripe" | "upi_qr" | "upi_id">("razorpay");
   const [upiQrData, setUpiQrData] = useState<{ order_id: string; upi_uri: string; upi_id: string; amount: number; txn_ref: string; product_name?: string } | null>(null);
   const [showQrModal, setShowQrModal] = useState(false);
+  const [utrNumber, setUtrNumber] = useState("");
   const qrCanvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -212,11 +213,37 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
     }
   };
 
+  const handleUpiIdPayment = async () => {
+    if (!user || !utrNumber.trim()) return;
+    setProcessing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-upi-order", {
+        body: {
+          listing_id: listing.id,
+          amount: listing.price,
+          utr_number: utrNumber.trim(),
+          delivery_method: deliveryMethod,
+          shipping_address: deliveryMethod === "shipping" ? shippingAddress : null,
+        },
+      });
+      if (error || !data?.success) {
+        throw new Error(data?.error || error?.message || "Failed to create UPI order");
+      }
+      toast({ title: "Order Placed! 🎉", description: "Payment will be verified by admin." });
+      navigate(`/orders?payment=pending_verification&order_id=${data.order_id}`);
+    } catch (err: any) {
+      toast({ title: "Payment Error", description: err.message, variant: "destructive" });
+    }
+    setProcessing(false);
+  };
+
   const handlePayment = () => {
     if (paymentMethod === "razorpay") {
       handleRazorpayPayment();
     } else if (paymentMethod === "upi_qr") {
       handleUpiQrPayment();
+    } else if (paymentMethod === "upi_id") {
+      handleUpiIdPayment();
     } else {
       handleStripePayment();
     }
@@ -480,8 +507,55 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
                   </div>
                   {paymentMethod === "upi_qr" && <CheckCircle className="h-5 w-5 text-primary shrink-0" />}
                 </button>
+
+                <button
+                  onClick={() => setPaymentMethod("upi_id")}
+                  className={`w-full flex items-start gap-4 rounded-2xl border p-4 text-left transition-all ${
+                    paymentMethod === "upi_id" ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "border-border bg-card"
+                  }`}
+                >
+                  <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${paymentMethod === "upi_id" ? "bg-primary/10" : "bg-secondary"}`}>
+                    <Smartphone className={`h-5 w-5 ${paymentMethod === "upi_id" ? "text-primary" : "text-muted-foreground"}`} />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-foreground">UPI ID / UTR</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">Pay via UPI to our ID and enter UTR number</p>
+                    <div className="mt-2 flex items-center gap-1.5">
+                      <span className="rounded-full bg-verified/10 px-2 py-0.5 text-[10px] font-semibold text-verified">Manual</span>
+                      <span className="text-[10px] text-muted-foreground">Admin verified</span>
+                    </div>
+                  </div>
+                  {paymentMethod === "upi_id" && <CheckCircle className="h-5 w-5 text-primary shrink-0" />}
+                </button>
               </div>
             </div>
+
+            {/* UPI ID / UTR input section */}
+            {paymentMethod === "upi_id" && (
+              <div className="rounded-2xl border border-border bg-card p-4 space-y-3 animate-fade-in">
+                <div className="rounded-xl bg-secondary/50 px-4 py-3 space-y-1">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Pay to UPI ID</p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-bold text-foreground">9080970874@upi</p>
+                    <button onClick={() => { navigator.clipboard.writeText("9080970874@upi"); toast({ title: "Copied!", description: "UPI ID copied" }); }} className="flex items-center gap-1 text-xs font-semibold text-primary">
+                      <Copy className="h-3 w-3" /> Copy
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-sm font-semibold text-foreground">UTR / Transaction Reference</label>
+                  <input
+                    type="text"
+                    value={utrNumber}
+                    onChange={(e) => setUtrNumber(e.target.value)}
+                    placeholder="Enter 12-digit UTR number after payment"
+                    className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/30"
+                    maxLength={30}
+                  />
+                  <p className="mt-1.5 text-[10px] text-muted-foreground">Find UTR in your UPI app's payment history</p>
+                </div>
+              </div>
+            )}
 
             {/* Security info */}
             <div className="flex items-start gap-3 rounded-2xl border border-verified/20 bg-verified/5 p-4">
@@ -497,7 +571,7 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
             {/* Pay button */}
             <Button
               onClick={handlePayment}
-              disabled={processing}
+              disabled={processing || (paymentMethod === "upi_id" && !utrNumber.trim())}
               className="w-full gap-2 dentzap-gradient rounded-xl py-5 text-sm font-semibold text-primary-foreground dentzap-shadow disabled:opacity-50"
             >
               {processing ? (
@@ -506,6 +580,8 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
                 <><Smartphone className="h-4 w-4" /> Pay {formatPrice(totalPayment)} via Razorpay</>
               ) : paymentMethod === "upi_qr" ? (
                 <><QrCode className="h-4 w-4" /> Generate UPI QR — {formatPrice(totalPayment)}</>
+              ) : paymentMethod === "upi_id" ? (
+                <><Smartphone className="h-4 w-4" /> Submit UTR — {formatPrice(totalPayment)}</>
               ) : (
                 <><CreditCard className="h-4 w-4" /> Pay {formatPrice(totalPayment)} via Stripe</>
               )}
