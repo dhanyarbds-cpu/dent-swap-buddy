@@ -7,13 +7,17 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   profile: Profile | null;
+  refreshProfile: () => Promise<void>;
   signOut: () => Promise<void>;
 }
 
-interface Profile {
+export interface Profile {
   id: string;
   user_id: string;
   full_name: string;
+  username: string;
+  phone: string;
+  bio: string;
   college: string;
   year_of_study: string;
   location: string;
@@ -26,6 +30,7 @@ const AuthContext = createContext<AuthContextType>({
   session: null,
   loading: true,
   profile: null,
+  refreshProfile: async () => {},
   signOut: async () => {},
 });
 
@@ -42,6 +47,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .eq("user_id", userId)
       .single();
     setProfile(data as Profile | null);
+  };
+
+  const refreshProfile = async () => {
+    if (user) await fetchProfile(user.id);
   };
 
   useEffect(() => {
@@ -76,7 +85,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, profile, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, profile, refreshProfile, signOut }}>
       {children}
     </AuthContext.Provider>
   );
