@@ -542,6 +542,7 @@ export type Database = {
       orders: {
         Row: {
           buyer_id: string
+          buyer_service_fee: number | null
           commission_amount: number | null
           commission_rate: number | null
           courier_name: string | null
@@ -567,6 +568,7 @@ export type Database = {
         }
         Insert: {
           buyer_id: string
+          buyer_service_fee?: number | null
           commission_amount?: number | null
           commission_rate?: number | null
           courier_name?: string | null
@@ -592,6 +594,7 @@ export type Database = {
         }
         Update: {
           buyer_id?: string
+          buyer_service_fee?: number | null
           commission_amount?: number | null
           commission_rate?: number | null
           courier_name?: string | null
@@ -793,6 +796,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      seller_payout_details: {
+        Row: {
+          account_holder_name: string | null
+          bank_account_number: string | null
+          bank_name: string | null
+          created_at: string
+          id: string
+          ifsc_code: string | null
+          is_verified: boolean
+          payout_method: string
+          seller_id: string
+          updated_at: string
+          upi_id: string | null
+        }
+        Insert: {
+          account_holder_name?: string | null
+          bank_account_number?: string | null
+          bank_name?: string | null
+          created_at?: string
+          id?: string
+          ifsc_code?: string | null
+          is_verified?: boolean
+          payout_method?: string
+          seller_id: string
+          updated_at?: string
+          upi_id?: string | null
+        }
+        Update: {
+          account_holder_name?: string | null
+          bank_account_number?: string | null
+          bank_name?: string | null
+          created_at?: string
+          id?: string
+          ifsc_code?: string | null
+          is_verified?: boolean
+          payout_method?: string
+          seller_id?: string
+          updated_at?: string
+          upi_id?: string | null
+        }
+        Relationships: []
       }
       seller_trust_scores: {
         Row: {
