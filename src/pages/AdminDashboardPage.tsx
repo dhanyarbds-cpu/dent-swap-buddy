@@ -1,9 +1,10 @@
 import { useNavigate } from "react-router-dom";
 import { useAdminRole } from "@/hooks/useAdminRole";
-import { ArrowLeft, ShieldCheck, CreditCard, Building2, RotateCcw, Package, Ban, Truck, Loader2 } from "lucide-react";
+import { ArrowLeft, ShieldCheck, CreditCard, Building2, RotateCcw, Package, Ban, Truck, Loader2, Wallet } from "lucide-react";
 
 const adminLinks = [
   { title: "UPI Payment Verification", desc: "Verify pending UPI payments", icon: CreditCard, path: "/admin/upi-verification", accent: "text-primary" },
+  { title: "Seller Payouts", desc: "Manage seller payout requests", icon: Wallet, path: "/admin/seller-payouts", accent: "text-verified" },
   { title: "Transactions", desc: "View all platform transactions", icon: CreditCard, path: "/admin/transactions", accent: "text-verified" },
   { title: "Companies", desc: "Manage company registrations", icon: Building2, path: "/admin/companies", accent: "text-primary" },
   { title: "Returns", desc: "Handle return requests", icon: RotateCcw, path: "/returns", accent: "text-amber-500" },

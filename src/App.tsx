@@ -43,6 +43,7 @@ import AdminBlockedListingsPage from "./pages/AdminBlockedListingsPage";
 import AdminDeliveriesPage from "./pages/AdminDeliveriesPage";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
 import AdminUpiVerificationPage from "./pages/AdminUpiVerificationPage";
+import AdminSellerPayoutsPage from "./pages/AdminSellerPayoutsPage";
 
 const queryClient = new QueryClient();
 
@@ -95,6 +96,7 @@ const AppRoutes = () => {
           <Route path="/admin/deliveries" element={<AdminDeliveriesPage />} />
           <Route path="/admin" element={<AdminDashboardPage />} />
           <Route path="/admin/upi-verification" element={<AdminUpiVerificationPage />} />
+          <Route path="/admin/seller-payouts" element={<AdminSellerPayoutsPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <BottomTabBar />
