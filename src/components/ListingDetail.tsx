@@ -1,4 +1,5 @@
-import { ArrowLeft, Share2, Heart, MapPin, BadgeCheck, Tag, IndianRupee, Eye, Clock, Bookmark } from "lucide-react";
+import { useState } from "react";
+import { ArrowLeft, Share2, Heart, MapPin, BadgeCheck, Tag, IndianRupee, Eye, Clock, Bookmark, ChevronLeft, ChevronRight } from "lucide-react";
 import { type Listing, formatPrice, timeAgo } from "@/lib/mockData";
 import NegotiateDialog from "@/components/NegotiateDialog";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,9 @@ interface ListingDetailProps {
 const ListingDetail = ({ listing, onBack }: ListingDetailProps) => {
   const initials = listing.seller.name.split(" ").map((n) => n[0]).join("");
   const isDbListing = listing.id.length > 10;
+  const hasImages = listing.images && listing.images.length > 0 && listing.images[0];
+  const [currentImage, setCurrentImage] = useState(0);
+  const imageCount = hasImages ? listing.images.length : 0;
 
   return (
     <div className="safe-bottom min-h-screen bg-background">
@@ -33,9 +37,71 @@ const ListingDetail = ({ listing, onBack }: ListingDetailProps) => {
       </header>
 
       {/* Image Gallery */}
-      <div className="aspect-square bg-secondary">
-        <div className="flex h-full items-center justify-center text-7xl text-muted-foreground/10">🦷</div>
+      <div className="relative aspect-square bg-secondary overflow-hidden">
+        {hasImages ? (
+          <>
+            <img
+              src={listing.images[currentImage]}
+              alt={`${listing.title} - ${currentImage + 1}`}
+              className="h-full w-full object-cover"
+            />
+            {imageCount > 1 && (
+              <>
+                {currentImage > 0 && (
+                  <button
+                    onClick={() => setCurrentImage((i) => i - 1)}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-card/80 backdrop-blur-sm"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                )}
+                {currentImage < imageCount - 1 && (
+                  <button
+                    onClick={() => setCurrentImage((i) => i + 1)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-card/80 backdrop-blur-sm"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                )}
+                {/* Dots */}
+                <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
+                  {listing.images.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setCurrentImage(i)}
+                      className={`h-1.5 rounded-full transition-all ${
+                        i === currentImage ? "w-5 bg-primary-foreground" : "w-1.5 bg-primary-foreground/40"
+                      }`}
+                    />
+                  ))}
+                </div>
+                <div className="absolute right-3 top-3 rounded-full bg-foreground/50 px-2 py-0.5 text-[10px] font-semibold text-primary-foreground backdrop-blur-sm">
+                  {currentImage + 1}/{imageCount}
+                </div>
+              </>
+            )}
+          </>
+        ) : (
+          <div className="flex h-full items-center justify-center text-7xl text-muted-foreground/10">🦷</div>
+        )}
       </div>
+
+      {/* Thumbnail strip */}
+      {hasImages && imageCount > 1 && (
+        <div className="no-scrollbar flex gap-1.5 overflow-x-auto bg-card px-4 py-2">
+          {listing.images.map((url, i) => (
+            <button
+              key={i}
+              onClick={() => setCurrentImage(i)}
+              className={`h-14 w-14 shrink-0 overflow-hidden rounded-lg border-2 transition ${
+                i === currentImage ? "border-primary" : "border-transparent opacity-60"
+              }`}
+            >
+              <img src={url} alt="" className="h-full w-full object-cover" />
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="mx-auto max-w-lg space-y-4 p-4 animate-slide-up">
         {/* Price & Title */}
