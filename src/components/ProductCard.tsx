@@ -1,6 +1,6 @@
 import { MapPin, Clock, Heart, BadgeCheck } from "lucide-react";
 import { type Listing, formatPrice, timeAgo } from "@/lib/mockData";
-import { useState } from "react";
+import { useWishlist } from "@/hooks/useWishlist";
 
 interface ProductCardProps {
   listing: Listing;
@@ -8,14 +8,15 @@ interface ProductCardProps {
 }
 
 const ProductCard = ({ listing, onClick }: ProductCardProps) => {
-  const [wishlisted, setWishlisted] = useState(false);
+  const { wishlistedIds, toggle } = useWishlist();
+  const wishlisted = wishlistedIds.has(listing.id);
   const hasImage = listing.images && listing.images.length > 0 && listing.images[0];
 
   return (
     <div className="group relative w-full overflow-hidden rounded-2xl border border-border bg-card transition-all duration-300 dentzap-card-shadow hover:dentzap-card-shadow-hover">
       {/* Wishlist */}
       <button
-        onClick={(e) => { e.stopPropagation(); setWishlisted(!wishlisted); }}
+        onClick={(e) => { e.stopPropagation(); toggle(listing.id); }}
         className="absolute right-2.5 top-2.5 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-card/90 backdrop-blur-sm transition-all duration-200 hover:scale-110"
       >
         <Heart className={`h-4 w-4 transition-colors ${wishlisted ? "fill-destructive text-destructive" : "text-muted-foreground"}`} />

@@ -1,14 +1,53 @@
+import { useState, useEffect } from "react";
 import { Settings, ChevronRight, Package, Heart, Star, Shield, Crown, LogOut, BadgeCheck, ShoppingBag, BarChart3, Bell, HelpCircle, Moon, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "next-themes";
+import { supabase } from "@/integrations/supabase/client";
 
 const ProfilePage = () => {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
+
+  const [stats, setStats] = useState({ listed: 0, sold: 0, rating: "—" });
+
+  useEffect(() => {
+    if (!user) return;
+    const fetchStats = async () => {
+      const { count: listedCount } = await supabase
+        .from("listings")
+        .select("id", { count: "exact", head: true })
+        .eq("seller_id", user.id)
+        .eq("status", "active");
+
+      const { count: soldCount } = await supabase
+        .from("listings")
+        .select("id", { count: "exact", head: true })
+        .eq("seller_id", user.id)
+        .eq("status", "sold");
+
+      const { data: reviews } = await supabase
+        .from("reviews")
+        .select("rating")
+        .eq("reviewed_user_id", user.id);
+
+      let ratingStr = "—";
+      if (reviews && reviews.length > 0) {
+        const avg = reviews.reduce((s, r) => s + r.rating, 0) / reviews.length;
+        ratingStr = `${avg.toFixed(1)} ★`;
+      }
+
+      setStats({
+        listed: listedCount || 0,
+        sold: soldCount || 0,
+        rating: ratingStr,
+      });
+    };
+    fetchStats();
+  }, [user]);
 
   const displayName = profile?.full_name || user?.user_metadata?.full_name || "Dental Student";
   const initials = displayName.split(" ").map((n: string) => n[0]).join("").toUpperCase() || "DS";
@@ -88,9 +127,9 @@ const ProfilePage = () => {
           {/* Stats */}
           <div className="mt-4 flex gap-3">
             {[
-              { label: "Listed", value: "0" },
-              { label: "Sold", value: "0" },
-              { label: "Rating", value: "—" },
+              { label: "Listed", value: String(stats.listed) },
+              { label: "Sold", value: String(stats.sold) },
+              { label: "Rating", value: stats.rating },
             ].map((stat) => (
               <div key={stat.label} className="flex-1 rounded-2xl bg-primary-foreground/10 px-3 py-2.5 text-center backdrop-blur-sm">
                 <p className="text-lg font-bold text-primary-foreground">{stat.value}</p>
@@ -118,7 +157,7 @@ const ProfilePage = () => {
                 <button
                   key={item.label}
                   onClick={() => {
-                    if ("toggle" in item && item.toggle) return; // handled by switch
+                    if ("toggle" in item && item.toggle) return;
                     if ("route" in item && item.route) navigate(item.route);
                   }}
                   className={`flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-secondary/50 ${

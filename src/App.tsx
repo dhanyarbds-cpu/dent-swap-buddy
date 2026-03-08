@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { WishlistProvider } from "@/hooks/useWishlist";
 import BottomTabBar from "@/components/BottomTabBar";
 import Index from "./pages/Index";
 import SearchPage from "./pages/SearchPage";
@@ -40,7 +41,7 @@ const AppRoutes = () => {
   if (!user) return <AuthPage />;
 
   return (
-    <>
+    <WishlistProvider>
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/search" element={<SearchPage />} />
@@ -60,7 +61,7 @@ const AppRoutes = () => {
         <Route path="*" element={<NotFound />} />
       </Routes>
       <BottomTabBar />
-    </>
+    </WishlistProvider>
   );
 };
 
