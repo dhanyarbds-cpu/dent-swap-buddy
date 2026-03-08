@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, ArrowRight, Check, ImagePlus } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, MapPin, Truck, ShieldAlert } from "lucide-react";
 import { categories } from "@/lib/mockData";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,7 @@ import ImageUploader from "@/components/ImageUploader";
 import { useNavigate } from "react-router-dom";
 
 const conditions = ["New", "Used"];
-const steps = ["Category", "Photos", "Details", "Price", "Location"];
+const steps = ["Category", "Photos", "Details", "Price", "Delivery"];
 
 const SellPage = () => {
   const { toast } = useToast();
@@ -30,15 +30,17 @@ const SellPage = () => {
     location: "",
     hashtags: "",
     negotiable: true,
+    pickupAvailable: true,
+    shippingAvailable: false,
   });
 
   const update = (key: string, value: any) => setForm((f) => ({ ...f, [key]: value }));
   const canNext = () => {
     if (step === 0) return !!form.category;
-    if (step === 1) return true; // photos optional
+    if (step === 1) return true;
     if (step === 2) return !!form.title && !!form.condition;
     if (step === 3) return !!form.price;
-    if (step === 4) return !!form.location;
+    if (step === 4) return !!form.location && (form.pickupAvailable || form.shippingAvailable);
     return false;
   };
 
@@ -65,11 +67,12 @@ const SellPage = () => {
         is_negotiable: form.negotiable,
         seller_id: user.id,
         status: "active",
+        pickup_available: form.pickupAvailable,
+        shipping_available: form.shippingAvailable,
       }).select("id").single();
 
       if (error) throw error;
 
-      // Trigger elite demand matching in background
       if (listing?.id) {
         supabase.functions.invoke("match-demands", {
           body: { listing_id: listing.id },
@@ -85,6 +88,29 @@ const SellPage = () => {
     }
   };
 
+  const ToggleOption = ({ active, onToggle, icon: Icon, title, desc }: { active: boolean; onToggle: () => void; icon: any; title: string; desc: string }) => (
+    <button
+      type="button"
+      onClick={onToggle}
+      className={`flex w-full items-center justify-between rounded-2xl border p-4 transition-all press-scale ${
+        active ? "border-primary/30 bg-primary/5" : "border-border bg-card"
+      }`}
+    >
+      <div className="flex items-center gap-3">
+        <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${active ? "bg-primary/10 text-primary" : "bg-secondary text-muted-foreground"}`}>
+          <Icon className="h-5 w-5" />
+        </div>
+        <div className="text-left">
+          <p className="text-sm font-semibold text-foreground">{title}</p>
+          <p className="text-xs text-muted-foreground">{desc}</p>
+        </div>
+      </div>
+      <div className={`flex h-6 w-11 items-center rounded-full px-0.5 transition-colors ${active ? "bg-primary" : "bg-muted"}`}>
+        <div className={`h-5 w-5 rounded-full bg-primary-foreground shadow-sm transition-transform ${active ? "translate-x-5" : "translate-x-0"}`} />
+      </div>
+    </button>
+  );
+
   return (
     <div className="safe-bottom min-h-screen bg-background">
       <header className="sticky top-0 z-40 border-b border-border bg-card/95 backdrop-blur-xl">
@@ -97,7 +123,6 @@ const SellPage = () => {
           <h1 className="flex-1 text-lg font-bold text-foreground">Post Your Ad</h1>
           <span className="text-xs font-medium text-muted-foreground">{step + 1}/{steps.length}</span>
         </div>
-        {/* Progress */}
         <div className="mx-auto flex max-w-lg gap-1 px-4 pb-2">
           {steps.map((s, i) => (
             <div
@@ -218,20 +243,13 @@ const SellPage = () => {
                 className="rounded-xl py-6 text-xl font-bold"
               />
             </div>
-            <button
-              onClick={() => update("negotiable", !form.negotiable)}
-              className={`flex w-full items-center justify-between rounded-2xl border p-4 transition-all press-scale ${
-                form.negotiable ? "border-primary/30 bg-primary/5" : "border-border bg-card"
-              }`}
-            >
-              <div>
-                <p className="text-sm font-semibold text-foreground">Negotiable</p>
-                <p className="text-xs text-muted-foreground">Allow buyers to negotiate the price</p>
-              </div>
-              <div className={`flex h-6 w-11 items-center rounded-full px-0.5 transition-colors ${form.negotiable ? "bg-primary" : "bg-muted"}`}>
-                <div className={`h-5 w-5 rounded-full bg-primary-foreground shadow-sm transition-transform ${form.negotiable ? "translate-x-5" : "translate-x-0"}`} />
-              </div>
-            </button>
+            <ToggleOption
+              active={form.negotiable}
+              onToggle={() => update("negotiable", !form.negotiable)}
+              icon={MapPin}
+              title="Negotiable"
+              desc="Allow buyers to negotiate the price"
+            />
 
             {/* Commission Info */}
             <div className="flex items-start gap-3 rounded-2xl border border-border bg-secondary/30 p-4">
@@ -243,12 +261,12 @@ const SellPage = () => {
           </div>
         )}
 
-        {/* Step 4: Location */}
+        {/* Step 4: Delivery & Location */}
         {step === 4 && (
           <div className="space-y-5">
             <div>
-              <p className="text-base font-bold text-foreground">Your Location</p>
-              <p className="mt-1 text-sm text-muted-foreground">Where is the item available?</p>
+              <p className="text-base font-bold text-foreground">Location & Delivery</p>
+              <p className="mt-1 text-sm text-muted-foreground">Where is the item available and how can it be delivered?</p>
             </div>
             <div>
               <label className="mb-1.5 block text-sm font-semibold text-foreground">City / Area</label>
@@ -259,6 +277,27 @@ const SellPage = () => {
                 className="rounded-xl py-5"
               />
             </div>
+
+            <div>
+              <p className="mb-3 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Delivery Options</p>
+              <div className="space-y-3">
+                <ToggleOption
+                  active={form.pickupAvailable}
+                  onToggle={() => update("pickupAvailable", !form.pickupAvailable)}
+                  icon={MapPin}
+                  title="Local Pickup"
+                  desc="Buyer picks up from your location"
+                />
+                <ToggleOption
+                  active={form.shippingAvailable}
+                  onToggle={() => update("shippingAvailable", !form.shippingAvailable)}
+                  icon={Truck}
+                  title="Shipping Available"
+                  desc="Ship via courier (cost negotiated in chat)"
+                />
+              </div>
+            </div>
+
             <div>
               <label className="mb-1.5 block text-sm font-semibold text-foreground">Tags (optional)</label>
               <Input
@@ -267,6 +306,20 @@ const SellPage = () => {
                 placeholder="#DentalInstruments #BDSKit"
                 className="rounded-xl py-5"
               />
+            </div>
+
+            {/* Safety Tips */}
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/30 dark:bg-amber-950/20">
+              <div className="flex items-center gap-2 mb-2">
+                <ShieldAlert className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">Safety Tips for Sellers</p>
+              </div>
+              <ul className="space-y-1 text-xs text-amber-700 dark:text-amber-400/80">
+                <li>• Meet buyers in public places for local pickups</li>
+                <li>• Use trusted courier services for shipping</li>
+                <li>• Share tracking details with the buyer</li>
+                <li>• Package items securely before shipping</li>
+              </ul>
             </div>
           </div>
         )}

@@ -1,11 +1,19 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, ShoppingBag, Loader2, MessageSquare, Star, ShieldCheck, CheckCircle } from "lucide-react";
+import { ArrowLeft, ShoppingBag, Loader2, MessageSquare, Star, ShieldCheck, CheckCircle, MapPin, Truck, Package } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { formatPrice, timeAgo } from "@/lib/mockData";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface Order {
   id: string;
@@ -13,9 +21,13 @@ interface Order {
   price: number;
   created_at: string;
   seller_id: string;
+  buyer_id: string;
   escrow_status: string;
   razorpay_payment_id: string | null;
   payment_method: string;
+  delivery_method: string;
+  courier_name: string | null;
+  tracking_number: string | null;
   listing: {
     id: string;
     title: string;
@@ -50,35 +62,55 @@ const OrdersPage = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
+  const [trackingForm, setTrackingForm] = useState({ orderId: "", courier: "", tracking: "" });
+  const [trackingOpen, setTrackingOpen] = useState(false);
+  const [savingTracking, setSavingTracking] = useState(false);
 
   useEffect(() => {
     if (!user) return;
-    const fetch = async () => {
-      const { data } = await supabase
+    const fetchOrders = async () => {
+      // Fetch orders where user is buyer OR seller
+      const { data: buyerOrders } = await supabase
         .from("orders")
-        .select("id, status, price, created_at, seller_id, escrow_status, razorpay_payment_id, payment_method, listing:listings(id, title, images, category)")
+        .select("id, status, price, created_at, seller_id, buyer_id, escrow_status, razorpay_payment_id, payment_method, delivery_method, courier_name, tracking_number, listing:listings(id, title, images, category)")
         .eq("buyer_id", user.id)
         .order("created_at", { ascending: false });
 
-      if (data) {
-        const sellerIds = [...new Set(data.map((o: any) => o.seller_id))];
-        const { data: profiles } = await supabase
-          .from("profiles")
-          .select("user_id, full_name, avatar_url")
-          .in("user_id", sellerIds);
+      const { data: sellerOrders } = await supabase
+        .from("orders")
+        .select("id, status, price, created_at, seller_id, buyer_id, escrow_status, razorpay_payment_id, payment_method, delivery_method, courier_name, tracking_number, listing:listings(id, title, images, category)")
+        .eq("seller_id", user.id)
+        .order("created_at", { ascending: false });
 
-        const profileMap = new Map((profiles || []).map((p: any) => [p.user_id, p]));
+      const allOrders = [...(buyerOrders || []), ...(sellerOrders || [])];
+      // Deduplicate
+      const uniqueMap = new Map(allOrders.map((o: any) => [o.id, o]));
+      const unique = Array.from(uniqueMap.values());
 
-        setOrders(
-          data.map((o: any) => ({
-            ...o,
-            seller_profile: profileMap.get(o.seller_id) || null,
-          }))
-        );
-      }
+      // Fetch profiles for all counterparts
+      const userIds = new Set<string>();
+      unique.forEach((o: any) => {
+        userIds.add(o.seller_id);
+        userIds.add(o.buyer_id);
+      });
+      userIds.delete(user.id);
+
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, full_name, avatar_url")
+        .in("user_id", [...userIds]);
+
+      const profileMap = new Map((profiles || []).map((p: any) => [p.user_id, p]));
+
+      setOrders(
+        unique.map((o: any) => ({
+          ...o,
+          seller_profile: profileMap.get(o.seller_id) || null,
+        }))
+      );
       setLoading(false);
     };
-    fetch();
+    fetchOrders();
   }, [user]);
 
   const handleConfirmDelivery = async (orderId: string) => {
@@ -100,6 +132,40 @@ const OrdersPage = () => {
     }
     setConfirmingId(null);
   };
+
+  const handleAddTracking = async () => {
+    if (!trackingForm.courier || !trackingForm.tracking) return;
+    setSavingTracking(true);
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .update({
+          courier_name: trackingForm.courier,
+          tracking_number: trackingForm.tracking,
+          delivery_method: "shipping",
+        })
+        .eq("id", trackingForm.orderId)
+        .eq("seller_id", user!.id);
+
+      if (error) throw error;
+
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === trackingForm.orderId
+            ? { ...o, courier_name: trackingForm.courier, tracking_number: trackingForm.tracking, delivery_method: "shipping" }
+            : o
+        )
+      );
+      toast({ title: "Tracking Added ✓" });
+      setTrackingOpen(false);
+      setTrackingForm({ orderId: "", courier: "", tracking: "" });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+    setSavingTracking(false);
+  };
+
+  const isSeller = (order: Order) => order.seller_id === user?.id;
 
   return (
     <div className="safe-bottom min-h-screen bg-background">
@@ -136,6 +202,7 @@ const OrdersPage = () => {
             {orders.map((order) => {
               const listing = order.listing;
               const img = listing?.images?.[0];
+              const seller = isSeller(order);
               return (
                 <div
                   key={order.id}
@@ -150,7 +217,12 @@ const OrdersPage = () => {
                       )}
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-bold text-foreground line-clamp-1">{listing?.title || "Listing removed"}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-bold text-foreground line-clamp-1 flex-1">{listing?.title || "Listing removed"}</p>
+                        <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase ${seller ? "bg-primary/10 text-primary" : "bg-verified/10 text-verified"}`}>
+                          {seller ? "Selling" : "Buying"}
+                        </span>
+                      </div>
                       <p className="text-xs font-bold text-primary mt-0.5">{formatPrice(order.price)}</p>
                       <div className="mt-1 flex items-center gap-2">
                         <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize ${statusColors[order.status] || "bg-secondary text-muted-foreground"}`}>
@@ -160,6 +232,33 @@ const OrdersPage = () => {
                       </div>
                     </div>
                   </div>
+
+                  {/* Delivery Method Badge */}
+                  <div className="flex items-center gap-2">
+                    {order.delivery_method === "shipping" ? (
+                      <span className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-semibold text-primary">
+                        <Truck className="h-3 w-3" /> Courier Shipping
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1 rounded-full bg-verified/10 px-2.5 py-1 text-[10px] font-semibold text-verified">
+                        <MapPin className="h-3 w-3" /> Local Pickup
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Tracking Info */}
+                  {order.courier_name && order.tracking_number && (
+                    <div className="rounded-xl bg-secondary/50 px-3 py-2 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Package className="h-3.5 w-3.5 text-primary" />
+                        <span className="text-[11px] font-semibold text-foreground">Shipment Tracking</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] text-muted-foreground">Courier: <span className="font-medium text-foreground">{order.courier_name}</span></span>
+                        <span className="text-[10px] font-mono text-primary">{order.tracking_number}</span>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Escrow Status */}
                   <div className="flex items-center gap-2 rounded-xl bg-secondary/50 px-3 py-2">
@@ -176,7 +275,7 @@ const OrdersPage = () => {
 
                   {/* Actions */}
                   <div className="flex items-center justify-between border-t border-border pt-2">
-                    {order.seller_profile && (
+                    {order.seller_profile && !seller && (
                       <div className="flex items-center gap-2">
                         {order.seller_profile.avatar_url ? (
                           <img src={order.seller_profile.avatar_url} className="h-6 w-6 rounded-full object-cover" alt="" />
@@ -188,6 +287,7 @@ const OrdersPage = () => {
                         <span className="text-xs text-muted-foreground">{order.seller_profile.full_name}</span>
                       </div>
                     )}
+                    {seller && <span className="text-[10px] text-muted-foreground">You are the seller</span>}
                     <div className="flex gap-2">
                       <button
                         onClick={() => navigate("/messages")}
@@ -195,7 +295,55 @@ const OrdersPage = () => {
                       >
                         <MessageSquare className="h-3 w-3" /> Chat
                       </button>
-                      {order.escrow_status === "held" && (
+
+                      {/* Seller: Add tracking */}
+                      {seller && order.escrow_status === "held" && !order.tracking_number && (
+                        <Dialog open={trackingOpen && trackingForm.orderId === order.id} onOpenChange={(open) => {
+                          setTrackingOpen(open);
+                          if (open) setTrackingForm({ orderId: order.id, courier: "", tracking: "" });
+                        }}>
+                          <DialogTrigger asChild>
+                            <button className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-semibold text-primary hover:bg-primary/20">
+                              <Truck className="h-3 w-3" /> Add Tracking
+                            </button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-sm">
+                            <DialogHeader>
+                              <DialogTitle className="text-base">Add Shipping Details</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4 pt-2">
+                              <div>
+                                <label className="mb-1 block text-sm font-medium text-foreground">Courier Name</label>
+                                <Input
+                                  value={trackingForm.courier}
+                                  onChange={(e) => setTrackingForm((f) => ({ ...f, courier: e.target.value }))}
+                                  placeholder="e.g. India Post, DTDC, Delhivery"
+                                  className="rounded-xl"
+                                />
+                              </div>
+                              <div>
+                                <label className="mb-1 block text-sm font-medium text-foreground">Tracking Number</label>
+                                <Input
+                                  value={trackingForm.tracking}
+                                  onChange={(e) => setTrackingForm((f) => ({ ...f, tracking: e.target.value }))}
+                                  placeholder="Enter tracking number"
+                                  className="rounded-xl"
+                                />
+                              </div>
+                              <Button
+                                onClick={handleAddTracking}
+                                disabled={!trackingForm.courier || !trackingForm.tracking || savingTracking}
+                                className="w-full dentzap-gradient rounded-xl py-5 text-sm font-semibold text-primary-foreground"
+                              >
+                                {savingTracking ? "Saving..." : "Save Tracking"}
+                              </Button>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      )}
+
+                      {/* Buyer: Confirm delivery */}
+                      {!seller && order.escrow_status === "held" && (
                         <button
                           onClick={() => handleConfirmDelivery(order.id)}
                           disabled={confirmingId === order.id}
@@ -209,7 +357,7 @@ const OrdersPage = () => {
                           Confirm Delivery
                         </button>
                       )}
-                      {order.status === "completed" && (
+                      {order.status === "completed" && !seller && (
                         <button
                           onClick={() => navigate("/reviews")}
                           className="flex items-center gap-1 text-[10px] font-medium text-amber-600 hover:underline"
