@@ -64,6 +64,8 @@ const EliteDashboardPage = () => {
   const [purchasing, setPurchasing] = useState(false);
   const [membershipStatus, setMembershipStatus] = useState<MembershipStatus | null>(null);
   const [checkingStatus, setCheckingStatus] = useState(true);
+  const [selectedMethod, setSelectedMethod] = useState("upi");
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
 
   const isElite = profile?.is_elite;
 
@@ -129,23 +131,91 @@ const EliteDashboardPage = () => {
     return () => { supabase.removeChannel(channel); };
   }, [user]);
 
+  const loadRazorpayScript = (): Promise<boolean> => {
+    return new Promise((resolve) => {
+      if (window.Razorpay) { resolve(true); return; }
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
   const handlePurchase = async () => {
     if (!user) return;
     setPurchasing(true);
     try {
-      const { data, error } = await supabase.functions.invoke("elite-membership", {
-        body: { action: "activate" },
+      const loaded = await loadRazorpayScript();
+      if (!loaded) throw new Error("Failed to load payment gateway");
+
+      // Create Razorpay order for elite membership
+      const { data, error } = await supabase.functions.invoke("create-elite-order", {
+        body: { action: "create_razorpay_order" },
       });
-      if (error) throw error;
-      if (data?.success) {
-        toast({ title: "🎉 Your Elite Membership is now active.", description: "Enjoy AI-powered alerts and priority features for 30 days!" });
-        setMembershipStatus({ active: true, membership: data.membership, daysLeft: 30, expiringSoon: false });
-        await refreshProfile();
+
+      if (error || !data?.razorpay_order_id) {
+        throw new Error(data?.error || error?.message || "Failed to create payment order");
       }
+
+      const options = {
+        key: data.razorpay_key_id,
+        amount: data.amount,
+        currency: data.currency,
+        name: "DentSwap",
+        description: "Elite Membership – 30 Days",
+        order_id: data.razorpay_order_id,
+        prefill: {
+          email: user.email,
+          name: profile?.full_name || "",
+          contact: profile?.phone || "",
+        },
+        theme: { color: "#7C3AED" },
+        method: {
+          upi: selectedMethod === "upi",
+          card: selectedMethod === "card",
+          netbanking: selectedMethod === "netbanking",
+          wallet: selectedMethod === "wallet",
+          paylater: false,
+        },
+        handler: async (response: any) => {
+          try {
+            const { data: verifyData, error: verifyError } = await supabase.functions.invoke("verify-elite-payment", {
+              body: {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              },
+            });
+
+            if (verifyError || !verifyData?.success) {
+              throw new Error(verifyData?.error || "Verification failed");
+            }
+
+            setPaymentSuccess(true);
+            setMembershipStatus({ active: true, membership: verifyData.membership, daysLeft: 30, expiringSoon: false });
+            await refreshProfile();
+            toast({ title: "🎉 Payment Successful – Elite Membership Activated.", description: "Enjoy AI-powered alerts and priority features for 30 days!" });
+          } catch (err: any) {
+            toast({ title: "Verification Failed", description: err.message, variant: "destructive" });
+          }
+          setPurchasing(false);
+        },
+        modal: {
+          ondismiss: () => setPurchasing(false),
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.on("payment.failed", (response: any) => {
+        toast({ title: "Payment Unsuccessful", description: "Please try again or choose another payment method.", variant: "destructive" });
+        setPurchasing(false);
+      });
+      rzp.open();
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
+      setPurchasing(false);
     }
-    setPurchasing(false);
   };
 
   const addDemand = async () => {
