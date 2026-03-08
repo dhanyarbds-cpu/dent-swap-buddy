@@ -16,7 +16,7 @@ const menuSections = [
   {
     title: "Preferences",
     items: [
-      { icon: Crown, label: "Premium Membership", badge: "Upgrade" },
+      { icon: Crown, label: "Elite Membership", badge: "Upgrade", route: "/elite" },
       { icon: Shield, label: "Verification", badge: "Verified" },
       { icon: Star, label: "Reviews & Ratings" },
       { icon: Moon, label: "Dark Mode" },
