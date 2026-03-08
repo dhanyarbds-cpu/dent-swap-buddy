@@ -192,6 +192,57 @@ export type Database = {
           },
         ]
       }
+      company_profiles: {
+        Row: {
+          brand_name: string | null
+          business_address: string
+          business_email: string
+          company_name: string
+          contact_phone: string
+          created_at: string
+          id: string
+          logo_url: string | null
+          rejection_reason: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          verification_doc_url: string | null
+          website: string | null
+        }
+        Insert: {
+          brand_name?: string | null
+          business_address: string
+          business_email: string
+          company_name: string
+          contact_phone: string
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          rejection_reason?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          verification_doc_url?: string | null
+          website?: string | null
+        }
+        Update: {
+          brand_name?: string | null
+          business_address?: string
+          business_email?: string
+          company_name?: string
+          contact_phone?: string
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          rejection_reason?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          verification_doc_url?: string | null
+          website?: string | null
+        }
+        Relationships: []
+      }
       complaints: {
         Row: {
           ai_analysis: Json | null
@@ -382,6 +433,7 @@ export type Database = {
         Row: {
           brand: string
           category: string
+          company_profile_id: string | null
           condition: string
           created_at: string
           description: string
@@ -394,6 +446,7 @@ export type Database = {
           pickup_available: boolean
           price: number
           seller_id: string
+          seller_type: string
           shipping_available: boolean
           status: string
           title: string
@@ -402,6 +455,7 @@ export type Database = {
         Insert: {
           brand?: string
           category: string
+          company_profile_id?: string | null
           condition: string
           created_at?: string
           description?: string
@@ -414,6 +468,7 @@ export type Database = {
           pickup_available?: boolean
           price: number
           seller_id: string
+          seller_type?: string
           shipping_available?: boolean
           status?: string
           title: string
@@ -422,6 +477,7 @@ export type Database = {
         Update: {
           brand?: string
           category?: string
+          company_profile_id?: string | null
           condition?: string
           created_at?: string
           description?: string
@@ -434,12 +490,21 @@ export type Database = {
           pickup_available?: boolean
           price?: number
           seller_id?: string
+          seller_type?: string
           shipping_available?: boolean
           status?: string
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "listings_company_profile_id_fkey"
+            columns: ["company_profile_id"]
+            isOneToOne: false
+            referencedRelation: "company_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notification_preferences: {
         Row: {
