@@ -335,6 +335,21 @@ const SellPage = () => {
               desc="Allow buyers to negotiate the price"
             />
 
+            {/* UPI ID */}
+            <div>
+              <label className="mb-1.5 block text-sm font-semibold text-foreground">Your UPI ID (for receiving payments)</label>
+              <div className="relative">
+                <Wallet className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  value={form.upiId}
+                  onChange={(e) => update("upiId", e.target.value.trim())}
+                  placeholder="e.g. yourname@upi"
+                  className="rounded-xl py-5 pl-10"
+                />
+              </div>
+              <p className="mt-1 text-[11px] text-muted-foreground">Buyers will pay to this UPI ID. You can update it later in your profile.</p>
+            </div>
+
             {/* Commission Info */}
             <div className="flex items-start gap-3 rounded-2xl border border-border bg-secondary/30 p-4">
               <span className="text-base">💡</span>
