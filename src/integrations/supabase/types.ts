@@ -99,6 +99,87 @@ export type Database = {
           },
         ]
       }
+      demand_alerts: {
+        Row: {
+          category: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          keywords: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          keywords: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          keywords?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      elite_notifications: {
+        Row: {
+          created_at: string
+          demand_alert_id: string | null
+          id: string
+          is_read: boolean
+          listing_id: string
+          match_score: number | null
+          message: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          demand_alert_id?: string | null
+          id?: string
+          is_read?: boolean
+          listing_id: string
+          match_score?: number | null
+          message: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          demand_alert_id?: string | null
+          id?: string
+          is_read?: boolean
+          listing_id?: string
+          match_score?: number | null
+          message?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "elite_notifications_demand_alert_id_fkey"
+            columns: ["demand_alert_id"]
+            isOneToOne: false
+            referencedRelation: "demand_alerts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "elite_notifications_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       listings: {
         Row: {
           brand: string
@@ -161,6 +242,7 @@ export type Database = {
           created_at: string
           full_name: string
           id: string
+          is_elite: boolean
           location: string
           phone: string | null
           updated_at: string
@@ -176,6 +258,7 @@ export type Database = {
           created_at?: string
           full_name?: string
           id?: string
+          is_elite?: boolean
           location?: string
           phone?: string | null
           updated_at?: string
@@ -191,6 +274,7 @@ export type Database = {
           created_at?: string
           full_name?: string
           id?: string
+          is_elite?: boolean
           location?: string
           phone?: string | null
           updated_at?: string
