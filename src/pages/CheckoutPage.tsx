@@ -79,7 +79,67 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
     window.location.href = upiUrl;
   };
 
-  const handleSubmitPayment = async () => {
+  const handleRazorpayPayment = async () => {
+    if (!user) return;
+    setProcessing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-order", {
+        body: { listing_id: listing.id, amount: listing.price },
+      });
+
+      if (error || !data?.razorpay_order_id) {
+        throw new Error(data?.error || error?.message || "Failed to create Razorpay order");
+      }
+
+      const options = {
+        key: data.razorpay_key_id,
+        amount: data.amount,
+        currency: data.currency,
+        name: "DentSwap",
+        description: `Payment for ${listing.title}`,
+        order_id: data.razorpay_order_id,
+        handler: async (response: any) => {
+          try {
+            const verifyRes = await supabase.functions.invoke("verify-payment", {
+              body: {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                order_id: data.order_id,
+              },
+            });
+            if (verifyRes.error || !verifyRes.data?.success) {
+              throw new Error(verifyRes.data?.error || "Verification failed");
+            }
+            setPaymentSuccess(true);
+            toast({ title: "Payment Successful! 🎉", description: "Your order has been placed and payment verified." });
+          } catch (err: any) {
+            toast({ title: "Verification Failed", description: err.message, variant: "destructive" });
+          }
+        },
+        prefill: {
+          name: profile?.full_name || "",
+          email: user.email || "",
+          contact: profile?.phone || "",
+        },
+        theme: { color: "#6366f1" },
+        modal: {
+          ondismiss: () => {
+            setProcessing(false);
+            toast({ title: "Payment Cancelled", description: "You can try again.", variant: "destructive" });
+          },
+        },
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+    setProcessing(false);
+  };
+
+  const handleSubmitUpiPayment = async () => {
     if (!user || !utrNumber.trim()) return;
     setProcessing(true);
 
