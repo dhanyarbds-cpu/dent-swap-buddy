@@ -484,78 +484,28 @@ const CheckoutPage = ({ listing, onBack }: CheckoutPageProps) => {
 
             <a
               href={upiQrData.upi_uri}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-sm font-semibold text-primary-foreground"
+              onClick={() => {
+                toast({ title: "Order Placed! 🎉", description: "Your order has been created. Payment will be verified automatically." });
+                setTimeout(() => {
+                  navigate(`/orders?order_id=${upiQrData.order_id}`);
+                }, 500);
+              }}
+              className="flex w-full items-center justify-center gap-2 rounded-xl dentzap-gradient py-3.5 text-sm font-semibold text-primary-foreground dentzap-shadow"
             >
-              <ExternalLink className="h-4 w-4" /> Open UPI App
+              <ExternalLink className="h-4 w-4" /> Pay {formatPrice(upiQrData.amount)} via UPI
             </a>
 
-            {!qrVerifyStep ? (
-              <>
-                <div className="flex gap-3">
-                  <Button
-                    variant="outline"
-                    onClick={() => { setShowQrModal(false); setUpiQrData(null); setQrVerifyStep(false); setQrUtrNumber(""); }}
-                    className="flex-1 rounded-xl"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    onClick={() => setQrVerifyStep(true)}
-                    className="flex-1 rounded-xl dentzap-gradient text-primary-foreground"
-                  >
-                    Done Paying? Verify →
-                  </Button>
-                </div>
-                <p className="text-center text-[10px] text-muted-foreground leading-relaxed">
-                  After paying, tap "Verify" to enter your UTR number for confirmation.
-                </p>
-              </>
-            ) : (
-              <div className="space-y-3 animate-fade-in">
-                <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-3">
-                  <p className="text-sm font-bold text-foreground">Enter UTR / Transaction Reference</p>
-                  <p className="text-xs text-muted-foreground">Find the UTR number in your UPI app's payment history or transaction receipt.</p>
-                  <input
-                    type="text"
-                    value={qrUtrNumber}
-                    onChange={(e) => setQrUtrNumber(e.target.value)}
-                    placeholder="Enter 12-digit UTR number"
-                    className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/30"
-                    maxLength={30}
-                  />
-                </div>
-                <div className="flex gap-3">
-                  <Button
-                    variant="outline"
-                    onClick={() => { setQrVerifyStep(false); setQrUtrNumber(""); }}
-                    className="flex-1 rounded-xl"
-                  >
-                    Back
-                  </Button>
-                  <Button
-                    disabled={!qrUtrNumber.trim() || submittingQrUtr}
-                    onClick={async () => {
-                      setSubmittingQrUtr(true);
-                      try {
-                        const { error } = await supabase
-                          .from("orders")
-                          .update({ razorpay_payment_id: qrUtrNumber.trim(), status: "pending_upi_verification" })
-                          .eq("id", upiQrData.order_id);
-                        if (error) throw error;
-                        toast({ title: "UTR Submitted! ✓", description: "Your payment is being verified by admin." });
-                        navigate(`/orders?payment=pending_verification&order_id=${upiQrData.order_id}`);
-                      } catch (err: any) {
-                        toast({ title: "Error", description: err.message, variant: "destructive" });
-                      }
-                      setSubmittingQrUtr(false);
-                    }}
-                    className="flex-1 rounded-xl dentzap-gradient text-primary-foreground"
-                  >
-                    {submittingQrUtr ? <><Loader2 className="h-4 w-4 animate-spin" /> Verifying...</> : "Submit UTR"}
-                  </Button>
-                </div>
-              </div>
-            )}
+            <Button
+              variant="outline"
+              onClick={() => { setShowQrModal(false); setUpiQrData(null); }}
+              className="w-full rounded-xl"
+            >
+              Cancel
+            </Button>
+
+            <p className="text-center text-[10px] text-muted-foreground leading-relaxed">
+              Tapping "Pay via UPI" will open your UPI app. Complete the payment there.
+            </p>
           </div>
         </div>
       )}
