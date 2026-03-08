@@ -703,6 +703,59 @@ export type Database = {
         }
         Relationships: []
       }
+      promotional_banners: {
+        Row: {
+          created_at: string
+          cta_link: string | null
+          cta_text: string
+          id: string
+          image_url: string
+          is_active: boolean
+          listing_id: string | null
+          price_text: string | null
+          sort_order: number
+          tagline: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          cta_link?: string | null
+          cta_text?: string
+          id?: string
+          image_url: string
+          is_active?: boolean
+          listing_id?: string | null
+          price_text?: string | null
+          sort_order?: number
+          tagline: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          cta_link?: string | null
+          cta_text?: string
+          id?: string
+          image_url?: string
+          is_active?: boolean
+          listing_id?: string | null
+          price_text?: string | null
+          sort_order?: number
+          tagline?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promotional_banners_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reviews: {
         Row: {
           comment: string | null
