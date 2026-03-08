@@ -314,6 +314,43 @@ const ListingDetail = ({ listing, onBack }: ListingDetailProps) => {
           </ReportProductDialog>
         )}
 
+        {/* Authenticity Certificate */}
+        {isDbListing && (
+          <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-emerald-500" />
+              <h2 className="text-sm font-bold text-foreground">Authenticity Certificate</h2>
+            </div>
+            {certificate ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 px-3 py-2">
+                  <ShieldCheck className="h-4 w-4 text-emerald-500" />
+                  <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">Verified Authentic</span>
+                </div>
+                <p className="font-mono text-[10px] text-muted-foreground break-all">Hash: {certificate.certificate_hash?.slice(0, 24)}...</p>
+                <button
+                  onClick={() => navigate(`/verify-certificate?id=${certificate.id}`)}
+                  className="w-full rounded-xl bg-primary/10 py-2.5 text-xs font-semibold text-primary transition hover:bg-primary/20"
+                >
+                  View Full Certificate
+                </button>
+              </div>
+            ) : user?.id === ((listing as any).seller_id || listing.id) ? (
+              <button
+                onClick={generateCertificate}
+                disabled={generatingCert}
+                className="w-full rounded-xl border border-dashed border-primary/30 py-2.5 text-xs font-semibold text-primary transition hover:bg-primary/5 disabled:opacity-50"
+              >
+                {generatingCert ? (
+                  <span className="flex items-center justify-center gap-2"><Loader2 className="h-3 w-3 animate-spin" /> Generating...</span>
+                ) : "Generate Authenticity Certificate"}
+              </button>
+            ) : (
+              <p className="text-xs text-muted-foreground">No certificate issued yet</p>
+            )}
+          </div>
+        )}
+
         {/* Safety Tips */}
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/30 dark:bg-amber-950/20">
           <div className="flex items-center gap-2 mb-2">
