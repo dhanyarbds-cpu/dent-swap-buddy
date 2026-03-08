@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Loader2, ShieldCheck, Wallet, CheckCircle, XCircle, Copy, Search, IndianRupee, Clock, User } from "lucide-react";
+import { ArrowLeft, Loader2, ShieldCheck, Wallet, CheckCircle, XCircle, Copy, Search, IndianRupee, Clock, User, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminRole } from "@/hooks/useAdminRole";
@@ -270,15 +270,29 @@ const AdminSellerPayoutsPage = () => {
                   {pd && (
                     <div className="rounded-xl border border-border bg-background px-3 py-2.5 space-y-1.5">
                       <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Payout Destination</p>
-                      {pd.payout_method === "upi" && pd.upi_id && (
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-[10px] text-muted-foreground">UPI ID</p>
-                            <p className="text-sm font-bold text-foreground">{pd.upi_id}</p>
+                      {pd.upi_id && (
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-[10px] text-muted-foreground">UPI ID</p>
+                              <p className="text-sm font-bold text-foreground">{pd.upi_id}</p>
+                            </div>
+                            <button onClick={() => { navigator.clipboard.writeText(pd.upi_id!); toast({ title: "Copied!" }); }}>
+                              <Copy className="h-3.5 w-3.5 text-primary" />
+                            </button>
                           </div>
-                          <button onClick={() => { navigator.clipboard.writeText(pd.upi_id!); toast({ title: "Copied!" }); }}>
-                            <Copy className="h-3.5 w-3.5 text-primary" />
-                          </button>
+                          {isPending && (
+                            <a
+                              href={`upi://pay?pa=${encodeURIComponent(pd.upi_id)}&pn=${encodeURIComponent(order.seller_profile?.full_name || "Seller")}&am=${order.seller_payout || order.price}&cu=INR&tn=${encodeURIComponent(`Payout for ${order.listing?.title || "order"} #${order.id.slice(0, 8)}`)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary/10 px-3 py-2.5 text-xs font-semibold text-primary transition hover:bg-primary/20"
+                            >
+                              <Wallet className="h-3.5 w-3.5" />
+                              Pay ₹{(order.seller_payout || order.price).toLocaleString("en-IN")} via UPI
+                              <ExternalLink className="h-3 w-3" />
+                            </a>
+                          )}
                         </div>
                       )}
                       {pd.payout_method === "bank" && (
