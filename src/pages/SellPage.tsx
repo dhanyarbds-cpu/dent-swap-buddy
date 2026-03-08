@@ -13,6 +13,25 @@ import { useNavigate } from "react-router-dom";
 const conditions = ["New", "Used"];
 const steps = ["Category", "Photos", "Details", "Price", "Delivery"];
 
+// Consumable keywords that should block listings
+const CONSUMABLE_KEYWORDS = [
+  "syringe", "syringes", "glove", "gloves", "mask", "masks", "medicine", "medicines",
+  "pharmaceutical", "reagent", "reagents", "disposable", "single-use", "single use",
+  "cotton", "gauze", "bandage", "capsule", "tablet", "injection", "injectable",
+  "chemical", "solution", "disinfectant", "sterilant", "swab", "suture", "sutures",
+  "catheter", "drip", "saline", "gel", "cream", "ointment", "drops",
+];
+
+function detectConsumableContent(title: string, description: string): string | null {
+  const combined = `${title} ${description}`.toLowerCase();
+  for (const keyword of CONSUMABLE_KEYWORDS) {
+    if (combined.includes(keyword)) {
+      return `Your listing appears to contain a consumable product ("${keyword}"). Only durable medical, dental, laboratory, and educational equipment can be listed. Consumable or disposable products are not allowed.`;
+    }
+  }
+  return null;
+}
+
 const SellPage = () => {
   const { toast } = useToast();
   const { user } = useAuth();
@@ -46,6 +65,14 @@ const SellPage = () => {
 
   const handleSubmit = async () => {
     if (!user) return;
+
+    // Check for consumable content
+    const consumableWarning = detectConsumableContent(form.title, form.description);
+    if (consumableWarning) {
+      toast({ title: "Listing Not Allowed", description: consumableWarning, variant: "destructive" });
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -143,6 +170,18 @@ const SellPage = () => {
               <p className="text-base font-bold text-foreground">Select a Category</p>
               <p className="mt-1 text-sm text-muted-foreground">Choose the best category for your listing</p>
             </div>
+
+            {/* Policy Notice */}
+            <div className="flex items-start gap-2.5 rounded-2xl border border-primary/20 bg-primary/5 p-3.5">
+              <ShieldAlert className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+              <div>
+                <p className="text-xs font-semibold text-foreground">Listing Policy</p>
+                <p className="mt-0.5 text-[11px] text-muted-foreground leading-relaxed">
+                  Only durable medical, dental, laboratory, and educational equipment can be listed. Consumable or disposable products are not allowed.
+                </p>
+              </div>
+            </div>
+
             <div className="grid grid-cols-2 gap-3">
               {categories.map((c) => (
                 <button
