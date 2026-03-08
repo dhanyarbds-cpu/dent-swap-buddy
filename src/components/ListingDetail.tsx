@@ -245,9 +245,21 @@ const ListingDetail = ({ listing, onBack }: ListingDetailProps) => {
                 <Truck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                 <div>
                   <p className="text-sm font-medium text-foreground">Courier Shipping</p>
-                  <p className="text-xs text-muted-foreground">Shipping via India Post, DTDC, Delhivery, or other couriers. Discuss shipping cost and details in chat.</p>
+                  <p className="text-xs text-muted-foreground">Ship via India Post, DTDC, Blue Dart, FedEx, Delhivery. Discuss cost in chat.</p>
                 </div>
               </div>
+            )}
+            {!shippingAvailable && pickupAvailable && isDbListing && user?.id !== ((listing as any).seller_id || listing.id) && (
+              <button
+                onClick={() => {
+                  const sellerId = (listing as any).seller_id || listing.id;
+                  toast.info("Send the seller a message to request shipping for this item.");
+                  navigate("/messages");
+                }}
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-primary/30 py-2.5 text-xs font-semibold text-primary transition hover:bg-primary/5"
+              >
+                <Truck className="h-3.5 w-3.5" /> Request Shipping
+              </button>
             )}
           </div>
         </div>
