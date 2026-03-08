@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { ArrowLeft, ShieldCheck, Loader2, CheckCircle, MapPin, Truck, Smartphone, QrCode, Copy, ExternalLink } from "lucide-react";
+import { ArrowLeft, ShieldCheck, Loader2, CheckCircle, MapPin, Truck, Smartphone, QrCode, Copy, ExternalLink, CreditCard } from "lucide-react";
+import GooglePayButton from "@/components/GooglePayButton";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { formatPrice } from "@/lib/mockData";
