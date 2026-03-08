@@ -290,7 +290,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      insert_elite_notification: {
+        Args: {
+          p_demand_alert_id: string
+          p_listing_id: string
+          p_match_score: number
+          p_message: string
+          p_title: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
