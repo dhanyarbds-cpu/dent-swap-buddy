@@ -41,3 +41,15 @@ verify_jwt = false
 
 [functions.validate-video]
 verify_jwt = false
+
+[functions.create-connect-account]
+verify_jwt = false
+
+[functions.create-stripe-checkout]
+verify_jwt = false
+
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.check-connect-status]
+verify_jwt = false
