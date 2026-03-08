@@ -126,6 +126,78 @@ export type Database = {
           },
         ]
       }
+      complaints: {
+        Row: {
+          ai_analysis: Json | null
+          buyer_id: string
+          category: string
+          created_at: string
+          description: string
+          id: string
+          listing_id: string | null
+          order_id: string
+          proof_urls: string[] | null
+          resolution: string | null
+          resolved_at: string | null
+          seller_id: string
+          seller_responded_at: string | null
+          seller_response: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          ai_analysis?: Json | null
+          buyer_id: string
+          category: string
+          created_at?: string
+          description: string
+          id?: string
+          listing_id?: string | null
+          order_id: string
+          proof_urls?: string[] | null
+          resolution?: string | null
+          resolved_at?: string | null
+          seller_id: string
+          seller_responded_at?: string | null
+          seller_response?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          ai_analysis?: Json | null
+          buyer_id?: string
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          listing_id?: string | null
+          order_id?: string
+          proof_urls?: string[] | null
+          resolution?: string | null
+          resolved_at?: string | null
+          seller_id?: string
+          seller_responded_at?: string | null
+          seller_response?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "complaints_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "complaints_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       demand_alerts: {
         Row: {
           category: string | null
@@ -411,10 +483,12 @@ export type Database = {
         Row: {
           avatar_url: string | null
           bio: string | null
+          blocked_reason: string | null
           college: string
           created_at: string
           full_name: string
           id: string
+          is_blocked: boolean
           is_elite: boolean
           location: string
           phone: string | null
@@ -427,10 +501,12 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           bio?: string | null
+          blocked_reason?: string | null
           college?: string
           created_at?: string
           full_name?: string
           id?: string
+          is_blocked?: boolean
           is_elite?: boolean
           location?: string
           phone?: string | null
@@ -443,10 +519,12 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           bio?: string | null
+          blocked_reason?: string | null
           college?: string
           created_at?: string
           full_name?: string
           id?: string
+          is_blocked?: boolean
           is_elite?: boolean
           location?: string
           phone?: string | null
@@ -492,6 +570,83 @@ export type Database = {
             columns: ["listing_id"]
             isOneToOne: false
             referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seller_trust_scores: {
+        Row: {
+          block_reason: string | null
+          blocked_at: string | null
+          id: string
+          is_blocked: boolean
+          resolved_complaints: number
+          seller_id: string
+          total_complaints: number
+          trust_score: number
+          unresolved_complaints: number
+          updated_at: string
+        }
+        Insert: {
+          block_reason?: string | null
+          blocked_at?: string | null
+          id?: string
+          is_blocked?: boolean
+          resolved_complaints?: number
+          seller_id: string
+          total_complaints?: number
+          trust_score?: number
+          unresolved_complaints?: number
+          updated_at?: string
+        }
+        Update: {
+          block_reason?: string | null
+          blocked_at?: string | null
+          id?: string
+          is_blocked?: boolean
+          resolved_complaints?: number
+          seller_id?: string
+          total_complaints?: number
+          trust_score?: number
+          unresolved_complaints?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      seller_warnings: {
+        Row: {
+          action_taken: string
+          complaint_id: string | null
+          created_at: string
+          id: string
+          reason: string
+          seller_id: string
+          warning_level: number
+        }
+        Insert: {
+          action_taken?: string
+          complaint_id?: string | null
+          created_at?: string
+          id?: string
+          reason: string
+          seller_id: string
+          warning_level?: number
+        }
+        Update: {
+          action_taken?: string
+          complaint_id?: string | null
+          created_at?: string
+          id?: string
+          reason?: string
+          seller_id?: string
+          warning_level?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seller_warnings_complaint_id_fkey"
+            columns: ["complaint_id"]
+            isOneToOne: false
+            referencedRelation: "complaints"
             referencedColumns: ["id"]
           },
         ]
