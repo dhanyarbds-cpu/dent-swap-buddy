@@ -297,6 +297,8 @@ export type Database = {
       orders: {
         Row: {
           buyer_id: string
+          commission_amount: number | null
+          commission_rate: number | null
           created_at: string
           escrow_released_at: string | null
           escrow_status: string
@@ -309,11 +311,14 @@ export type Database = {
           refund_amount: number | null
           refund_status: string | null
           seller_id: string
+          seller_payout: number | null
           status: string
           updated_at: string
         }
         Insert: {
           buyer_id: string
+          commission_amount?: number | null
+          commission_rate?: number | null
           created_at?: string
           escrow_released_at?: string | null
           escrow_status?: string
@@ -326,11 +331,14 @@ export type Database = {
           refund_amount?: number | null
           refund_status?: string | null
           seller_id: string
+          seller_payout?: number | null
           status?: string
           updated_at?: string
         }
         Update: {
           buyer_id?: string
+          commission_amount?: number | null
+          commission_rate?: number | null
           created_at?: string
           escrow_released_at?: string | null
           escrow_status?: string
@@ -343,6 +351,7 @@ export type Database = {
           refund_amount?: number | null
           refund_status?: string | null
           seller_id?: string
+          seller_payout?: number | null
           status?: string
           updated_at?: string
         }
@@ -355,6 +364,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      platform_settings: {
+        Row: {
+          id: string
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          id?: string
+          key: string
+          updated_at?: string
+          value?: Json
+        }
+        Update: {
+          id?: string
+          key?: string
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
