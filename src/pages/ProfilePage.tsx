@@ -1,40 +1,14 @@
-import { Settings, ChevronRight, Package, Heart, Star, Shield, Crown, LogOut, BadgeCheck, ShoppingBag, BarChart3, Languages, HelpCircle, Moon, Pencil } from "lucide-react";
+import { Settings, ChevronRight, Package, Heart, Star, Shield, Crown, LogOut, BadgeCheck, ShoppingBag, BarChart3, Bell, HelpCircle, Moon, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
-
-const menuSections = [
-  {
-    title: "Activity",
-    items: [
-      { icon: ShoppingBag, label: "My Orders" },
-      { icon: Heart, label: "Wishlist", count: 5 },
-      { icon: BarChart3, label: "Seller Dashboard" },
-      { icon: Package, label: "My Listings", count: 3 },
-    ],
-  },
-  {
-    title: "Preferences",
-    items: [
-      { icon: Crown, label: "Elite Membership", badge: "Upgrade", route: "/elite" },
-      { icon: Shield, label: "Verification", badge: "Verified" },
-      { icon: Star, label: "Reviews & Ratings" },
-      { icon: Moon, label: "Dark Mode" },
-      { icon: Languages, label: "Language" },
-    ],
-  },
-  {
-    title: "Support",
-    items: [
-      { icon: HelpCircle, label: "Help & Support" },
-      { icon: Settings, label: "Settings" },
-    ],
-  },
-];
+import { useTheme } from "next-themes";
 
 const ProfilePage = () => {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
+  const { theme, setTheme } = useTheme();
 
   const displayName = profile?.full_name || user?.user_metadata?.full_name || "Dental Student";
   const initials = displayName.split(" ").map((n: string) => n[0]).join("").toUpperCase() || "DS";
@@ -42,6 +16,35 @@ const ProfilePage = () => {
   const year = profile?.year_of_study || "";
   const location = profile?.location || "";
   const bio = profile?.bio || "";
+
+  const menuSections = [
+    {
+      title: "Activity",
+      items: [
+        { icon: ShoppingBag, label: "My Orders", route: "/orders" },
+        { icon: Heart, label: "Wishlist", route: "/wishlist" },
+        { icon: BarChart3, label: "Seller Dashboard", route: "/my-ads" },
+        { icon: Package, label: "My Listings", route: "/my-ads" },
+      ],
+    },
+    {
+      title: "Preferences",
+      items: [
+        { icon: Crown, label: "Elite Membership", badge: profile?.is_elite ? "Active" : "Upgrade", route: "/elite" },
+        { icon: Shield, label: "Verification", badge: profile?.verified ? "Verified" : "Pending", route: "/verification" },
+        { icon: Star, label: "Reviews & Ratings", route: "/reviews" },
+        { icon: Bell, label: "Notifications", route: "/notification-settings" },
+        { icon: Moon, label: "Dark Mode", toggle: true },
+      ],
+    },
+    {
+      title: "Support",
+      items: [
+        { icon: HelpCircle, label: "Help & Support", route: "/help" },
+        { icon: Settings, label: "Settings", route: "/settings" },
+      ],
+    },
+  ];
 
   return (
     <div className="safe-bottom min-h-screen bg-background">
@@ -68,6 +71,7 @@ const ProfilePage = () => {
               <div className="flex items-center gap-1.5">
                 <h2 className="text-lg font-bold text-primary-foreground">{displayName}</h2>
                 {profile?.verified && <BadgeCheck className="h-5 w-5 text-primary-foreground/80" />}
+                {profile?.is_elite && <Crown className="h-4 w-4 text-amber-300" />}
               </div>
               {profile?.username && (
                 <p className="text-xs text-primary-foreground/60">@{profile.username}</p>
@@ -113,7 +117,10 @@ const ProfilePage = () => {
               {section.items.map((item, i) => (
                 <button
                   key={item.label}
-                  onClick={() => "route" in item && item.route && navigate(item.route as string)}
+                  onClick={() => {
+                    if ("toggle" in item && item.toggle) return; // handled by switch
+                    if ("route" in item && item.route) navigate(item.route);
+                  }}
                   className={`flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-secondary/50 ${
                     i < section.items.length - 1 ? "border-b border-border" : ""
                   }`}
@@ -122,19 +129,23 @@ const ProfilePage = () => {
                     <item.icon className="h-4 w-4 text-secondary-foreground" />
                   </div>
                   <span className="flex-1 text-sm font-medium text-foreground">{item.label}</span>
-                  {"count" in item && item.count !== undefined && (
-                    <span className="text-xs text-muted-foreground">{item.count}</span>
-                  )}
                   {"badge" in item && item.badge && (
                     <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${
-                      item.badge === "Verified"
+                      item.badge === "Verified" || item.badge === "Active"
                         ? "bg-verified/10 text-verified"
                         : "dentzap-gradient text-primary-foreground"
                     }`}>
                       {item.badge}
                     </span>
                   )}
-                  <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
+                  {"toggle" in item && item.toggle ? (
+                    <Switch
+                      checked={theme === "dark"}
+                      onCheckedChange={(v) => setTheme(v ? "dark" : "light")}
+                    />
+                  ) : (
+                    <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
+                  )}
                 </button>
               ))}
             </div>

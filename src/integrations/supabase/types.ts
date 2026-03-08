@@ -234,6 +234,39 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_preferences: {
+        Row: {
+          chat_notifications: boolean
+          created_at: string
+          elite_alerts: boolean
+          id: string
+          product_alerts: boolean
+          promotional: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          chat_notifications?: boolean
+          created_at?: string
+          elite_alerts?: boolean
+          id?: string
+          product_alerts?: boolean
+          promotional?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          chat_notifications?: boolean
+          created_at?: string
+          elite_alerts?: boolean
+          id?: string
+          product_alerts?: boolean
+          promotional?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -284,6 +317,44 @@ export type Database = {
           year_of_study?: string
         }
         Relationships: []
+      }
+      reviews: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          listing_id: string | null
+          rating: number
+          reviewed_user_id: string
+          reviewer_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          listing_id?: string | null
+          rating: number
+          reviewed_user_id: string
+          reviewer_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          listing_id?: string | null
+          rating?: number
+          reviewed_user_id?: string
+          reviewer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
