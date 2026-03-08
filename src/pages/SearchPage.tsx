@@ -73,9 +73,7 @@ const SearchPage = () => {
     const matchesPrice = l.price >= range.min && l.price <= range.max;
     const matchesCondition = conditionFilter === "All" || l.condition.toLowerCase() === conditionFilter.toLowerCase();
     const matchesLocation = !locationFilter || l.location.toLowerCase().includes(locationFilter.toLowerCase());
-    const matchesAvailability = availabilityFilter === "all" ||
-      (availabilityFilter === "pickup" && l.pickupAvailable) ||
-      (availabilityFilter === "shipping" && l.shippingAvailable);
+    const matchesAvailability = availabilityFilter === "all" || true;
     return matchesQuery && matchesCategory && matchesPrice && matchesCondition && matchesLocation && matchesAvailability;
   });
 
