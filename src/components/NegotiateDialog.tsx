@@ -82,7 +82,7 @@ const NegotiateDialog = ({ listingId, sellerId, askingPrice, listingTitle, listi
       const { error } = await supabase.from("chat_requests").insert({
         listing_id: listingId,
         buyer_id: user.id,
-        seller_id: sellerId,
+        seller_id: resolvedSellerId,
         offered_price: offeredPrice ? parseFloat(offeredPrice) : null,
         message: message || `Interested in "${listingTitle}"`,
       });
