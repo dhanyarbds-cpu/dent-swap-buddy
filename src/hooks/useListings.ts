@@ -24,7 +24,7 @@ interface DbListing {
   company_profile_id: string | null;
 }
 
-function mapDbToListing(db: DbListing, profile?: any): Listing & { seller_type?: string; pickupAvailable?: boolean; shippingAvailable?: boolean } {
+function mapDbToListing(db: DbListing, profile?: any): Listing & { seller_type?: string; pickupAvailable?: boolean; shippingAvailable?: boolean; seller_id?: string } {
   return {
     id: db.id,
     title: db.title,
@@ -39,6 +39,7 @@ function mapDbToListing(db: DbListing, profile?: any): Listing & { seller_type?:
     hashtags: db.hashtags || [],
     createdAt: db.created_at,
     seller_type: db.seller_type,
+    seller_id: db.seller_id, // ← preserve for NegotiateDialog FK
     pickupAvailable: db.pickup_available,
     shippingAvailable: db.shipping_available,
     seller: {

@@ -56,25 +56,33 @@ const NegotiateDialog = ({ listingId, sellerId, askingPrice, listingTitle, listi
       return;
     }
 
+    if (!sellerId) {
+      toast({ title: "Seller info missing", description: "Cannot negotiate — seller information is unavailable. Please try again.", variant: "destructive" });
+      return;
+    }
+
     if (user.id === sellerId) {
       toast({ title: "Can't negotiate", description: "You can't negotiate on your own listing.", variant: "destructive" });
       return;
     }
 
     // Check listing status in real-time
-    const { data: listing } = await supabase.from("listings").select("status").eq("id", listingId).single();
+    const { data: listing } = await supabase.from("listings").select("status, seller_id").eq("id", listingId).single();
     if (listing && listing.status !== "active") {
       toast({ title: "Listing unavailable", description: "This product is no longer available for negotiation.", variant: "destructive" });
       setOpen(false);
       return;
     }
 
+    // Use the seller_id from the live listing as the source of truth
+    const resolvedSellerId = listing?.seller_id || sellerId;
+
     setLoading(true);
     try {
       const { error } = await supabase.from("chat_requests").insert({
         listing_id: listingId,
         buyer_id: user.id,
-        seller_id: sellerId,
+        seller_id: resolvedSellerId,
         offered_price: offeredPrice ? parseFloat(offeredPrice) : null,
         message: message || `Interested in "${listingTitle}"`,
       });

@@ -385,7 +385,7 @@ const ListingDetail = ({ listing, onBack }: ListingDetailProps) => {
           <div className="flex-1">
             <NegotiateDialog
               listingId={listing.id}
-              sellerId={isDbListing ? (listing as any).seller_id || listing.id : listing.id}
+              sellerId={(listing as any).seller_id ?? ""}
               askingPrice={listing.price}
               listingTitle={listing.title}
               listingStatus={(listing as any).status}
