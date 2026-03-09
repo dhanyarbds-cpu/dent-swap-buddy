@@ -69,6 +69,25 @@ const MessagesPage = () => {
 
   useEffect(() => {
     fetchRequests();
+
+    if (!user) return;
+
+    // Real-time subscription for chat_requests changes
+    const channel = supabase
+      .channel("chat-requests-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "chat_requests" },
+        (payload) => {
+          const row = payload.new as any;
+          if (row && (row.buyer_id === user.id || row.seller_id === user.id)) {
+            fetchRequests();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, [user]);
 
   const handleAcceptDecline = async (requestId: string, status: "accepted" | "declined") => {

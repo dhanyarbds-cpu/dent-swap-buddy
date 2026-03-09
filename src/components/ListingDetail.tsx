@@ -388,6 +388,7 @@ const ListingDetail = ({ listing, onBack }: ListingDetailProps) => {
               sellerId={isDbListing ? (listing as any).seller_id || listing.id : listing.id}
               askingPrice={listing.price}
               listingTitle={listing.title}
+              listingStatus={(listing as any).status}
             />
           </div>
           {isDbListing && (
